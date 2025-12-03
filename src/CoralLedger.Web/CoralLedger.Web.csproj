@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="MediatR" />
+    <PackageReference Include="Mapsui.Blazor" />
+    <PackageReference Include="Mapsui.Nts" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoralLedger.Application\CoralLedger.Application.csproj" />
+    <ProjectReference Include="..\CoralLedger.Infrastructure\CoralLedger.Infrastructure.csproj" />
+    <ProjectReference Include="..\CoralLedger.ServiceDefaults\CoralLedger.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\CoralLedger.Web.Client\CoralLedger.Web.Client.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>CoralLedger Blue Contributors</Authors>
+    <Company>Open Source Community</Company>
+    <Product>CoralLedger Blue</Product>
+    <Description>Open source marine intelligence platform for the Bahamas Blue Economy</Description>
+    <RepositoryUrl>https://github.com/coralledger/coralledger-blue</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+</Project>

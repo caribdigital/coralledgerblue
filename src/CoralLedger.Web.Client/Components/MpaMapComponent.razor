@@ -1,0 +1,287 @@
+@using System.Text.Json
+@using NetTopologySuite.Geometries
+@using NetTopologySuite.IO
+@inject HttpClient Http
+
+<div class="mpa-map-container" style="height: 100%; width: 100%; position: relative;">
+    @if (_loading)
+    {
+        <div class="loading-overlay">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading map...</span>
+            </div>
+        </div>
+    }
+    <MapControl @ref="_mapControl" Map="_map" />
+
+    @if (_showLegend)
+    {
+        <div class="map-legend">
+            <h6>Protection Levels</h6>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: #dc3545;"></span>
+                <span>No-Take Zone</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: #fd7e14;"></span>
+                <span>Highly Protected</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: #0dcaf0;"></span>
+                <span>Lightly Protected</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-color" style="background-color: #6c757d;"></span>
+                <span>Minimal Protection</span>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .mpa-map-container {
+        position: relative;
+        min-height: 500px;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .map-legend {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 999;
+    }
+
+    .map-legend h6 {
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+        font-size: 0.85rem;
+    }
+
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        margin-right: 8px;
+        border: 1px solid rgba(0,0,0,0.2);
+    }
+</style>
+
+@code {
+    [Parameter]
+    public EventCallback<Guid> OnMpaSelected { get; set; }
+
+    [Parameter]
+    public Guid? SelectedMpaId { get; set; }
+
+    [Parameter]
+    public bool ShowLegend { get; set; } = true;
+
+    private MapControl? _mapControl;
+    private Map _map = new();
+    private bool _loading = true;
+    private bool _showLegend = true;
+    private Dictionary<string, MpaGeoJsonFeature> _mpaFeatures = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _showLegend = ShowLegend;
+        InitializeMap();
+        await LoadMpaDataAsync();
+        _loading = false;
+    }
+
+    private void InitializeMap()
+    {
+        // Add OpenStreetMap tile layer as base
+        _map.Layers.Add(OpenStreetMap.CreateTileLayer());
+
+        // Center on Bahamas (longitude -77.5, latitude 24.5)
+        var (x, y) = SphericalMercator.FromLonLat(-77.5, 24.5);
+        var bahamasCenter = new MPoint(x, y);
+
+        // Set initial viewport
+        _map.Navigator.CenterOnAndZoomTo(bahamasCenter, _map.Navigator.Resolutions[7]);
+
+        // Configure navigator
+        _map.Navigator.RotationLock = true;
+    }
+
+    private async Task LoadMpaDataAsync()
+    {
+        try
+        {
+            var mpas = await Http.GetFromJsonAsync<MpaGeoJsonCollection>("/api/mpas/geojson");
+
+            if (mpas?.Features != null)
+            {
+                var mpaLayer = CreateMpaLayer(mpas.Features);
+                _map.Layers.Add(mpaLayer);
+
+                // Store features for click handling
+                foreach (var feature in mpas.Features)
+                {
+                    _mpaFeatures[feature.Id] = feature;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading MPA data: {ex.Message}");
+        }
+    }
+
+    private MemoryLayer CreateMpaLayer(List<MpaGeoJsonFeature> features)
+    {
+        var mpaFeatures = new List<IFeature>();
+
+        foreach (var geoFeature in features)
+        {
+            try
+            {
+                // Parse GeoJSON geometry
+                var geometry = ParseGeoJsonGeometry(geoFeature.Geometry);
+                if (geometry == null) continue;
+
+                // Transform from WGS84 to SphericalMercator
+                var transformedGeometry = TransformGeometry(geometry);
+
+                // Create Mapsui feature from geometry
+                var feature = transformedGeometry.ToFeature();
+                feature["mpaId"] = geoFeature.Id;
+                feature["name"] = geoFeature.Properties.Name;
+                feature["protectionLevel"] = geoFeature.Properties.ProtectionLevel;
+
+                // Apply style based on protection level
+                feature.Styles.Add(CreateMpaStyle(geoFeature.Properties.ProtectionLevel));
+
+                mpaFeatures.Add(feature);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating feature for {geoFeature.Properties.Name}: {ex.Message}");
+            }
+        }
+
+        return new MemoryLayer
+        {
+            Name = "Marine Protected Areas",
+            Features = mpaFeatures
+        };
+    }
+
+    private Geometry? ParseGeoJsonGeometry(JsonElement geometryJson)
+    {
+        try
+        {
+            var serializer = GeoJsonSerializer.Create();
+            var json = geometryJson.GetRawText();
+            using var reader = new System.IO.StringReader(json);
+            using var jsonReader = new Newtonsoft.Json.JsonTextReader(reader);
+            return serializer.Deserialize<Geometry>(jsonReader);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private Geometry TransformGeometry(Geometry geometry)
+    {
+        // Transform from EPSG:4326 (WGS84) to EPSG:3857 (SphericalMercator)
+        var coordinates = geometry.Coordinates;
+        var transformedCoords = new Coordinate[coordinates.Length];
+
+        for (int i = 0; i < coordinates.Length; i++)
+        {
+            var (x, y) = SphericalMercator.FromLonLat(coordinates[i].X, coordinates[i].Y);
+            transformedCoords[i] = new Coordinate(x, y);
+        }
+
+        var factory = new GeometryFactory();
+
+        if (geometry is Polygon)
+        {
+            var ring = factory.CreateLinearRing(transformedCoords);
+            return factory.CreatePolygon(ring);
+        }
+        else if (geometry is Point)
+        {
+            return factory.CreatePoint(transformedCoords[0]);
+        }
+
+        return geometry;
+    }
+
+    private IStyle CreateMpaStyle(string protectionLevel)
+    {
+        var fillColor = protectionLevel switch
+        {
+            "NoTake" => Color.FromArgb(128, 220, 53, 69),           // Red with transparency
+            "HighlyProtected" => Color.FromArgb(128, 253, 126, 20), // Orange with transparency
+            "LightlyProtected" => Color.FromArgb(128, 13, 202, 240), // Cyan with transparency
+            _ => Color.FromArgb(128, 108, 117, 125)                  // Gray with transparency
+        };
+
+        var strokeColor = protectionLevel switch
+        {
+            "NoTake" => Color.FromArgb(255, 220, 53, 69),
+            "HighlyProtected" => Color.FromArgb(255, 253, 126, 20),
+            "LightlyProtected" => Color.FromArgb(255, 13, 202, 240),
+            _ => Color.FromArgb(255, 108, 117, 125)
+        };
+
+        return new VectorStyle
+        {
+            Fill = new Brush(fillColor),
+            Outline = new Pen(strokeColor, 2),
+            Line = new Pen(strokeColor, 2)
+        };
+    }
+
+    // GeoJSON DTOs for deserialization
+    public class MpaGeoJsonCollection
+    {
+        public string Type { get; set; } = "FeatureCollection";
+        public List<MpaGeoJsonFeature> Features { get; set; } = new();
+    }
+
+    public class MpaGeoJsonFeature
+    {
+        public string Type { get; set; } = "Feature";
+        public string Id { get; set; } = "";
+        public JsonElement Geometry { get; set; }
+        public MpaProperties Properties { get; set; } = new();
+    }
+
+    public class MpaProperties
+    {
+        public string Name { get; set; } = "";
+        public string ProtectionLevel { get; set; } = "";
+        public string IslandGroup { get; set; } = "";
+        public double AreaSquareKm { get; set; }
+    }
+}

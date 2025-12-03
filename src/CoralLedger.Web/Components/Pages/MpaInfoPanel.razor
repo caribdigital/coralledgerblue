@@ -1,0 +1,115 @@
+@inject IMediator Mediator
+
+<div class="card h-100">
+    <div class="card-header bg-info text-white">
+        <strong>MPA Details</strong>
+    </div>
+    <div class="card-body">
+        @if (SelectedMpaId is null)
+        {
+            <p class="text-muted">Select a Marine Protected Area from the list to view details.</p>
+        }
+        else if (_loading)
+        {
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+        else if (_detail is not null)
+        {
+            <h5 class="card-title">@_detail.Name</h5>
+            @if (!string.IsNullOrEmpty(_detail.LocalName))
+            {
+                <p class="text-muted mb-2"><em>@_detail.LocalName</em></p>
+            }
+
+            <dl class="row small">
+                <dt class="col-5">Status</dt>
+                <dd class="col-7">
+                    <span class="badge bg-success">@_detail.Status</span>
+                </dd>
+
+                <dt class="col-5">Protection</dt>
+                <dd class="col-7">
+                    <span class="badge @GetProtectionBadgeClass(_detail.ProtectionLevel)">
+                        @_detail.ProtectionLevel
+                    </span>
+                </dd>
+
+                <dt class="col-5">Island Group</dt>
+                <dd class="col-7">@_detail.IslandGroup</dd>
+
+                <dt class="col-5">Area</dt>
+                <dd class="col-7">@_detail.AreaSquareKm.ToString("N1") km²</dd>
+
+                @if (_detail.DesignationDate.HasValue)
+                {
+                    <dt class="col-5">Designated</dt>
+                    <dd class="col-7">@_detail.DesignationDate.Value.Year</dd>
+                }
+
+                @if (!string.IsNullOrEmpty(_detail.ManagingAuthority))
+                {
+                    <dt class="col-5">Manager</dt>
+                    <dd class="col-7">@_detail.ManagingAuthority</dd>
+                }
+
+                <dt class="col-5">Reefs</dt>
+                <dd class="col-7">@_detail.ReefCount tracked</dd>
+            </dl>
+
+            @if (!string.IsNullOrEmpty(_detail.Description))
+            {
+                <hr />
+                <p class="small">@_detail.Description</p>
+            }
+
+            @if (!string.IsNullOrEmpty(_detail.WdpaId))
+            {
+                <hr />
+                <p class="small text-muted mb-0">
+                    WDPA ID: @_detail.WdpaId
+                </p>
+            }
+        }
+        else
+        {
+            <p class="text-danger">Failed to load MPA details.</p>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid? SelectedMpaId { get; set; }
+
+    private MpaDetailDto? _detail;
+    private bool _loading;
+    private Guid? _loadedMpaId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SelectedMpaId != _loadedMpaId && SelectedMpaId.HasValue)
+        {
+            _loading = true;
+            _detail = await Mediator.Send(new GetMpaByIdQuery(SelectedMpaId.Value));
+            _loadedMpaId = SelectedMpaId;
+            _loading = false;
+        }
+        else if (!SelectedMpaId.HasValue)
+        {
+            _detail = null;
+            _loadedMpaId = null;
+        }
+    }
+
+    private string GetProtectionBadgeClass(string level) => level switch
+    {
+        "NoTake" => "bg-danger",
+        "HighlyProtected" => "bg-warning text-dark",
+        "LightlyProtected" => "bg-info",
+        _ => "bg-secondary"
+    };
+}
