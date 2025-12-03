@@ -2,6 +2,7 @@
 @using NetTopologySuite.Geometries
 @using NetTopologySuite.IO
 @using Mapsui.Extensions
+@using Mapsui.Styles
 @inject HttpClient Http
 
 <div class="mpa-map-container" style="height: 100%; width: 100%; position: relative;">
@@ -35,6 +36,27 @@
                 <span class="legend-color" style="background-color: #6c757d;"></span>
                 <span>Minimal Protection</span>
             </div>
+            @if (ShowFishingEvents)
+            {
+                <hr class="my-2" />
+                <h6>Fishing Activity</h6>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background-color: #dc3545;"></span>
+                    <span>Last 7 days</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background-color: #fd7e14;"></span>
+                    <span>7-14 days ago</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background-color: #ffc107;"></span>
+                    <span>14-30 days ago</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background-color: #6c757d;"></span>
+                    <span>Older</span>
+                </div>
+            }
         </div>
     }
 
@@ -44,6 +66,20 @@
             <strong>@_selectedMpaName</strong>
             <br />
             <small>Click for details</small>
+        </div>
+    }
+
+    @if (_selectedFishingEvent is not null)
+    {
+        <div class="map-info-popup fishing-event-popup">
+            <strong><i class="bi bi-water"></i> Fishing Event</strong>
+            <hr class="my-1" />
+            <small class="d-block"><strong>Vessel:</strong> @_selectedFishingEvent.VesselId</small>
+            <small class="d-block"><strong>Date:</strong> @_selectedFishingEvent.StartTime.ToString("MMM d, yyyy")</small>
+            @if (_selectedFishingEvent.DurationHours.HasValue)
+            {
+                <small class="d-block"><strong>Duration:</strong> @_selectedFishingEvent.DurationHours.Value.ToString("F1") hours</small>
+            }
         </div>
     }
 </div>
@@ -99,6 +135,21 @@
         border: 1px solid rgba(0,0,0,0.2);
     }
 
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    .fishing-event-popup {
+        background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+        border-left: 4px solid #0d6efd;
+    }
+
     .map-info-popup {
         position: absolute;
         top: 20px;
@@ -129,6 +180,18 @@
     [Parameter]
     public bool ShowLegend { get; set; } = true;
 
+    [Parameter]
+    public bool ShowFishingEvents { get; set; } = false;
+
+    [Parameter]
+    public DateTime? FishingEventsStartDate { get; set; }
+
+    [Parameter]
+    public DateTime? FishingEventsEndDate { get; set; }
+
+    [Parameter]
+    public EventCallback<FishingEventDto> OnFishingEventSelected { get; set; }
+
     private MapControl? _mapControl;
     private Map _map = new();
     private bool _loading = true;
@@ -138,6 +201,10 @@
     private Dictionary<string, MRect> _mpaBounds = new();
     private MemoryLayer? _mpaLayer;
     private MemoryLayer? _selectionLayer;
+    private MemoryLayer? _fishingEventsLayer;
+    private FishingEventDto? _selectedFishingEvent;
+    private List<FishingEventDto> _fishingEvents = new();
+    private bool _fishingEventsLoaded = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -154,6 +221,19 @@
         {
             ZoomToMpa(SelectedMpaId.Value.ToString());
             UpdateSelectionHighlight(SelectedMpaId.Value.ToString());
+        }
+
+        // Handle fishing events layer toggle
+        if (ShowFishingEvents && !_fishingEventsLoaded)
+        {
+            await LoadFishingEventsAsync();
+        }
+        else if (!ShowFishingEvents && _fishingEventsLayer != null)
+        {
+            _map.Layers.Remove(_fishingEventsLayer);
+            _fishingEventsLayer = null;
+            _fishingEventsLoaded = false;
+            _selectedFishingEvent = null;
         }
     }
 
@@ -178,7 +258,31 @@
 
     private void OnMapInfo(object? sender, MapInfoEventArgs e)
     {
-        // In Mapsui v5, use GetMapInfo() with specific layers to query
+        // Clear previous selections
+        _selectedFishingEvent = null;
+
+        // Check fishing events layer first (it's on top)
+        if (_fishingEventsLayer != null && ShowFishingEvents)
+        {
+            var fishingInfo = e.GetMapInfo(new[] { _fishingEventsLayer });
+            if (fishingInfo?.Feature != null)
+            {
+                var feature = fishingInfo.Feature;
+                if (feature["eventId"] is string eventId)
+                {
+                    _selectedFishingEvent = _fishingEvents.FirstOrDefault(evt => evt.EventId == eventId);
+                    if (_selectedFishingEvent != null)
+                    {
+                        OnFishingEventSelected.InvokeAsync(_selectedFishingEvent);
+                        _selectedMpaName = ""; // Clear MPA selection
+                        StateHasChanged();
+                        return;
+                    }
+                }
+            }
+        }
+
+        // Check MPA layer
         if (_mpaLayer == null) return;
 
         var mapInfo = e.GetMapInfo(new[] { _mpaLayer });
@@ -409,6 +513,86 @@
         };
     }
 
+    private async Task LoadFishingEventsAsync()
+    {
+        try
+        {
+            var start = FishingEventsStartDate ?? DateTime.UtcNow.AddDays(-30);
+            var end = FishingEventsEndDate ?? DateTime.UtcNow;
+
+            var events = await Http.GetFromJsonAsync<List<FishingEventDto>>(
+                $"/api/vessels/fishing-events/bahamas?startDate={start:O}&endDate={end:O}");
+
+            if (events != null && events.Count > 0)
+            {
+                _fishingEvents = events;
+                _fishingEventsLayer = CreateFishingEventsLayer(events);
+                _map.Layers.Add(_fishingEventsLayer);
+                _fishingEventsLoaded = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading fishing events: {ex.Message}");
+        }
+    }
+
+    private MemoryLayer CreateFishingEventsLayer(List<FishingEventDto> events)
+    {
+        var features = new List<IFeature>();
+        var factory = new GeometryFactory();
+
+        foreach (var evt in events)
+        {
+            try
+            {
+                var (x, y) = SphericalMercator.FromLonLat(evt.Longitude, evt.Latitude);
+                var point = factory.CreatePoint(new Coordinate(x, y));
+                var feature = point.ToFeature();
+
+                feature["eventId"] = evt.EventId;
+                feature["vesselId"] = evt.VesselId;
+                feature["startTime"] = evt.StartTime;
+
+                feature.Styles.Add(CreateFishingEventStyle(evt));
+                features.Add(feature);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating fishing event feature: {ex.Message}");
+            }
+        }
+
+        return new MemoryLayer
+        {
+            Name = "Fishing Events",
+            Features = features
+        };
+    }
+
+    private IStyle CreateFishingEventStyle(FishingEventDto evt)
+    {
+        var daysAgo = (DateTime.UtcNow - evt.StartTime).TotalDays;
+        Color color;
+
+        if (daysAgo < 7)
+            color = Color.FromArgb(220, 220, 53, 69);    // Red - recent
+        else if (daysAgo < 14)
+            color = Color.FromArgb(220, 253, 126, 20);  // Orange
+        else if (daysAgo < 30)
+            color = Color.FromArgb(220, 255, 193, 7);   // Yellow
+        else
+            color = Color.FromArgb(150, 108, 117, 125); // Gray - older
+
+        return new SymbolStyle
+        {
+            Fill = new Brush(color),
+            Outline = new Pen(Color.White, 1),
+            SymbolScale = 0.4,
+            SymbolType = SymbolType.Ellipse
+        };
+    }
+
     public void Dispose()
     {
         _map.Info -= OnMapInfo;
@@ -418,7 +602,7 @@
     public class MpaGeoJsonCollection
     {
         public string Type { get; set; } = "FeatureCollection";
-        public List<MpaGeoJsonFeature> Features { get; set; } = new();
+        public List<MpaGeoJsonFeature> Features { get; set; } = [];
     }
 
     public class MpaGeoJsonFeature
@@ -435,5 +619,18 @@
         public string ProtectionLevel { get; set; } = "";
         public string IslandGroup { get; set; } = "";
         public double AreaSquareKm { get; set; }
+    }
+
+    // Fishing Event DTO for deserialization
+    public class FishingEventDto
+    {
+        public string EventId { get; set; } = "";
+        public string VesselId { get; set; } = "";
+        public double Longitude { get; set; }
+        public double Latitude { get; set; }
+        public DateTime StartTime { get; set; }
+        public DateTime? EndTime { get; set; }
+        public double? DurationHours { get; set; }
+        public string? EventType { get; set; }
     }
 }

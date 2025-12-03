@@ -7,17 +7,42 @@
 <div class="map-page">
     <div class="map-header">
         <h2><i class="bi bi-geo-alt-fill"></i> Bahamas Marine Protected Areas</h2>
-        <div class="view-toggle btn-group" role="group">
-            <button type="button"
-                    class="btn @(_viewMode == ViewMode.Map ? "btn-primary" : "btn-outline-primary")"
-                    @onclick="() => _viewMode = ViewMode.Map">
-                <i class="bi bi-map"></i> Map View
-            </button>
-            <button type="button"
-                    class="btn @(_viewMode == ViewMode.List ? "btn-primary" : "btn-outline-primary")"
-                    @onclick="() => _viewMode = ViewMode.List">
-                <i class="bi bi-list-ul"></i> List View
-            </button>
+        <div class="header-controls d-flex gap-3 align-items-center">
+            @if (_viewMode == ViewMode.Map)
+            {
+                <div class="fishing-controls d-flex align-items-center gap-2">
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox"
+                               @bind="_showFishingEvents" id="fishingToggle">
+                        <label class="form-check-label text-white" for="fishingToggle">
+                            <i class="bi bi-water"></i> Fishing Activity
+                        </label>
+                    </div>
+                    @if (_showFishingEvents)
+                    {
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn @(_fishingDays == 7 ? "btn-light" : "btn-outline-light")"
+                                    @onclick="() => SetFishingDays(7)">7d</button>
+                            <button class="btn @(_fishingDays == 14 ? "btn-light" : "btn-outline-light")"
+                                    @onclick="() => SetFishingDays(14)">14d</button>
+                            <button class="btn @(_fishingDays == 30 ? "btn-light" : "btn-outline-light")"
+                                    @onclick="() => SetFishingDays(30)">30d</button>
+                        </div>
+                    }
+                </div>
+            }
+            <div class="view-toggle btn-group" role="group">
+                <button type="button"
+                        class="btn @(_viewMode == ViewMode.Map ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => _viewMode = ViewMode.Map">
+                    <i class="bi bi-map"></i> Map View
+                </button>
+                <button type="button"
+                        class="btn @(_viewMode == ViewMode.List ? "btn-primary" : "btn-outline-primary")"
+                        @onclick="() => _viewMode = ViewMode.List">
+                    <i class="bi bi-list-ul"></i> List View
+                </button>
+            </div>
         </div>
     </div>
 
@@ -31,7 +56,10 @@
                             @rendermode="InteractiveWebAssembly"
                             OnMpaSelected="HandleMpaSelected"
                             SelectedMpaId="@_selectedMpaId"
-                            ShowLegend="true" />
+                            ShowLegend="true"
+                            ShowFishingEvents="@_showFishingEvents"
+                            FishingEventsStartDate="@_fishingEventsStart"
+                            FishingEventsEndDate="@DateTime.UtcNow" />
                     </div>
                 </div>
                 <div class="col-md-4 col-lg-3" style="height: 100%; overflow-y: auto;">
@@ -221,6 +249,9 @@
     private bool _loading = true;
     private Guid? _selectedMpaId;
     private ViewMode _viewMode = ViewMode.Map;
+    private bool _showFishingEvents = false;
+    private int _fishingDays = 30;
+    private DateTime _fishingEventsStart => DateTime.UtcNow.AddDays(-_fishingDays);
 
     private enum ViewMode { Map, List }
 
@@ -239,6 +270,11 @@
     {
         _selectedMpaId = mpaId;
         StateHasChanged();
+    }
+
+    private void SetFishingDays(int days)
+    {
+        _fishingDays = days;
     }
 
     private string GetProtectionBadgeClass(string level) => level switch
