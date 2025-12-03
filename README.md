@@ -40,19 +40,33 @@ dotnet run --project src/CoralLedger.AppHost
 
 ### Configuration
 
+> **IMPORTANT**: Never store API keys or secrets in `appsettings.json` or commit them to version control.
+
+#### Local Development (User Secrets)
+
 For vessel tracking features, obtain a free API key from [Global Fishing Watch](https://globalfishingwatch.org/our-apis/tokens).
 
-Add to `appsettings.json` or user secrets:
-```json
-{
-  "GlobalFishingWatch": {
-    "ApiToken": "your-api-token-here",
-    "Enabled": true
-  }
-}
+Use .NET User Secrets for local development:
+
+```bash
+# Initialize user secrets (one-time)
+dotnet user-secrets init --project src/CoralLedger.Web
+
+# Set Global Fishing Watch API token
+dotnet user-secrets set "GlobalFishingWatch:ApiToken" "your-token-here" --project src/CoralLedger.Web
+dotnet user-secrets set "GlobalFishingWatch:Enabled" "true" --project src/CoralLedger.Web
 ```
 
 NOAA Coral Reef Watch data is publicly available and requires no authentication.
+
+#### Production Deployment
+
+For production, use one of these secure options:
+- **Azure Key Vault** (recommended for Azure deployments)
+- **Environment Variables**
+- **Docker Secrets** (for containerized deployments)
+
+See [.NET Secret Management](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets) for details.
 
 The Aspire dashboard will open at `https://localhost:17088` with links to:
 - **Web Application** - Blazor frontend with interactive map

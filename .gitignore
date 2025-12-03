@@ -25,6 +25,9 @@ bld/
 # Rider
 .idea/
 
+# Claude
+.claude/
+
 # VS Code
 .vscode/
 

@@ -27,9 +27,20 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
         _httpClient = httpClient;
         _logger = logger;
 
+        var gfwOptions = options.Value;
+
+        // Validate configuration and warn if enabled but missing token
+        if (gfwOptions.Enabled && string.IsNullOrEmpty(gfwOptions.ApiToken))
+        {
+            _logger.LogWarning(
+                "GlobalFishingWatch is enabled but ApiToken is not configured. " +
+                "API calls will fail. Set it using: " +
+                "dotnet user-secrets set \"GlobalFishingWatch:ApiToken\" \"your-token\" --project src/CoralLedger.Web");
+        }
+
         _httpClient.BaseAddress = new Uri("https://gateway.api.globalfishingwatch.org/");
         _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", options.Value.ApiToken);
+            new AuthenticationHeaderValue("Bearer", gfwOptions.ApiToken);
 
         _jsonOptions = new JsonSerializerOptions
         {
