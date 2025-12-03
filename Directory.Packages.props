@@ -46,6 +46,10 @@
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
 
+    <!-- Background Jobs -->
+    <PackageVersion Include="Quartz" Version="3.13.1" />
+    <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.13.1" />
+
     <!-- Testing -->
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="FluentAssertions" Version="7.0.0" />

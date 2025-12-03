@@ -21,6 +21,9 @@ builder.Services.AddApplication();
 // Add Infrastructure layer services (including external API clients)
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// Add background job scheduler (Quartz.NET)
+builder.Services.AddQuartzJobs();
+
 // Add Database with PostGIS support
 builder.AddMarineDatabase("marinedb");
 
@@ -55,6 +58,7 @@ app.MapStaticAssets();
 app.MapMpaEndpoints();
 app.MapVesselEndpoints();
 app.MapBleachingEndpoints();
+app.MapJobEndpoints();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

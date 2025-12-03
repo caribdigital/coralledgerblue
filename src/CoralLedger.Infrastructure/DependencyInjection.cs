@@ -1,11 +1,13 @@
 using CoralLedger.Application.Common.Interfaces;
 using CoralLedger.Infrastructure.Data;
 using CoralLedger.Infrastructure.ExternalServices;
+using CoralLedger.Infrastructure.Jobs;
 using CoralLedger.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Quartz;
 
 namespace CoralLedger.Infrastructure;
 
@@ -52,5 +54,34 @@ public static class DependencyInjection
 
         builder.Services.AddScoped<IMarineDbContext>(sp =>
             sp.GetRequiredService<MarineDbContext>());
+    }
+
+    /// <summary>
+    /// Add Quartz.NET background job scheduler with configured jobs
+    /// </summary>
+    public static IServiceCollection AddQuartzJobs(this IServiceCollection services)
+    {
+        services.AddQuartz(q =>
+        {
+            // BleachingDataSyncJob - syncs NOAA bleaching data for all MPAs
+            q.AddJob<BleachingDataSyncJob>(opts => opts
+                .WithIdentity(BleachingDataSyncJob.Key)
+                .StoreDurably());
+
+            q.AddTrigger(opts => opts
+                .ForJob(BleachingDataSyncJob.Key)
+                .WithIdentity("BleachingDataSyncJob-DailyTrigger")
+                .WithDescription("Runs daily at 6 AM UTC to sync NOAA bleaching data")
+                .WithCronSchedule("0 0 6 * * ?") // 6:00 AM UTC daily
+                .StartNow()); // Also run immediately on startup
+        });
+
+        // Add Quartz as a hosted service
+        services.AddQuartzHostedService(options =>
+        {
+            options.WaitForJobsToComplete = true;
+        });
+
+        return services;
     }
 }
