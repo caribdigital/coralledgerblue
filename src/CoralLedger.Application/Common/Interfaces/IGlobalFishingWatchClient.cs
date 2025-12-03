@@ -9,6 +9,11 @@ namespace CoralLedger.Application.Common.Interfaces;
 public interface IGlobalFishingWatchClient
 {
     /// <summary>
+    /// Gets whether the client is properly configured with an API token
+    /// </summary>
+    bool IsConfigured { get; }
+
+    /// <summary>
     /// Search for vessels by various criteria
     /// </summary>
     Task<IEnumerable<GfwVesselInfo>> SearchVesselsAsync(

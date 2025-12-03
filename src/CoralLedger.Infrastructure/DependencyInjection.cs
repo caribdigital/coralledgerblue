@@ -84,6 +84,18 @@ public static class DependencyInjection
                 .WithDescription("Runs daily at 6 AM UTC to sync NOAA bleaching data")
                 .WithCronSchedule("0 0 6 * * ?") // 6:00 AM UTC daily
                 .StartNow()); // Also run immediately on startup
+
+            // VesselEventSyncJob - syncs GFW fishing events for Bahamas
+            q.AddJob<VesselEventSyncJob>(opts => opts
+                .WithIdentity(VesselEventSyncJob.Key)
+                .StoreDurably());
+
+            q.AddTrigger(opts => opts
+                .ForJob(VesselEventSyncJob.Key)
+                .WithIdentity("VesselEventSyncJob-6HourTrigger")
+                .WithDescription("Runs every 6 hours to sync GFW fishing events for Bahamas")
+                .WithCronSchedule("0 0 */6 * * ?") // Every 6 hours
+                .StartNow()); // Also run immediately on startup
         });
 
         // Add Quartz as a hosted service

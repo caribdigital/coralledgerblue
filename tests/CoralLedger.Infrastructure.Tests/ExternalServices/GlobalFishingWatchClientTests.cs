@@ -132,6 +132,60 @@ public class GlobalFishingWatchClientTests
         httpClient.DefaultRequestHeaders.Authorization!.Scheme.Should().Be("Bearer");
         httpClient.DefaultRequestHeaders.Authorization.Parameter.Should().Be(testToken);
     }
+
+    [Fact]
+    public void IsConfigured_WithToken_ReturnsTrue()
+    {
+        // Arrange
+        var options = Options.Create(new GlobalFishingWatchOptions
+        {
+            Enabled = true,
+            ApiToken = "valid-token"
+        });
+
+        var mockLogger = new Mock<ILogger<GlobalFishingWatchClient>>();
+        var httpClient = new HttpClient();
+        var client = new GlobalFishingWatchClient(httpClient, options, mockLogger.Object);
+
+        // Act & Assert
+        client.IsConfigured.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsConfigured_WithoutToken_ReturnsFalse()
+    {
+        // Arrange
+        var options = Options.Create(new GlobalFishingWatchOptions
+        {
+            Enabled = true,
+            ApiToken = ""
+        });
+
+        var mockLogger = new Mock<ILogger<GlobalFishingWatchClient>>();
+        var httpClient = new HttpClient();
+        var client = new GlobalFishingWatchClient(httpClient, options, mockLogger.Object);
+
+        // Act & Assert
+        client.IsConfigured.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsConfigured_WithNullToken_ReturnsFalse()
+    {
+        // Arrange
+        var options = Options.Create(new GlobalFishingWatchOptions
+        {
+            Enabled = true,
+            ApiToken = null!
+        });
+
+        var mockLogger = new Mock<ILogger<GlobalFishingWatchClient>>();
+        var httpClient = new HttpClient();
+        var client = new GlobalFishingWatchClient(httpClient, options, mockLogger.Object);
+
+        // Act & Assert
+        client.IsConfigured.Should().BeFalse();
+    }
 }
 
 public class GlobalFishingWatchOptionsTests

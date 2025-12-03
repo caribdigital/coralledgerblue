@@ -1,4 +1,4 @@
-# CoralLedger Blue
+# 🐚 CoralLedger Blue
 
 **Open Source Marine Intelligence for the Blue Economy**
 
@@ -8,95 +8,62 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![GitHub](https://img.shields.io/github/stars/caribdigital/coralledgerblue?style=social)](https://github.com/caribdigital/coralledgerblue)
 
-CoralLedger Blue is an open-source marine intelligence platform designed to support marine conservation efforts in The Bahamas. Built with cutting-edge .NET 10 technology, it provides tools for monitoring Marine Protected Areas (MPAs), tracking reef health, and enabling citizen science contributions.
+<!-- TODO: Add hero screenshot of the map with MPAs, bleaching panel, and fishing events visible -->
 
-## Features
+> **Real-time coral bleaching monitoring. Fishing vessel tracking. 8 Marine Protected Areas. One command to run.**
 
-- **Interactive Map** - Mapsui-powered map with OpenStreetMap tiles and MPA polygon visualization
-- **Marine Protected Areas Management** - Track and visualize all Bahamas MPAs with spatial data
-- **Protection Level Styling** - Color-coded MPAs by protection type (No-Take, Highly Protected, etc.)
-- **PostGIS Spatial Database** - Full GIS capabilities for marine boundary management
-- **Clean Architecture** - Modular monolith design for maintainability and scalability
-- **.NET Aspire Orchestration** - One-command deployment with automatic container management
-- **Dual View Modes** - Toggle between interactive map and table list views
+CoralLedger Blue connects NOAA satellite data and Global Fishing Watch to help protect the Bahamas' 2,854 km² of ocean reserves.
+
+Built with .NET 10, Blazor, PostGIS, and .NET Aspire—because saving reefs should be as easy as `dotnet run`.
 
 ## Quick Start
 
-### Prerequisites
-
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-
-### Run the Application
-
 ```bash
-# Clone the repository
+# Clone and run (requires .NET 10 SDK + Docker)
 git clone https://github.com/caribdigital/coralledgerblue.git
 cd coralledgerblue
-
-# Run with .NET Aspire (starts PostgreSQL/PostGIS automatically)
 dotnet run --project src/CoralLedger.AppHost
 ```
 
-### Configuration
+The Aspire dashboard opens at `https://localhost:17088` with links to the web app, pgAdmin, and PostgreSQL.
 
-> **IMPORTANT**: Never store API keys or secrets in `appsettings.json` or commit them to version control.
+## What Can You Do With It?
 
-#### Local Development (User Secrets)
+- 🗺️ **Visualize all 8 Bahamas MPAs** on an interactive map with protection-level styling
+- 🌡️ **Monitor coral bleaching risk** with live NOAA satellite data (SST, DHW, alerts)
+- 🚢 **Track fishing vessels** and detect activity inside protected areas
+- 📊 **Access everything via REST API** for your own analysis or integrations
+- ⚡ **Run locally in 30 seconds** with .NET Aspire (PostgreSQL + PostGIS included)
 
-For vessel tracking features, obtain a free API key from [Global Fishing Watch](https://globalfishingwatch.org/our-apis/tokens).
+## Why This Matters
 
-Use .NET User Secrets for local development:
+The Bahamas possesses one of the world's most extensive coral reef systems—and it's under threat.
 
-```bash
-# Initialize user secrets (one-time)
-dotnet user-secrets init --project src/CoralLedger.Web
+- **Climate change** is warming the ocean, causing mass coral bleaching events
+- **Illegal fishing** depletes protected marine areas
+- **Conservation officers** lack real-time data to respond effectively
 
-# Set Global Fishing Watch API token
-dotnet user-secrets set "GlobalFishingWatch:ApiToken" "your-token-here" --project src/CoralLedger.Web
-dotnet user-secrets set "GlobalFishingWatch:Enabled" "true" --project src/CoralLedger.Web
-```
+CoralLedger Blue puts satellite data, vessel tracking, and spatial analysis into the hands of the people protecting these ecosystems. It's not just code—it's a tool for the Blue Economy.
 
-NOAA Coral Reef Watch data is publicly available and requires no authentication.
+## Help Wanted 🆘
 
-#### Production Deployment
+We're actively looking for contributors in these areas:
 
-For production, use one of these secure options:
-- **Azure Key Vault** (recommended for Azure deployments)
-- **Environment Variables**
-- **Docker Secrets** (for containerized deployments)
+| Area | Difficulty | What You'll Do |
+|------|------------|----------------|
+| 🧪 **Testing** | Medium | Help build comprehensive test coverage |
+| 🌍 **Spanish Translation** | Easy | Translate UI strings for Spanish speakers |
+| 🇭🇹 **Haitian Creole** | Easy | Support Bahamian fishing communities |
+| 🗺️ **GIS Optimization** | Advanced | Improve PostGIS query performance |
+| 📝 **Documentation** | Easy | Expand guides and tutorials |
 
-See [.NET Secret Management](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets) for details.
-
-The Aspire dashboard will open at `https://localhost:17088` with links to:
-- **Web Application** - Blazor frontend with interactive map
-- **pgAdmin** - Database management interface
-- **PostgreSQL** - PostGIS-enabled database
+👉 **[See all Good First Issues](https://github.com/caribdigital/coralledgerblue/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)**
 
 ## Screenshots
 
-### Map View
-Interactive map centered on The Bahamas showing all Marine Protected Areas with color-coded protection levels.
+*Screenshots and GIFs of the application in action coming soon. Run `dotnet run --project src/CoralLedger.AppHost` to see it yourself!*
 
-### List View
-Tabular view of all MPAs with sortable columns and detailed information panel.
-
-## Architecture
-
-CoralLedger Blue follows **Clean Architecture** principles with a modular monolith structure:
-
-```
-src/
-├── CoralLedger.Domain/          # Entities, Value Objects, Enums
-├── CoralLedger.Application/     # CQRS (MediatR), DTOs, Interfaces
-├── CoralLedger.Infrastructure/  # EF Core, PostGIS, Data Seeding
-├── CoralLedger.Web/             # Blazor Server Host + API
-├── CoralLedger.Web.Client/      # Blazor WebAssembly Components
-├── CoralLedger.AppHost/         # .NET Aspire Orchestrator
-└── CoralLedger.ServiceDefaults/ # Shared Aspire Configuration
-```
-
-### Technology Stack
+## Technology Stack
 
 | Layer | Technology |
 |-------|------------|
@@ -107,8 +74,24 @@ src/
 | **ORM** | Entity Framework Core 10 |
 | **Spatial** | NetTopologySuite 2.6 |
 | **CQRS** | MediatR 12.4 |
+| **Jobs** | Quartz.NET 3.13 |
 | **Orchestration** | .NET Aspire 13.0 |
 | **Containers** | Docker |
+
+## Architecture
+
+CoralLedger Blue follows **Clean Architecture** principles with a modular monolith structure:
+
+```
+src/
+├── CoralLedger.Domain/          # Entities, Value Objects, Enums
+├── CoralLedger.Application/     # CQRS (MediatR), DTOs, Interfaces
+├── CoralLedger.Infrastructure/  # EF Core, PostGIS, Quartz Jobs
+├── CoralLedger.Web/             # Blazor Server Host + API
+├── CoralLedger.Web.Client/      # Blazor WebAssembly Components
+├── CoralLedger.AppHost/         # .NET Aspire Orchestrator
+└── CoralLedger.ServiceDefaults/ # Shared Aspire Configuration
+```
 
 ## API Endpoints
 
@@ -137,6 +120,13 @@ src/
 | `/api/bleaching/bahamas` | GET | Current Bahamas bleaching alerts |
 | `/api/bleaching/timeseries` | GET | DHW time series for a location |
 | `/api/bleaching/mpa/{mpaId}` | GET | Bleaching data for an MPA |
+
+### Background Jobs
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/jobs/status` | GET | All job statuses and sync info |
+| `/api/jobs/sync/bleaching` | POST | Trigger manual bleaching sync |
+| `/api/jobs/sync/vessels` | POST | Trigger manual vessel event sync |
 
 ## Database Schema
 
@@ -187,7 +177,7 @@ The application comes pre-seeded with 8 Bahamas Marine Protected Areas:
 
 ## Project Roadmap
 
-### Phase 1: Spatial Foundation
+### Phase 1: Spatial Foundation ✅
 - [x] Clean Architecture setup
 - [x] PostGIS spatial database
 - [x] MPA entity with spatial boundaries
@@ -195,7 +185,7 @@ The application comes pre-seeded with 8 Bahamas Marine Protected Areas:
 - [x] Blazor web interface
 - [x] .NET Aspire orchestration
 
-### Phase 2: Interactive Map (Complete)
+### Phase 2: Interactive Map ✅
 - [x] Mapsui map component with OpenStreetMap
 - [x] MPA polygon rendering with protection level styling
 - [x] GeoJSON API endpoints
@@ -205,13 +195,14 @@ The application comes pre-seeded with 8 Bahamas Marine Protected Areas:
 - [x] Zoom-to-MPA on selection
 - [x] Selection highlight with info popup
 
-### Phase 3: Data Ingestion (Current)
+### Phase 3: Data Ingestion ✅
 - [x] Global Fishing Watch API v3 integration
 - [x] NOAA Coral Reef Watch ERDDAP integration
 - [x] Vessel tracking domain entities
 - [x] Bleaching alert domain entities
 - [x] REST API endpoints for external data
-- [ ] Automated data pipelines (Quartz.NET)
+- [x] Protected Planet WDPA API integration
+- [x] Automated data pipelines (Quartz.NET)
 - [ ] Vessel activity visualization on map
 
 ### Phase 4: Citizen Science
@@ -226,6 +217,34 @@ The application comes pre-seeded with 8 Bahamas Marine Protected Areas:
 - [ ] Text-to-SQL for spatial queries
 - [ ] Predictive analytics
 
+## Configuration
+
+> **IMPORTANT**: Never store API keys or secrets in `appsettings.json` or commit them to version control.
+
+### Local Development (User Secrets)
+
+For vessel tracking features, obtain a free API key from [Global Fishing Watch](https://globalfishingwatch.org/our-apis/tokens).
+
+```bash
+# Initialize user secrets (one-time)
+dotnet user-secrets init --project src/CoralLedger.Web
+
+# Set Global Fishing Watch API token
+dotnet user-secrets set "GlobalFishingWatch:ApiToken" "your-token-here" --project src/CoralLedger.Web
+dotnet user-secrets set "GlobalFishingWatch:Enabled" "true" --project src/CoralLedger.Web
+```
+
+NOAA Coral Reef Watch data is publicly available and requires no authentication.
+
+### Production Deployment
+
+For production, use one of these secure options:
+- **Azure Key Vault** (recommended for Azure deployments)
+- **Environment Variables**
+- **Docker Secrets** (for containerized deployments)
+
+See [.NET Secret Management](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets) for details.
+
 ## Documentation
 
 - [Architecture Overview](docs/architecture.md)
@@ -233,20 +252,25 @@ The application comes pre-seeded with 8 Bahamas Marine Protected Areas:
 - [Phase 2 Delivery](docs/phase2-delivery.md)
 - [Contributing Guide](docs/CONTRIBUTING.md)
 
+## Community
+
+- 💬 **Discussions** — [GitHub Discussions](https://github.com/caribdigital/coralledgerblue/discussions)
+- 🐛 **Issues** — [Report bugs or request features](https://github.com/caribdigital/coralledgerblue/issues)
+- 📧 **Contact** — [DigitalCarib.com](https://digitalcarib.com)
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
 
-### Good First Issues
-- Add hover tooltips on MPA polygons
-- Improve mobile responsiveness
-- Add French/Spanish translations
-- Expand MPA seed data
-- Add unit tests for domain entities
-
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+If CoralLedger Blue helps you or inspires you, consider giving it a ⭐ — it helps others discover the project!
+
+---
 
 ## Acknowledgments
 
@@ -260,4 +284,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Created by Robbie McKenzie - Founder, [DigitalCarib.com](https://digitalcarib.com)**
 
-**Built with love for the Bahamas Blue Economy**
+**Built with love for the Bahamas Blue Economy** 🇧🇸

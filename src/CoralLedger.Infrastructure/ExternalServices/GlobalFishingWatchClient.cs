@@ -18,6 +18,10 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
     private readonly HttpClient _httpClient;
     private readonly ILogger<GlobalFishingWatchClient> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
+    private readonly GlobalFishingWatchOptions _options;
+
+    /// <inheritdoc />
+    public bool IsConfigured => !string.IsNullOrEmpty(_options.ApiToken);
 
     public GlobalFishingWatchClient(
         HttpClient httpClient,
@@ -26,11 +30,10 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
     {
         _httpClient = httpClient;
         _logger = logger;
-
-        var gfwOptions = options.Value;
+        _options = options.Value;
 
         // Validate configuration and warn if enabled but missing token
-        if (gfwOptions.Enabled && string.IsNullOrEmpty(gfwOptions.ApiToken))
+        if (_options.Enabled && string.IsNullOrEmpty(_options.ApiToken))
         {
             _logger.LogWarning(
                 "GlobalFishingWatch is enabled but ApiToken is not configured. " +
@@ -40,7 +43,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
 
         _httpClient.BaseAddress = new Uri("https://gateway.api.globalfishingwatch.org/");
         _httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", gfwOptions.ApiToken);
+            new AuthenticationHeaderValue("Bearer", _options.ApiToken);
 
         _jsonOptions = new JsonSerializerOptions
         {

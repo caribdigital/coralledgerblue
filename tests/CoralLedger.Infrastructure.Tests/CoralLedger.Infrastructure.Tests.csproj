@@ -18,6 +18,8 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Moq" />
     <PackageReference Include="NetTopologySuite" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Quartz" />
   </ItemGroup>
 
   <ItemGroup>

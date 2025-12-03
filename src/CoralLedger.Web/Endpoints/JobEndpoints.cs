@@ -24,19 +24,34 @@ public static class JobEndpoints
             var bleachingTriggers = await scheduler.GetTriggersOfJob(BleachingDataSyncJob.Key, ct);
             var bleachingTrigger = bleachingTriggers.FirstOrDefault();
 
-            // Get last sync from database
+            // Get vessel sync job info
+            var vesselTriggers = await scheduler.GetTriggersOfJob(VesselEventSyncJob.Key, ct);
+            var vesselTrigger = vesselTriggers.FirstOrDefault();
+
+            // Get last bleaching sync from database
             var lastBleachingSync = await dbContext.BleachingAlerts
                 .OrderByDescending(b => b.CreatedAt)
                 .Select(b => new { b.CreatedAt, b.Date })
                 .FirstOrDefaultAsync(ct);
 
-            // Count records by date
+            // Get last vessel event sync from database
+            var lastVesselSync = await dbContext.VesselEvents
+                .OrderByDescending(v => v.CreatedAt)
+                .Select(v => new { v.CreatedAt, v.StartTime })
+                .FirstOrDefaultAsync(ct);
+
+            // Count bleaching records by date
             var recordsByDate = await dbContext.BleachingAlerts
                 .GroupBy(b => b.Date)
                 .Select(g => new { Date = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Date)
                 .Take(7)
                 .ToListAsync(ct);
+
+            // Count vessel events and MPA violations
+            var totalVesselEvents = await dbContext.VesselEvents.CountAsync(ct);
+            var mpaViolations = await dbContext.VesselEvents.CountAsync(v => v.IsInMpa == true, ct);
+            var totalVessels = await dbContext.Vessels.CountAsync(ct);
 
             return Results.Ok(new JobStatusResponse
             {
@@ -48,6 +63,17 @@ public static class JobEndpoints
                     LastDataDate = lastBleachingSync?.Date,
                     LastSyncTime = lastBleachingSync?.CreatedAt,
                     TotalRecords = await dbContext.BleachingAlerts.CountAsync(ct)
+                },
+                VesselSync = new VesselSyncInfo
+                {
+                    JobName = "VesselEventSyncJob",
+                    NextFireTime = vesselTrigger?.GetNextFireTimeUtc()?.UtcDateTime,
+                    PreviousFireTime = vesselTrigger?.GetPreviousFireTimeUtc()?.UtcDateTime,
+                    LastEventTime = lastVesselSync?.StartTime,
+                    LastSyncTime = lastVesselSync?.CreatedAt,
+                    TotalEvents = totalVesselEvents,
+                    TotalVessels = totalVessels,
+                    MpaViolations = mpaViolations
                 },
                 RecentSyncs = recordsByDate.Select(r => new SyncRecord
                 {
@@ -88,6 +114,34 @@ public static class JobEndpoints
         .Produces(StatusCodes.Status202Accepted)
         .Produces(StatusCodes.Status409Conflict);
 
+        // POST /api/jobs/sync/vessels - Trigger manual vessel event sync
+        group.MapPost("/sync/vessels", async (
+            ISchedulerFactory schedulerFactory,
+            CancellationToken ct = default) =>
+        {
+            var scheduler = await schedulerFactory.GetScheduler(ct);
+
+            // Check if job is already running
+            var runningJobs = await scheduler.GetCurrentlyExecutingJobs(ct);
+            if (runningJobs.Any(j => j.JobDetail.Key.Equals(VesselEventSyncJob.Key)))
+            {
+                return Results.Conflict(new { Message = "Vessel sync job is already running" });
+            }
+
+            // Trigger the job immediately
+            await scheduler.TriggerJob(VesselEventSyncJob.Key, ct);
+
+            return Results.Accepted(value: new
+            {
+                Message = "Vessel event sync job triggered successfully",
+                TriggeredAt = DateTime.UtcNow
+            });
+        })
+        .WithName("TriggerVesselSync")
+        .WithDescription("Manually trigger vessel event sync from Global Fishing Watch")
+        .Produces(StatusCodes.Status202Accepted)
+        .Produces(StatusCodes.Status409Conflict);
+
         return endpoints;
     }
 }
@@ -95,6 +149,7 @@ public static class JobEndpoints
 public record JobStatusResponse
 {
     public JobInfo BleachingSync { get; init; } = new();
+    public VesselSyncInfo VesselSync { get; init; } = new();
     public List<SyncRecord> RecentSyncs { get; init; } = new();
 }
 
@@ -112,4 +167,16 @@ public record SyncRecord
 {
     public DateOnly Date { get; init; }
     public int RecordCount { get; init; }
+}
+
+public record VesselSyncInfo
+{
+    public string JobName { get; init; } = string.Empty;
+    public DateTime? NextFireTime { get; init; }
+    public DateTime? PreviousFireTime { get; init; }
+    public DateTime? LastEventTime { get; init; }
+    public DateTime? LastSyncTime { get; init; }
+    public int TotalEvents { get; init; }
+    public int TotalVessels { get; init; }
+    public int MpaViolations { get; init; }
 }
