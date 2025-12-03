@@ -135,6 +135,45 @@
                 </div>
             }
 
+            @* Historical DHW Trend Section *@
+            @if (_historyLoading)
+            {
+                <hr />
+                <div class="text-center py-2">
+                    <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                        <span class="visually-hidden">Loading history...</span>
+                    </div>
+                    <small class="text-muted d-block mt-1">Loading trend data...</small>
+                </div>
+            }
+            else if (_historyData?.Count > 1)
+            {
+                <hr />
+                <h6 class="mb-2">
+                    <i class="bi bi-graph-up"></i> 30-Day DHW Trend
+                </h6>
+                <DhwSparkline Data="@_historyData" Height="60" ShowLegend="true" />
+                <div class="d-flex justify-content-between small text-muted mt-1">
+                    <span>@_historyData.First().Date.ToString("MMM d")</span>
+                    <span>@_historyData.Last().Date.ToString("MMM d")</span>
+                </div>
+                @if (!string.IsNullOrEmpty(GetTrendIndicator().text))
+                {
+                    <div class="mt-2">
+                        <span class="badge @GetTrendIndicator().badgeClass">
+                            <i class="bi @GetTrendIndicator().icon"></i> @GetTrendIndicator().text
+                        </span>
+                    </div>
+                }
+            }
+            else if (_historyData?.Count == 1)
+            {
+                <hr />
+                <div class="alert alert-info py-2 small mb-0">
+                    <i class="bi bi-info-circle"></i> Only 1 day of historical data available. Trend chart requires at least 2 days.
+                </div>
+            }
+
             @if (!string.IsNullOrEmpty(_detail.Description))
             {
                 <hr />
@@ -172,6 +211,8 @@
     private Guid? _loadedMpaId;
     private CrwBleachingData? _bleachingData;
     private bool _bleachingLoading;
+    private IReadOnlyList<BleachingHistoryDto>? _historyData;
+    private bool _historyLoading;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -179,18 +220,22 @@
         {
             _loading = true;
             _bleachingData = null;
+            _historyData = null;
             _detail = await Mediator.Send(new GetMpaByIdQuery(SelectedMpaId.Value));
             _loadedMpaId = SelectedMpaId;
             _loading = false;
 
-            // Load bleaching data asynchronously after MPA details
-            await LoadBleachingDataAsync();
+            // Load bleaching data and history asynchronously after MPA details
+            await Task.WhenAll(
+                LoadBleachingDataAsync(),
+                LoadHistoryDataAsync());
         }
         else if (!SelectedMpaId.HasValue)
         {
             _detail = null;
             _loadedMpaId = null;
             _bleachingData = null;
+            _historyData = null;
         }
     }
 
@@ -255,4 +300,53 @@
         >= 1 => "text-info",
         _ => "text-success"
     };
+
+    private async Task LoadHistoryDataAsync()
+    {
+        if (_loadedMpaId is null) return;
+
+        try
+        {
+            _historyLoading = true;
+            StateHasChanged();
+
+            _historyData = await Mediator.Send(new GetMpaBleachingHistoryQuery(_loadedMpaId.Value, 30));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading history data: {ex.Message}");
+            _historyData = null;
+        }
+        finally
+        {
+            _historyLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private (string text, string badgeClass, string icon) GetTrendIndicator()
+    {
+        if (_historyData is null || _historyData.Count < 7)
+            return (string.Empty, string.Empty, string.Empty);
+
+        // Compare last 7 days average to previous 7 days
+        var recentDays = _historyData.TakeLast(7).ToList();
+        var olderDays = _historyData.SkipLast(7).TakeLast(7).ToList();
+
+        if (olderDays.Count < 3)
+            return (string.Empty, string.Empty, string.Empty);
+
+        var recentAvg = recentDays.Average(d => d.DegreeHeatingWeek);
+        var olderAvg = olderDays.Average(d => d.DegreeHeatingWeek);
+        var change = recentAvg - olderAvg;
+
+        return change switch
+        {
+            > 1.0 => ("Rising quickly", "bg-danger", "bi-arrow-up-circle-fill"),
+            > 0.5 => ("Rising", "bg-warning text-dark", "bi-arrow-up"),
+            < -1.0 => ("Improving quickly", "bg-success", "bi-arrow-down-circle-fill"),
+            < -0.5 => ("Improving", "bg-info", "bi-arrow-down"),
+            _ => ("Stable", "bg-secondary", "bi-dash")
+        };
+    }
 }

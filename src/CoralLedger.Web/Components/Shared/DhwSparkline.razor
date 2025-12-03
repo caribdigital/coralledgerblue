@@ -1,0 +1,196 @@
+@*
+    DHW Sparkline - Lightweight SVG trend chart for Degree Heating Week data
+    Shows historical bleaching stress with color-coded severity
+*@
+
+<div class="dhw-sparkline-container">
+    <svg viewBox="0 0 @Width @Height"
+         preserveAspectRatio="none"
+         class="dhw-sparkline"
+         style="width: 100%; height: @(Height)px;">
+
+        @* Background grid - threshold lines *@
+        @if (ShowThresholds && Data?.Count > 0)
+        {
+            var maxDhw = GetMaxScale();
+
+            @* Warning threshold at DHW 4 *@
+            @if (maxDhw >= 4)
+            {
+                var y4 = Height - (4.0 / maxDhw * Height);
+                <line x1="0" y1="@y4.ToString("F1")"
+                      x2="@Width" y2="@y4.ToString("F1")"
+                      stroke="#ffc107"
+                      stroke-width="1"
+                      stroke-dasharray="4,4"
+                      opacity="0.5" />
+            }
+
+            @* Alert threshold at DHW 8 *@
+            @if (maxDhw >= 8)
+            {
+                var y8 = Height - (8.0 / maxDhw * Height);
+                <line x1="0" y1="@y8.ToString("F1")"
+                      x2="@Width" y2="@y8.ToString("F1")"
+                      stroke="#dc3545"
+                      stroke-width="1"
+                      stroke-dasharray="4,4"
+                      opacity="0.5" />
+            }
+        }
+
+        @* Area fill under the line *@
+        @if (Data?.Count > 1)
+        {
+            <polygon
+                points="@GetAreaPoints()"
+                fill="@GetFillColor()"
+                opacity="0.2" />
+
+            @* Main trend line *@
+            <polyline
+                fill="none"
+                stroke="@GetStrokeColor()"
+                stroke-width="2"
+                stroke-linejoin="round"
+                stroke-linecap="round"
+                points="@GetLinePoints()" />
+
+            @* Current value dot *@
+            @if (ShowCurrentDot)
+            {
+                var lastPoint = GetLastPoint();
+                <circle
+                    cx="@lastPoint.x.ToString("F1")"
+                    cy="@lastPoint.y.ToString("F1")"
+                    r="4"
+                    fill="@GetStrokeColor()" />
+            }
+        }
+        else if (Data?.Count == 1)
+        {
+            @* Single point - show as dot *@
+            <circle
+                cx="@(Width / 2)"
+                cy="@(Height / 2)"
+                r="4"
+                fill="@GetStrokeColor()" />
+        }
+    </svg>
+
+    @* Optional legend *@
+    @if (ShowLegend && Data?.Count > 0)
+    {
+        var maxDhw = Data.Max(d => d.DegreeHeatingWeek);
+        var minDhw = Data.Min(d => d.DegreeHeatingWeek);
+        <div class="dhw-legend small text-muted mt-1">
+            <span>Min: @minDhw.ToString("F1")</span>
+            <span class="mx-2">|</span>
+            <span>Max: @maxDhw.ToString("F1")</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<BleachingHistoryDto>? Data { get; set; }
+
+    [Parameter]
+    public int Width { get; set; } = 200;
+
+    [Parameter]
+    public int Height { get; set; } = 60;
+
+    [Parameter]
+    public bool ShowThresholds { get; set; } = true;
+
+    [Parameter]
+    public bool ShowCurrentDot { get; set; } = true;
+
+    [Parameter]
+    public bool ShowLegend { get; set; } = false;
+
+    private double GetMaxScale()
+    {
+        if (Data is null || Data.Count == 0) return 8;
+        var maxValue = Data.Max(d => d.DegreeHeatingWeek);
+        // Ensure scale shows at least DHW 8 for context, or actual max + 10%
+        return Math.Max(8, maxValue * 1.1);
+    }
+
+    private string GetLinePoints()
+    {
+        if (Data is null || Data.Count < 2) return string.Empty;
+
+        var maxDhw = GetMaxScale();
+        var xStep = (double)Width / (Data.Count - 1);
+
+        return string.Join(" ", Data.Select((d, i) =>
+        {
+            var x = i * xStep;
+            var y = Height - (d.DegreeHeatingWeek / maxDhw * Height);
+            return $"{x:F1},{y:F1}";
+        }));
+    }
+
+    private string GetAreaPoints()
+    {
+        if (Data is null || Data.Count < 2) return string.Empty;
+
+        var maxDhw = GetMaxScale();
+        var xStep = (double)Width / (Data.Count - 1);
+
+        var points = new List<string>();
+
+        // Start at bottom-left
+        points.Add($"0,{Height}");
+
+        // Add all data points
+        for (int i = 0; i < Data.Count; i++)
+        {
+            var x = i * xStep;
+            var y = Height - (Data[i].DegreeHeatingWeek / maxDhw * Height);
+            points.Add($"{x:F1},{y:F1}");
+        }
+
+        // End at bottom-right
+        points.Add($"{Width},{Height}");
+
+        return string.Join(" ", points);
+    }
+
+    private (double x, double y) GetLastPoint()
+    {
+        if (Data is null || Data.Count == 0) return (0, 0);
+
+        var maxDhw = GetMaxScale();
+        var xStep = Data.Count > 1 ? (double)Width / (Data.Count - 1) : Width / 2.0;
+        var lastIndex = Data.Count - 1;
+
+        var x = lastIndex * xStep;
+        var y = Height - (Data[lastIndex].DegreeHeatingWeek / maxDhw * Height);
+
+        return (x, y);
+    }
+
+    private string GetStrokeColor()
+    {
+        if (Data is null || Data.Count == 0) return "#6c757d"; // Gray
+
+        var maxDhw = Data.Max(d => d.DegreeHeatingWeek);
+
+        return maxDhw switch
+        {
+            >= 8 => "#dc3545",  // Red - Alert Level 2
+            >= 4 => "#fd7e14",  // Orange - Alert Level 1
+            >= 1 => "#ffc107",  // Yellow - Watch
+            _ => "#28a745"      // Green - No stress
+        };
+    }
+
+    private string GetFillColor()
+    {
+        // Use same color logic as stroke
+        return GetStrokeColor();
+    }
+}

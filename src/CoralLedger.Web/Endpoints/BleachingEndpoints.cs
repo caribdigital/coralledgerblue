@@ -1,4 +1,6 @@
 using CoralLedger.Application.Common.Interfaces;
+using CoralLedger.Application.Features.Bleaching.Queries.GetMpaBleachingHistory;
+using MediatR;
 
 namespace CoralLedger.Web.Endpoints;
 
@@ -116,6 +118,26 @@ public static class BleachingEndpoints
         .Produces<MpaBleachingResponse>()
         .Produces(StatusCodes.Status404NotFound);
 
+        // GET /api/bleaching/mpa/{mpaId}/history?days=30 - Get historical bleaching data for an MPA
+        group.MapGet("/mpa/{mpaId:guid}/history", async (
+            Guid mpaId,
+            IMediator mediator,
+            int days = 30,
+            CancellationToken ct = default) =>
+        {
+            var history = await mediator.Send(new GetMpaBleachingHistoryQuery(mpaId, days), ct);
+            return Results.Ok(new MpaBleachingHistoryResponse
+            {
+                MpaId = mpaId,
+                Days = days,
+                DataPoints = history.Count,
+                History = history
+            });
+        })
+        .WithName("GetMpaBleachingHistory")
+        .WithDescription("Get historical bleaching data from database for trend analysis")
+        .Produces<MpaBleachingHistoryResponse>();
+
         return endpoints;
     }
 
@@ -149,4 +171,12 @@ public record MpaBleachingResponse
     public string MpaName { get; init; } = string.Empty;
     public DateOnly Date { get; init; }
     public CrwBleachingData? Data { get; init; }
+}
+
+public record MpaBleachingHistoryResponse
+{
+    public Guid MpaId { get; init; }
+    public int Days { get; init; }
+    public int DataPoints { get; init; }
+    public IReadOnlyList<BleachingHistoryDto> History { get; init; } = [];
 }
