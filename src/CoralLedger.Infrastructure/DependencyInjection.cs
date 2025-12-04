@@ -42,6 +42,11 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(60);
         });
 
+        // Register Azure Blob Storage service
+        services.Configure<BlobStorageOptions>(
+            configuration.GetSection(BlobStorageOptions.SectionName));
+        services.AddSingleton<IBlobStorageService, BlobStorageService>();
+
         return services;
     }
 

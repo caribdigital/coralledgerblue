@@ -1,0 +1,230 @@
+@page "/observations"
+@page "/observations/new"
+@rendermode InteractiveServer
+@using CoralLedger.Web.Client.Components
+@inject HttpClient Http
+
+<PageTitle>Citizen Observations - CoralLedger Blue</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Left: Observation Form -->
+        <div class="col-lg-4 col-md-5">
+            <ObservationFormComponent OnSubmitted="HandleObservationSubmitted" />
+        </div>
+
+        <!-- Right: Map and List -->
+        <div class="col-lg-8 col-md-7">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-map me-2"></i>Observation Locations</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary @(_viewMode == "map" ? "active" : "")" @onclick="@(() => _viewMode = "map")">
+                            <i class="bi bi-map"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary @(_viewMode == "list" ? "active" : "")" @onclick="@(() => _viewMode = "list")">
+                            <i class="bi bi-list"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    @if (_viewMode == "map")
+                    {
+                        <div style="height: 400px;">
+                            <MpaMapComponent ShowLegend="false" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="observation-list p-3">
+                            @if (_loading)
+                            {
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                </div>
+                            }
+                            else if (_observations.Count == 0)
+                            {
+                                <p class="text-muted text-center py-4 mb-0">
+                                    No observations yet. Be the first to submit one!
+                                </p>
+                            }
+                            else
+                            {
+                                @foreach (var obs in _observations)
+                                {
+                                    <div class="observation-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <span class="badge @GetTypeBadgeClass(obs.Type) me-2">@obs.Type</span>
+                                                <strong>@obs.Title</strong>
+                                            </div>
+                                            <span class="severity-indicator severity-@obs.Severity" title="Severity @obs.Severity">
+                                                @obs.Severity
+                                            </span>
+                                        </div>
+                                        <div class="text-muted small mt-1">
+                                            <i class="bi bi-calendar me-1"></i>@obs.ObservationTime.ToString("MMM d, yyyy")
+                                            @if (obs.IsInMpa == true && !string.IsNullOrEmpty(obs.MpaName))
+                                            {
+                                                <span class="ms-2"><i class="bi bi-shield-check me-1"></i>@obs.MpaName</span>
+                                            }
+                                            @if (obs.PhotoCount > 0)
+                                            {
+                                                <span class="ms-2"><i class="bi bi-camera me-1"></i>@obs.PhotoCount</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row g-3">
+                <div class="col-4">
+                    <div class="stat-card">
+                        <div class="stat-value">@_observations.Count</div>
+                        <div class="stat-label">Total Observations</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="stat-card">
+                        <div class="stat-value">@_observations.Count(o => o.IsInMpa == true)</div>
+                        <div class="stat-label">Within MPAs</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="stat-card">
+                        <div class="stat-value">@_observations.Sum(o => o.PhotoCount)</div>
+                        <div class="stat-label">Photos Uploaded</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .observation-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .observation-item {
+        padding: 12px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .observation-item:last-child {
+        border-bottom: none;
+    }
+
+    .observation-item:hover {
+        background: #f8f9fa;
+    }
+
+    .severity-indicator {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
+    }
+
+    .severity-1 { background: #28a745; }
+    .severity-2 { background: #6c757d; }
+    .severity-3 { background: #ffc107; color: #212529; }
+    .severity-4 { background: #fd7e14; }
+    .severity-5 { background: #dc3545; }
+
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+</style>
+
+@code {
+    private string _viewMode = "map";
+    private bool _loading = true;
+    private List<ObservationSummary> _observations = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadObservations();
+    }
+
+    private async Task LoadObservations()
+    {
+        _loading = true;
+        try
+        {
+            var response = await Http.GetFromJsonAsync<List<ObservationSummary>>("/api/observations?limit=50");
+            _observations = response ?? new();
+        }
+        catch
+        {
+            _observations = new();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task HandleObservationSubmitted(Guid observationId)
+    {
+        await LoadObservations();
+    }
+
+    private string GetTypeBadgeClass(string type) => type switch
+    {
+        "CoralBleaching" => "bg-danger",
+        "ReefHealth" => "bg-warning text-dark",
+        "IllegalFishing" => "bg-danger",
+        "MarineDebris" => "bg-secondary",
+        "FishSighting" => "bg-info",
+        "WildlifeSighting" => "bg-success",
+        "BoatAnchorDamage" => "bg-warning text-dark",
+        "WaterQuality" => "bg-primary",
+        _ => "bg-secondary"
+    };
+
+    public class ObservationSummary
+    {
+        public Guid Id { get; set; }
+        public double Longitude { get; set; }
+        public double Latitude { get; set; }
+        public DateTime ObservationTime { get; set; }
+        public string Title { get; set; } = "";
+        public string Type { get; set; } = "";
+        public int Severity { get; set; }
+        public string Status { get; set; } = "";
+        public bool? IsInMpa { get; set; }
+        public string? MpaName { get; set; }
+        public string? CitizenName { get; set; }
+        public int PhotoCount { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+}

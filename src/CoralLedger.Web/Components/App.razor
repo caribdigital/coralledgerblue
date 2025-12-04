@@ -5,6 +5,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#00bcd4" />
+    <meta name="description" content="Marine Intelligence Platform for the Bahamas Blue Economy - Track MPAs, coral bleaching, and fishing activity" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CoralLedger" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json" />
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="images/icons/icon-152x152.png" />
+
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["CoralLedger.Web.styles.css"]" />
@@ -16,6 +30,21 @@
 <body>
     <Routes />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('SW registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('SW registration failed:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 
 </html>

@@ -1,4 +1,6 @@
 using CoralLedger.Application.Common.Interfaces;
+using CoralLedger.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace CoralLedger.Web.Endpoints;
 
@@ -59,29 +61,46 @@ public static class VesselEndpoints
         .Produces<IEnumerable<GfwEvent>>();
 
         // GET /api/vessels/fishing-events/bahamas?startDate=&endDate=
+        // Returns fishing events from database with MPA violation context
         group.MapGet("/fishing-events/bahamas", async (
-            IGlobalFishingWatchClient gfwClient,
+            IMarineDbContext dbContext,
             DateTime? startDate,
             DateTime? endDate,
             int limit = 500,
             CancellationToken ct = default) =>
         {
-            // Bahamas bounding box
-            const double minLon = -80.5;
-            const double maxLon = -72.5;
-            const double minLat = 20.5;
-            const double maxLat = 27.5;
-
             var start = startDate ?? DateTime.UtcNow.AddDays(-30);
             var end = endDate ?? DateTime.UtcNow;
 
-            var events = await gfwClient.GetFishingEventsAsync(
-                minLon, minLat, maxLon, maxLat, start, end, limit, ct);
+            var events = await dbContext.VesselEvents
+                .Include(e => e.Vessel)
+                .Include(e => e.MarineProtectedArea)
+                .Where(e => e.EventType == VesselEventType.Fishing)
+                .Where(e => e.StartTime >= start && e.StartTime <= end)
+                .OrderByDescending(e => e.StartTime)
+                .Take(limit)
+                .Select(e => new
+                {
+                    EventId = e.GfwEventId ?? e.Id.ToString(),
+                    VesselId = e.Vessel.GfwVesselId ?? e.VesselId.ToString(),
+                    VesselName = e.Vessel.Name,
+                    Longitude = e.Location.X,
+                    Latitude = e.Location.Y,
+                    e.StartTime,
+                    e.EndTime,
+                    e.DurationHours,
+                    e.DistanceKm,
+                    EventType = e.EventType.ToString(),
+                    e.IsInMpa,
+                    MpaName = e.MarineProtectedArea != null ? e.MarineProtectedArea.Name : null
+                })
+                .ToListAsync(ct);
+
             return Results.Ok(events);
         })
         .WithName("GetBahamasFishingEvents")
-        .WithDescription("Get fishing events in the Bahamas region from Global Fishing Watch")
-        .Produces<IEnumerable<GfwEvent>>();
+        .WithDescription("Get fishing events in the Bahamas from database with MPA context")
+        .Produces<IEnumerable<object>>();
 
         // GET /api/vessels/encounters?...
         group.MapGet("/encounters", async (

@@ -16,6 +16,8 @@ public class MarineDbContext : DbContext, IMarineDbContext
     public DbSet<VesselPosition> VesselPositions => Set<VesselPosition>();
     public DbSet<VesselEvent> VesselEvents => Set<VesselEvent>();
     public DbSet<BleachingAlert> BleachingAlerts => Set<BleachingAlert>();
+    public DbSet<CitizenObservation> CitizenObservations => Set<CitizenObservation>();
+    public DbSet<ObservationPhoto> ObservationPhotos => Set<ObservationPhoto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

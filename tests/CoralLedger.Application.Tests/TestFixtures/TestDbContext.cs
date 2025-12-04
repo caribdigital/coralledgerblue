@@ -20,6 +20,8 @@ public class TestDbContext : DbContext, IMarineDbContext
     public DbSet<VesselPosition> VesselPositions => Set<VesselPosition>();
     public DbSet<VesselEvent> VesselEvents => Set<VesselEvent>();
     public DbSet<BleachingAlert> BleachingAlerts => Set<BleachingAlert>();
+    public DbSet<CitizenObservation> CitizenObservations => Set<CitizenObservation>();
+    public DbSet<ObservationPhoto> ObservationPhotos => Set<ObservationPhoto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +61,17 @@ public class TestDbContext : DbContext, IMarineDbContext
         {
             entity.HasKey(e => e.Id);
             entity.Ignore(e => e.Location);  // Ignore geometry
+        });
+
+        modelBuilder.Entity<CitizenObservation>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Ignore(e => e.Location);  // Ignore geometry
+        });
+
+        modelBuilder.Entity<ObservationPhoto>(entity =>
+        {
+            entity.HasKey(e => e.Id);
         });
 
         base.OnModelCreating(modelBuilder);

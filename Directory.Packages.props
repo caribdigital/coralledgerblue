@@ -41,6 +41,8 @@
     <!-- Background Jobs -->
     <PackageVersion Include="Quartz" Version="3.13.1" />
     <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.13.1" />
+    <!-- Azure Storage -->
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.22.2" />
     <!-- Testing -->
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.0" />

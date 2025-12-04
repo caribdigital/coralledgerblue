@@ -1,0 +1,357 @@
+@using System.Text.Json
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<div class="observation-form">
+    <h4 class="mb-3"><i class="bi bi-binoculars me-2"></i>Report an Observation</h4>
+
+    @if (_submitted)
+    {
+        <div class="alert alert-success">
+            <h5><i class="bi bi-check-circle me-2"></i>Observation Submitted!</h5>
+            <p class="mb-2">Thank you for contributing to marine conservation in the Bahamas.</p>
+            @if (!string.IsNullOrEmpty(_mpaName))
+            {
+                <p class="mb-0"><small>Your observation is within <strong>@_mpaName</strong></small></p>
+            }
+            <button class="btn btn-outline-success btn-sm mt-3" @onclick="ResetForm">
+                Submit Another Observation
+            </button>
+        </div>
+    }
+    else
+    {
+        <EditForm Model="@_model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <!-- Location Section -->
+            <div class="form-section">
+                <h6><i class="bi bi-geo-alt me-1"></i> Location</h6>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small">Longitude</label>
+                        <InputNumber @bind-Value="_model.Longitude" class="form-control form-control-sm" step="0.0001" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">Latitude</label>
+                        <InputNumber @bind-Value="_model.Latitude" class="form-control form-control-sm" step="0.0001" />
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-outline-secondary btn-sm mt-2" @onclick="GetCurrentLocation" disabled="@_gettingLocation">
+                    @if (_gettingLocation)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-crosshair me-1"></i>
+                    }
+                    Use Current Location
+                </button>
+            </div>
+
+            <!-- Observation Details -->
+            <div class="form-section">
+                <h6><i class="bi bi-clipboard-data me-1"></i> Observation Details</h6>
+
+                <div class="mb-2">
+                    <label class="form-label small">Type of Observation *</label>
+                    <InputSelect @bind-Value="_model.Type" class="form-select form-select-sm">
+                        <option value="">-- Select Type --</option>
+                        <option value="CoralBleaching">Coral Bleaching</option>
+                        <option value="ReefHealth">Reef Health Assessment</option>
+                        <option value="FishSighting">Fish/Marine Life Sighting</option>
+                        <option value="MarineDebris">Marine Debris/Pollution</option>
+                        <option value="IllegalFishing">Suspected Illegal Fishing</option>
+                        <option value="BoatAnchorDamage">Boat/Anchor Damage</option>
+                        <option value="WildlifeSighting">Wildlife Sighting</option>
+                        <option value="WaterQuality">Water Quality Concern</option>
+                        <option value="Other">Other</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => _model.Type)" class="text-danger small" />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small">Title *</label>
+                    <InputText @bind-Value="_model.Title" class="form-control form-control-sm" placeholder="Brief description of what you observed" />
+                    <ValidationMessage For="@(() => _model.Title)" class="text-danger small" />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small">Description</label>
+                    <InputTextArea @bind-Value="_model.Description" class="form-control form-control-sm" rows="3" placeholder="Provide additional details about your observation..." />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small">Severity (1-5)</label>
+                    <div class="severity-slider">
+                        <InputNumber @bind-Value="_model.Severity" class="form-range" type="range" min="1" max="5" />
+                        <div class="severity-labels">
+                            <span class="@(_model.Severity == 1 ? "active" : "")">Low</span>
+                            <span class="@(_model.Severity == 2 ? "active" : "")">Minor</span>
+                            <span class="@(_model.Severity == 3 ? "active" : "")">Moderate</span>
+                            <span class="@(_model.Severity == 4 ? "active" : "")">High</span>
+                            <span class="@(_model.Severity == 5 ? "active" : "")">Critical</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label small">Date & Time of Observation</label>
+                    <InputDate @bind-Value="_model.ObservationDate" class="form-control form-control-sm" Type="InputDateType.DateTimeLocal" />
+                </div>
+            </div>
+
+            <!-- Photos -->
+            <div class="form-section">
+                <h6><i class="bi bi-camera me-1"></i> Photos (Optional)</h6>
+                <PhotoUploadComponent @ref="_photoUpload" @bind-Photos="_photos" MaxPhotos="5" />
+            </div>
+
+            <!-- Contact Info -->
+            <div class="form-section">
+                <h6><i class="bi bi-person me-1"></i> Your Information (Optional)</h6>
+                <p class="text-muted small mb-2">Help us follow up if needed. Your info won't be publicly displayed.</p>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small">Name</label>
+                        <InputText @bind-Value="_model.CitizenName" class="form-control form-control-sm" placeholder="Your name" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">Email</label>
+                        <InputText @bind-Value="_model.CitizenEmail" class="form-control form-control-sm" placeholder="email@example.com" type="email" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="d-grid gap-2 mt-3">
+                <button type="submit" class="btn btn-primary" disabled="@_submitting">
+                    @if (_submitting)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                        <span>Submitting...</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-send me-1"></i>
+                        <span>Submit Observation</span>
+                    }
+                </button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-danger mt-3">
+                    <small>@_error</small>
+                </div>
+            }
+        </EditForm>
+    }
+</div>
+
+<style>
+    .observation-form {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+
+    .form-section h6 {
+        color: #495057;
+        margin-bottom: 12px;
+        font-weight: 600;
+    }
+
+    .severity-slider {
+        padding: 0 4px;
+    }
+
+    .severity-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+
+    .severity-labels span.active {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+
+    .form-range {
+        width: 100%;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public EventCallback<Guid> OnSubmitted { get; set; }
+
+    private ObservationFormModel _model = new();
+    private List<PhotoUploadComponent.PhotoItem> _photos = new();
+    private PhotoUploadComponent? _photoUpload;
+    private bool _submitting = false;
+    private bool _submitted = false;
+    private bool _gettingLocation = false;
+    private string? _error;
+    private string? _mpaName;
+
+    protected override void OnInitialized()
+    {
+        _model.ObservationDate = DateTime.Now;
+        // Default to central Bahamas
+        _model.Longitude = -77.5;
+        _model.Latitude = 24.5;
+    }
+
+    private async Task GetCurrentLocation()
+    {
+        _gettingLocation = true;
+        StateHasChanged();
+
+        try
+        {
+            var position = await JS.InvokeAsync<GeolocationPosition>("getCurrentPosition");
+            if (position != null)
+            {
+                _model.Longitude = position.Longitude;
+                _model.Latitude = position.Latitude;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = "Unable to get current location. Please enter coordinates manually.";
+        }
+        finally
+        {
+            _gettingLocation = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        _error = null;
+        _submitting = true;
+        StateHasChanged();
+
+        try
+        {
+            // Validate required fields
+            if (string.IsNullOrEmpty(_model.Type))
+            {
+                _error = "Please select an observation type";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_model.Title))
+            {
+                _error = "Please enter a title for your observation";
+                return;
+            }
+
+            var request = new
+            {
+                longitude = _model.Longitude,
+                latitude = _model.Latitude,
+                observationTime = _model.ObservationDate.ToUniversalTime(),
+                title = _model.Title,
+                type = _model.Type,
+                description = _model.Description,
+                severity = _model.Severity,
+                citizenEmail = _model.CitizenEmail,
+                citizenName = _model.CitizenName
+            };
+
+            var response = await Http.PostAsJsonAsync("/api/observations", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<CreateObservationResponse>();
+
+                if (result?.ObservationId != null)
+                {
+                    _mpaName = result.MpaName;
+
+                    // Upload photos if any
+                    if (_photos.Count > 0 && _photoUpload != null)
+                    {
+                        await _photoUpload.UploadPhotosAsync(result.ObservationId.Value);
+                    }
+
+                    _submitted = true;
+                    await OnSubmitted.InvokeAsync(result.ObservationId.Value);
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _error = $"Failed to submit observation: {errorContent}";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            _submitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ResetForm()
+    {
+        _model = new ObservationFormModel
+        {
+            ObservationDate = DateTime.Now,
+            Longitude = -77.5,
+            Latitude = 24.5,
+            Severity = 3
+        };
+        _photos.Clear();
+        _submitted = false;
+        _mpaName = null;
+        _error = null;
+    }
+
+    public class ObservationFormModel
+    {
+        public double Longitude { get; set; } = -77.5;
+        public double Latitude { get; set; } = 24.5;
+        public DateTime ObservationDate { get; set; } = DateTime.Now;
+        public string Title { get; set; } = "";
+        public string Type { get; set; } = "";
+        public string? Description { get; set; }
+        public int Severity { get; set; } = 3;
+        public string? CitizenEmail { get; set; }
+        public string? CitizenName { get; set; }
+    }
+
+    public class GeolocationPosition
+    {
+        public double Longitude { get; set; }
+        public double Latitude { get; set; }
+    }
+
+    public class CreateObservationResponse
+    {
+        public bool Success { get; set; }
+        public Guid? ObservationId { get; set; }
+        public string? MpaName { get; set; }
+        public string? Error { get; set; }
+    }
+}

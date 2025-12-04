@@ -56,6 +56,10 @@
                     <span class="legend-dot" style="background-color: #6c757d;"></span>
                     <span>Older</span>
                 </div>
+                <div class="legend-item">
+                    <span class="legend-dot legend-mpa-violation" style="background-color: #dc3545; border: 3px solid #ff0000;"></span>
+                    <span>Inside MPA</span>
+                </div>
             }
         </div>
     }
@@ -71,14 +75,22 @@
 
     @if (_selectedFishingEvent is not null)
     {
-        <div class="map-info-popup fishing-event-popup">
+        <div class="map-info-popup fishing-event-popup @(_selectedFishingEvent.IsInMpa == true ? "mpa-violation" : "")">
             <strong><i class="bi bi-water"></i> Fishing Event</strong>
+            @if (_selectedFishingEvent.IsInMpa == true)
+            {
+                <span class="badge bg-danger ms-2">MPA Violation</span>
+            }
             <hr class="my-1" />
-            <small class="d-block"><strong>Vessel:</strong> @_selectedFishingEvent.VesselId</small>
+            <small class="d-block"><strong>Vessel:</strong> @(_selectedFishingEvent.VesselName ?? _selectedFishingEvent.VesselId)</small>
             <small class="d-block"><strong>Date:</strong> @_selectedFishingEvent.StartTime.ToString("MMM d, yyyy")</small>
             @if (_selectedFishingEvent.DurationHours.HasValue)
             {
                 <small class="d-block"><strong>Duration:</strong> @_selectedFishingEvent.DurationHours.Value.ToString("F1") hours</small>
+            }
+            @if (_selectedFishingEvent.IsInMpa == true && !string.IsNullOrEmpty(_selectedFishingEvent.MpaName))
+            {
+                <small class="d-block text-danger"><strong>Inside:</strong> @_selectedFishingEvent.MpaName</small>
             }
         </div>
     }
@@ -148,6 +160,11 @@
     .fishing-event-popup {
         background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
         border-left: 4px solid #0d6efd;
+    }
+
+    .fishing-event-popup.mpa-violation {
+        background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
+        border-left: 4px solid #dc3545;
     }
 
     .map-info-popup {
@@ -573,22 +590,29 @@
     private IStyle CreateFishingEventStyle(FishingEventDto evt)
     {
         var daysAgo = (DateTime.UtcNow - evt.StartTime).TotalDays;
-        Color color;
+        Color fillColor;
 
         if (daysAgo < 7)
-            color = Color.FromArgb(220, 220, 53, 69);    // Red - recent
+            fillColor = Color.FromArgb(220, 220, 53, 69);    // Red - recent
         else if (daysAgo < 14)
-            color = Color.FromArgb(220, 253, 126, 20);  // Orange
+            fillColor = Color.FromArgb(220, 253, 126, 20);  // Orange
         else if (daysAgo < 30)
-            color = Color.FromArgb(220, 255, 193, 7);   // Yellow
+            fillColor = Color.FromArgb(220, 255, 193, 7);   // Yellow
         else
-            color = Color.FromArgb(150, 108, 117, 125); // Gray - older
+            fillColor = Color.FromArgb(150, 108, 117, 125); // Gray - older
+
+        // MPA violation: distinct red outline and larger size
+        var outlineColor = evt.IsInMpa == true
+            ? Color.FromArgb(255, 255, 0, 0)   // Bright red outline for MPA violations
+            : Color.White;
+        var outlineWidth = evt.IsInMpa == true ? 3 : 1;
+        var symbolScale = evt.IsInMpa == true ? 0.6 : 0.4;  // Larger for MPA violations
 
         return new SymbolStyle
         {
-            Fill = new Brush(color),
-            Outline = new Pen(Color.White, 1),
-            SymbolScale = 0.4,
+            Fill = new Brush(fillColor),
+            Outline = new Pen(outlineColor, outlineWidth),
+            SymbolScale = symbolScale,
             SymbolType = SymbolType.Ellipse
         };
     }
@@ -626,11 +650,15 @@
     {
         public string EventId { get; set; } = "";
         public string VesselId { get; set; } = "";
+        public string? VesselName { get; set; }
         public double Longitude { get; set; }
         public double Latitude { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
         public double? DurationHours { get; set; }
+        public double? DistanceKm { get; set; }
         public string? EventType { get; set; }
+        public bool? IsInMpa { get; set; }
+        public string? MpaName { get; set; }
     }
 }

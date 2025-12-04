@@ -1,0 +1,330 @@
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
+
+<div class="photo-upload-container">
+    <div class="upload-area @(_isDragOver ? "drag-over" : "")"
+         @ondragenter="HandleDragEnter"
+         @ondragleave="HandleDragLeave"
+         @ondragover:preventDefault
+         @ondrop="HandleDrop"
+         @ondrop:preventDefault>
+
+        @if (_uploading)
+        {
+            <div class="upload-progress">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Uploading...</span>
+                </div>
+                <p class="mt-2 mb-0">Uploading photo...</p>
+            </div>
+        }
+        else if (Photos.Count == 0)
+        {
+            <div class="upload-prompt">
+                <i class="bi bi-camera fs-1 text-muted"></i>
+                <p class="mt-2 mb-1">Drag & drop photos here</p>
+                <p class="text-muted small mb-2">or</p>
+                <label class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-upload me-1"></i> Choose Files
+                    <InputFile OnChange="HandleFileSelection" accept="image/*" multiple class="d-none" />
+                </label>
+                <p class="text-muted small mt-2 mb-0">JPEG, PNG, WebP up to 10MB each</p>
+            </div>
+        }
+        else
+        {
+            <div class="photo-grid">
+                @foreach (var photo in Photos)
+                {
+                    <div class="photo-item">
+                        <img src="@photo.PreviewUrl" alt="@photo.FileName" />
+                        <button type="button" class="btn-remove" @onclick="() => RemovePhoto(photo)">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                        @if (photo.Uploaded)
+                        {
+                            <span class="upload-badge success"><i class="bi bi-check"></i></span>
+                        }
+                        else if (photo.Error != null)
+                        {
+                            <span class="upload-badge error" title="@photo.Error"><i class="bi bi-exclamation"></i></span>
+                        }
+                    </div>
+                }
+                <div class="photo-add">
+                    <label>
+                        <i class="bi bi-plus-lg"></i>
+                        <InputFile OnChange="HandleFileSelection" accept="image/*" multiple class="d-none" />
+                    </label>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="alert alert-danger mt-2 mb-0 py-2">
+            <small>@_error</small>
+        </div>
+    }
+</div>
+
+<style>
+    .photo-upload-container {
+        width: 100%;
+    }
+
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 24px;
+        text-align: center;
+        transition: all 0.2s ease;
+        background: #f8f9fa;
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .upload-area.drag-over {
+        border-color: #0d6efd;
+        background: #e7f1ff;
+    }
+
+    .upload-prompt {
+        color: #6c757d;
+    }
+
+    .upload-progress {
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+        width: 100%;
+    }
+
+    .photo-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .photo-item .btn-remove {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        padding: 0;
+        line-height: 1;
+    }
+
+    .photo-item .btn-remove:hover {
+        color: #dc3545;
+    }
+
+    .upload-badge {
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: white;
+    }
+
+    .upload-badge.success {
+        background: #198754;
+    }
+
+    .upload-badge.error {
+        background: #dc3545;
+    }
+
+    .photo-add {
+        aspect-ratio: 1;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: #6c757d;
+        font-size: 24px;
+        transition: all 0.2s ease;
+    }
+
+    .photo-add:hover {
+        border-color: #0d6efd;
+        color: #0d6efd;
+    }
+
+    .photo-add label {
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public Guid? ObservationId { get; set; }
+
+    [Parameter]
+    public List<PhotoItem> Photos { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<PhotoItem>> PhotosChanged { get; set; }
+
+    [Parameter]
+    public int MaxPhotos { get; set; } = 5;
+
+    private bool _isDragOver = false;
+    private bool _uploading = false;
+    private string? _error;
+
+    private void HandleDragEnter() => _isDragOver = true;
+    private void HandleDragLeave() => _isDragOver = false;
+
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        _isDragOver = false;
+        // Note: File data from drop isn't available in Blazor WebAssembly
+        // Users need to use the file input
+    }
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        _error = null;
+
+        var remainingSlots = MaxPhotos - Photos.Count;
+        if (remainingSlots <= 0)
+        {
+            _error = $"Maximum {MaxPhotos} photos allowed";
+            return;
+        }
+
+        var filesToProcess = e.GetMultipleFiles(remainingSlots);
+
+        foreach (var file in filesToProcess)
+        {
+            if (file.Size > 10 * 1024 * 1024)
+            {
+                _error = $"{file.Name} exceeds 10MB limit";
+                continue;
+            }
+
+            var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/heic" };
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+            {
+                _error = $"{file.Name} is not a supported image type";
+                continue;
+            }
+
+            // Create preview
+            var photo = new PhotoItem
+            {
+                FileName = file.Name,
+                ContentType = file.ContentType,
+                Size = file.Size,
+                File = file
+            };
+
+            // Generate preview URL
+            try
+            {
+                var buffer = new byte[file.Size];
+                await file.OpenReadStream(10 * 1024 * 1024).ReadAsync(buffer);
+                var base64 = Convert.ToBase64String(buffer);
+                photo.PreviewUrl = $"data:{file.ContentType};base64,{base64}";
+                photo.FileData = buffer;
+            }
+            catch (Exception ex)
+            {
+                photo.Error = ex.Message;
+            }
+
+            Photos.Add(photo);
+        }
+
+        await PhotosChanged.InvokeAsync(Photos);
+        StateHasChanged();
+    }
+
+    private async Task RemovePhoto(PhotoItem photo)
+    {
+        Photos.Remove(photo);
+        await PhotosChanged.InvokeAsync(Photos);
+    }
+
+    public async Task UploadPhotosAsync(Guid observationId)
+    {
+        _uploading = true;
+        StateHasChanged();
+
+        foreach (var photo in Photos.Where(p => !p.Uploaded && p.FileData != null))
+        {
+            try
+            {
+                using var content = new MultipartFormDataContent();
+                using var fileContent = new ByteArrayContent(photo.FileData!);
+                fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(photo.ContentType);
+                content.Add(fileContent, "file", photo.FileName);
+
+                var response = await Http.PostAsync($"/api/observations/{observationId}/photos", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    photo.Uploaded = true;
+                }
+                else
+                {
+                    var error = await response.Content.ReadAsStringAsync();
+                    photo.Error = error;
+                }
+            }
+            catch (Exception ex)
+            {
+                photo.Error = ex.Message;
+            }
+        }
+
+        _uploading = false;
+        StateHasChanged();
+    }
+
+    public class PhotoItem
+    {
+        public string FileName { get; set; } = "";
+        public string ContentType { get; set; } = "";
+        public long Size { get; set; }
+        public string PreviewUrl { get; set; } = "";
+        public bool Uploaded { get; set; }
+        public string? Error { get; set; }
+        public IBrowserFile? File { get; set; }
+        public byte[]? FileData { get; set; }
+    }
+}
