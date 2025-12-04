@@ -1,6 +1,7 @@
 @using System.Text.Json
 @inject IJSRuntime JS
-@inject HttpClient Http
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
 @implements IAsyncDisposable
 
 <div class="leaflet-map-container" style="height: calc(100vh - 200px); min-height: 500px; width: 100%; position: relative;">
@@ -20,7 +21,24 @@
         </div>
     }
 
+    @if (_mpaLoadError)
+    {
+        <div class="alert alert-warning m-3" role="alert">
+            <i class="bi bi-exclamation-triangle"></i> @_mpaLoadErrorMessage
+            <button class="btn btn-sm btn-outline-warning ms-2" @onclick="RetryLoadMpaDataAsync">
+                <i class="bi bi-arrow-clockwise"></i> Retry
+            </button>
+        </div>
+    }
+
     <div id="@_mapId" style="height: 100%; width: 100%;"></div>
+
+    @if (_mpaCount > 0 && !_loading)
+    {
+        <div class="mpa-count-badge">
+            <i class="bi bi-geo-alt-fill"></i> @_mpaCount MPAs loaded
+        </div>
+    }
 
     @if (ShowLegend)
     {
@@ -131,6 +149,24 @@
         border: 2px solid white;
         box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
+
+    .mpa-count-badge {
+        position: absolute;
+        top: 10px;
+        left: 50px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #198754;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        z-index: 999;
+    }
+
+    .mpa-count-badge i {
+        margin-right: 4px;
+    }
 </style>
 
 @code {
@@ -210,22 +246,69 @@
         }
     }
 
+    private bool _mpaLoadError = false;
+    private string? _mpaLoadErrorMessage;
+    private int _mpaCount = 0;
+
     private async Task LoadMpaDataAsync()
     {
         try
         {
-            var response = await Http.GetAsync("/api/mpas/geojson");
+            Console.WriteLine("[LeafletMap] Loading MPA data from /api/mpas/geojson...");
+            var httpClient = HttpClientFactory.CreateClient();
+            httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+            var response = await httpClient.GetAsync("/api/mpas/geojson");
+
             if (response.IsSuccessStatusCode)
             {
                 var geojson = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"[LeafletMap] GeoJSON response length: {geojson.Length} chars");
+
                 var geojsonObj = JsonSerializer.Deserialize<JsonElement>(geojson);
-                await JS.InvokeVoidAsync("leafletMap.addMpaLayer", _mapId, geojsonObj, _dotNetRef);
+
+                // Log the structure for debugging
+                if (geojsonObj.TryGetProperty("type", out var typeElement))
+                {
+                    Console.WriteLine($"[LeafletMap] GeoJSON type: {typeElement.GetString()}");
+                }
+                if (geojsonObj.TryGetProperty("features", out var featuresElement))
+                {
+                    _mpaCount = featuresElement.GetArrayLength();
+                    Console.WriteLine($"[LeafletMap] GeoJSON features count: {_mpaCount}");
+                }
+
+                var success = await JS.InvokeAsync<bool>("leafletMap.addMpaLayer", _mapId, geojsonObj, _dotNetRef);
+                Console.WriteLine($"[LeafletMap] addMpaLayer returned: {success}");
+
+                if (!success)
+                {
+                    _mpaLoadError = true;
+                    _mpaLoadErrorMessage = "Failed to add MPA layer to map";
+                }
+            }
+            else
+            {
+                _mpaLoadError = true;
+                _mpaLoadErrorMessage = $"API returned {(int)response.StatusCode}: {response.ReasonPhrase}";
+                Console.WriteLine($"[LeafletMap] API error: {_mpaLoadErrorMessage}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading MPA data: {ex.Message}");
+            _mpaLoadError = true;
+            _mpaLoadErrorMessage = $"Error loading MPA data: {ex.Message}";
+            Console.WriteLine($"[LeafletMap] Exception: {ex}");
         }
+    }
+
+    private async Task RetryLoadMpaDataAsync()
+    {
+        _mpaLoadError = false;
+        _mpaLoadErrorMessage = null;
+        _mpaCount = 0;
+        StateHasChanged();
+        await LoadMpaDataAsync();
+        StateHasChanged();
     }
 
     private async Task LoadFishingEventsAsync()
@@ -235,7 +318,9 @@
             var start = FishingEventsStartDate ?? DateTime.UtcNow.AddDays(-30);
             var end = FishingEventsEndDate ?? DateTime.UtcNow;
 
-            var response = await Http.GetAsync($"/api/vessels/fishing-events/bahamas?startDate={start:O}&endDate={end:O}");
+            var httpClient = HttpClientFactory.CreateClient();
+            httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+            var response = await httpClient.GetAsync($"/api/vessels/fishing-events/bahamas?startDate={start:O}&endDate={end:O}");
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();

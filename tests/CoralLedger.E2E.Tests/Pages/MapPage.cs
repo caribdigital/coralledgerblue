@@ -1,7 +1,7 @@
 namespace CoralLedger.E2E.Tests.Pages;
 
 /// <summary>
-/// Page object for the Map page with Mapsui map component
+/// Page object for the Map page with Leaflet map component
 /// </summary>
 public class MapPage : BasePage
 {
@@ -14,8 +14,8 @@ public class MapPage : BasePage
     protected override async Task WaitForPageLoadAsync()
     {
         await base.WaitForPageLoadAsync();
-        // Wait for Mapsui map container to render
-        await Page.WaitForSelectorAsync(".mpa-map-container, [class*='map']",
+        // Wait for Leaflet map container to render
+        await Page.WaitForSelectorAsync(".leaflet-map-container, .leaflet-container, [class*='map']",
             new PageWaitForSelectorOptions { Timeout = 15000 });
         // Wait for loading overlay to disappear
         await Page.WaitForFunctionAsync(@"() => {
@@ -26,15 +26,16 @@ public class MapPage : BasePage
 
     public async Task<bool> IsMapContainerVisibleAsync()
     {
-        var mapContainer = Page.Locator(".mpa-map-container");
+        // Check for Leaflet container class
+        var mapContainer = Page.Locator(".leaflet-map-container, .leaflet-container").First;
         return await mapContainer.IsVisibleAsync();
     }
 
-    public async Task<bool> IsMapCanvasVisibleAsync()
+    public async Task<bool> IsLeafletMapRenderedAsync()
     {
-        // Mapsui uses a canvas element for rendering
-        var canvas = Page.Locator(".mpa-map-container canvas, canvas");
-        return await canvas.IsVisibleAsync();
+        // Leaflet uses SVG elements for vector layers (polygons, etc.)
+        var leafletPane = Page.Locator(".leaflet-pane, .leaflet-tile-container").First;
+        return await leafletPane.IsVisibleAsync();
     }
 
     public async Task<bool> HasLegendAsync()
@@ -66,7 +67,7 @@ public class MapPage : BasePage
 
     public async Task ClickOnMapCenterAsync()
     {
-        var mapContainer = Page.Locator(".mpa-map-container");
+        var mapContainer = Page.Locator(".leaflet-map-container, .leaflet-container").First;
         await mapContainer.ClickAsync();
     }
 
@@ -82,7 +83,45 @@ public class MapPage : BasePage
 
     public async Task<ILocator> GetMapContainerAsync()
     {
-        return Page.Locator(".mpa-map-container");
+        return Page.Locator(".leaflet-map-container, .leaflet-container").First;
+    }
+
+    /// <summary>
+    /// Check if MPA boundaries (SVG polygons) are visible on the map
+    /// </summary>
+    public async Task<bool> HasMpaBoundariesAsync()
+    {
+        // Leaflet renders GeoJSON features as SVG paths in the overlay-pane
+        var svgPaths = Page.Locator(".leaflet-overlay-pane svg path");
+        var count = await svgPaths.CountAsync();
+        return count > 0;
+    }
+
+    /// <summary>
+    /// Get the count of MPA boundary polygons on the map
+    /// </summary>
+    public async Task<int> GetMpaPolygonCountAsync()
+    {
+        var svgPaths = Page.Locator(".leaflet-overlay-pane svg path");
+        return await svgPaths.CountAsync();
+    }
+
+    /// <summary>
+    /// Check if the MPA count badge is visible
+    /// </summary>
+    public async Task<bool> HasMpaCountBadgeAsync()
+    {
+        var badge = Page.Locator(".mpa-count-badge");
+        return await badge.IsVisibleAsync();
+    }
+
+    /// <summary>
+    /// Get the MPA count from the badge
+    /// </summary>
+    public async Task<string> GetMpaCountTextAsync()
+    {
+        var badge = Page.Locator(".mpa-count-badge");
+        return await badge.TextContentAsync() ?? "";
     }
 
     public async Task<bool> CanZoomAsync()

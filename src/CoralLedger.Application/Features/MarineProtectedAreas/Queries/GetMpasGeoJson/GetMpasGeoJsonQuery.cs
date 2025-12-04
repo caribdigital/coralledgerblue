@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 namespace CoralLedger.Application.Features.MarineProtectedAreas.Queries.GetMpasGeoJson;
 
@@ -14,28 +15,60 @@ namespace CoralLedger.Application.Features.MarineProtectedAreas.Queries.GetMpasG
 /// <param name="Resolution">Geometry resolution level (default: Medium for map performance)</param>
 public record GetMpasGeoJsonQuery(GeometryResolution Resolution = GeometryResolution.Medium) : IRequest<MpaGeoJsonCollection>;
 
+/// <summary>
+/// GeoJSON FeatureCollection - property names must be lowercase per GeoJSON spec
+/// </summary>
 public class MpaGeoJsonCollection
 {
+    [JsonPropertyName("type")]
     public string Type { get; init; } = "FeatureCollection";
+
+    [JsonPropertyName("features")]
     public List<MpaGeoJsonFeature> Features { get; init; } = new();
 }
 
+/// <summary>
+/// GeoJSON Feature - property names must be lowercase per GeoJSON spec
+/// </summary>
 public class MpaGeoJsonFeature
 {
+    [JsonPropertyName("type")]
     public string Type { get; init; } = "Feature";
+
+    [JsonPropertyName("id")]
     public string Id { get; init; } = "";
+
+    [JsonPropertyName("geometry")]
     public JsonNode? Geometry { get; init; }
+
+    [JsonPropertyName("properties")]
     public MpaGeoJsonProperties Properties { get; init; } = new();
 }
 
+/// <summary>
+/// GeoJSON Feature properties - use PascalCase for app-specific properties
+/// </summary>
 public class MpaGeoJsonProperties
 {
+    [JsonPropertyName("Name")]
     public string Name { get; init; } = "";
+
+    [JsonPropertyName("ProtectionLevel")]
     public string ProtectionLevel { get; init; } = "";
+
+    [JsonPropertyName("IslandGroup")]
     public string IslandGroup { get; init; } = "";
+
+    [JsonPropertyName("AreaSquareKm")]
     public double AreaSquareKm { get; init; }
+
+    [JsonPropertyName("Status")]
     public string Status { get; init; } = "";
+
+    [JsonPropertyName("CentroidLongitude")]
     public double CentroidLongitude { get; init; }
+
+    [JsonPropertyName("CentroidLatitude")]
     public double CentroidLatitude { get; init; }
 }
 

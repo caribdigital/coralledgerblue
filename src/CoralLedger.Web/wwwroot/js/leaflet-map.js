@@ -34,12 +34,45 @@ window.leafletMap = {
 
     // Add GeoJSON MPA layer
     addMpaLayer: function (mapId, geojsonData, dotNetHelper) {
+        console.log('[leaflet-map.js] addMpaLayer called with mapId:', mapId);
+        console.log('[leaflet-map.js] geojsonData type:', typeof geojsonData);
+        console.log('[leaflet-map.js] geojsonData:', JSON.stringify(geojsonData).substring(0, 500) + '...');
+
         const map = this.maps[mapId];
-        if (!map) return false;
+        if (!map) {
+            console.error('[leaflet-map.js] Map not found for mapId:', mapId);
+            console.error('[leaflet-map.js] Available mapIds:', Object.keys(this.maps));
+            return false;
+        }
+        console.log('[leaflet-map.js] Map found, container:', map.getContainer()?.id);
 
         // Remove existing MPA layer
         if (this.mpaLayers[mapId]) {
+            console.log('[leaflet-map.js] Removing existing MPA layer');
             map.removeLayer(this.mpaLayers[mapId]);
+        }
+
+        // Validate GeoJSON structure
+        if (!geojsonData || !geojsonData.type) {
+            console.error('[leaflet-map.js] Invalid GeoJSON: missing type');
+            return false;
+        }
+        if (geojsonData.type !== 'FeatureCollection') {
+            console.error('[leaflet-map.js] Invalid GeoJSON: type is not FeatureCollection, got:', geojsonData.type);
+            return false;
+        }
+        if (!geojsonData.features || !Array.isArray(geojsonData.features)) {
+            console.error('[leaflet-map.js] Invalid GeoJSON: missing features array');
+            return false;
+        }
+        console.log('[leaflet-map.js] GeoJSON has', geojsonData.features.length, 'features');
+
+        // Log first feature for debugging
+        if (geojsonData.features.length > 0) {
+            const firstFeature = geojsonData.features[0];
+            console.log('[leaflet-map.js] First feature id:', firstFeature.id);
+            console.log('[leaflet-map.js] First feature properties:', JSON.stringify(firstFeature.properties));
+            console.log('[leaflet-map.js] First feature geometry type:', firstFeature.geometry?.type);
         }
 
         const getColor = (protectionLevel) => {
@@ -65,6 +98,7 @@ window.leafletMap = {
             fillOpacity: 0.6
         };
 
+        try {
         const layer = L.geoJSON(geojsonData, {
             style: style,
             onEachFeature: (feature, layer) => {
@@ -102,9 +136,23 @@ window.leafletMap = {
         // Fit map to show all MPAs
         if (layer.getBounds().isValid()) {
             map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+            console.log('[leaflet-map.js] Map fitted to MPA bounds');
+        } else {
+            console.warn('[leaflet-map.js] Layer bounds are not valid');
         }
 
+        console.log('[leaflet-map.js] MPA layer added successfully');
         return true;
+        } catch (error) {
+            console.error('[leaflet-map.js] Error adding MPA layer:', error);
+            console.error('[leaflet-map.js] Error message:', error.message);
+            console.error('[leaflet-map.js] Error stack:', error.stack);
+            // Try to log what feature caused the issue
+            if (geojsonData.features && geojsonData.features.length > 0) {
+                console.error('[leaflet-map.js] First feature geometry:', JSON.stringify(geojsonData.features[0].geometry));
+            }
+            return false;
+        }
     },
 
     // Add fishing events layer

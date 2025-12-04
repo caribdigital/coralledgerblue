@@ -22,6 +22,9 @@ builder.Services.AddRazorComponents()
 // Add Application layer (MediatR, FluentValidation)
 builder.Services.AddApplication();
 
+// Add HttpClient factory for Blazor components
+builder.Services.AddHttpClient();
+
 // Add Infrastructure layer services (including external API clients)
 builder.Services.AddInfrastructure(builder.Configuration);
 
