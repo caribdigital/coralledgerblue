@@ -1,3 +1,5 @@
+using CoralLedger.Domain.Enums;
+
 namespace CoralLedger.Application.Common.Interfaces;
 
 /// <summary>
@@ -18,6 +20,14 @@ public interface IMarineAIService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Process a natural language query with persona-aware formatting
+    /// </summary>
+    Task<MarineQueryResult> QueryAsync(
+        string naturalLanguageQuery,
+        UserPersona persona,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Get suggested queries based on context
     /// </summary>
     Task<IReadOnlyList<string>> GetSuggestedQueriesAsync(
@@ -28,6 +38,7 @@ public record MarineQueryResult(
     bool Success,
     string? Answer = null,
     MarineQueryData? Data = null,
+    UserPersona Persona = UserPersona.General,
     string? SqlGenerated = null,
     string? Error = null);
 

@@ -1,4 +1,5 @@
 using CoralLedger.Application.Common.Interfaces;
+using CoralLedger.Domain.Enums;
 
 namespace CoralLedger.Web.Endpoints;
 
@@ -24,7 +25,7 @@ public static class AIEndpoints
         .WithDescription("Check if AI service is configured and available")
         .Produces<object>();
 
-        // POST /api/ai/query - Submit natural language query
+        // POST /api/ai/query - Submit natural language query with optional persona
         group.MapPost("/query", async (
             AIQueryRequest request,
             IMarineAIService aiService,
@@ -40,7 +41,8 @@ public static class AIEndpoints
                 return Results.BadRequest(new { error = "Query must be 500 characters or less" });
             }
 
-            var result = await aiService.QueryAsync(request.Query, ct);
+            var persona = request.Persona ?? UserPersona.General;
+            var result = await aiService.QueryAsync(request.Query, persona, ct);
 
             if (!result.Success)
             {
@@ -50,14 +52,30 @@ public static class AIEndpoints
             return Results.Ok(new
             {
                 query = request.Query,
+                persona = result.Persona.ToString(),
                 answer = result.Answer,
                 data = result.Data
             });
         })
         .WithName("QueryAI")
-        .WithDescription("Submit a natural language query about marine data")
+        .WithDescription("Submit a natural language query about marine data with optional persona (General, Ranger, Fisherman, Scientist, Policymaker)")
         .Produces<object>()
         .Produces(StatusCodes.Status400BadRequest);
+
+        // GET /api/ai/personas - Get available personas
+        group.MapGet("/personas", () =>
+        {
+            var personas = Enum.GetValues<UserPersona>()
+                .Select(p => new
+                {
+                    value = p.ToString(),
+                    description = GetPersonaDescription(p)
+                });
+            return Results.Ok(personas);
+        })
+        .WithName("GetAIPersonas")
+        .WithDescription("Get available user personas for response formatting")
+        .Produces<object>();
 
         // GET /api/ai/suggestions - Get suggested queries
         group.MapGet("/suggestions", async (
@@ -73,6 +91,16 @@ public static class AIEndpoints
 
         return endpoints;
     }
+
+    private static string GetPersonaDescription(UserPersona persona) => persona switch
+    {
+        UserPersona.General => "Default balanced response for general users",
+        UserPersona.Ranger => "Park ranger - Focus on enforcement, patrol routes, violations",
+        UserPersona.Fisherman => "Commercial fisherman - Focus on sustainability, quotas, plain language",
+        UserPersona.Scientist => "Researcher - Include data sources, methodology, statistics",
+        UserPersona.Policymaker => "Government official - Executive summary, policy implications",
+        _ => persona.ToString()
+    };
 }
 
-public record AIQueryRequest(string Query);
+public record AIQueryRequest(string Query, UserPersona? Persona = null);

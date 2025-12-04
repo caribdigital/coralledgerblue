@@ -16,6 +16,8 @@ public interface IMarineDbContext
     DbSet<ObservationPhoto> ObservationPhotos { get; }
     DbSet<AlertRule> AlertRules { get; }
     DbSet<Alert> Alerts { get; }
+    DbSet<BahamianSpecies> BahamianSpecies { get; }
+    DbSet<SpeciesObservation> SpeciesObservations { get; }
 
     /// <summary>
     /// Provides access to database related operations like raw SQL execution

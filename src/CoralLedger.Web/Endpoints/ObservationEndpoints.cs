@@ -156,6 +156,88 @@ public static class ObservationEndpoints
         .Produces(StatusCodes.Status404NotFound)
         .DisableAntiforgery();
 
+        // POST /api/observations/{id}/classify-species - AI species classification
+        group.MapPost("/{id:guid}/classify-species", async (
+            Guid id,
+            IMarineDbContext dbContext,
+            ISpeciesClassificationService classificationService,
+            CancellationToken ct = default) =>
+        {
+            // Verify observation exists and has photos
+            var observation = await dbContext.CitizenObservations
+                .Include(o => o.Photos)
+                .FirstOrDefaultAsync(o => o.Id == id, ct);
+
+            if (observation is null)
+            {
+                return Results.NotFound(new { error = "Observation not found" });
+            }
+
+            if (!observation.Photos.Any())
+            {
+                return Results.BadRequest(new { error = "Observation has no photos to classify" });
+            }
+
+            if (!classificationService.IsConfigured)
+            {
+                return Results.Problem("AI classification service is not configured", statusCode: 503);
+            }
+
+            // Classify each photo and aggregate results
+            var allSpecies = new List<IdentifiedSpecies>();
+            var errors = new List<string>();
+
+            foreach (var photo in observation.Photos.OrderBy(p => p.DisplayOrder))
+            {
+                var result = await classificationService.ClassifyPhotoAsync(photo.BlobUri, ct);
+                if (result.Success)
+                {
+                    allSpecies.AddRange(result.Species);
+                }
+                else if (result.Error != null)
+                {
+                    errors.Add($"Photo {photo.Id}: {result.Error}");
+                }
+            }
+
+            // Deduplicate species by scientific name, keeping highest confidence
+            var uniqueSpecies = allSpecies
+                .GroupBy(s => s.ScientificName.ToLower())
+                .Select(g => g.OrderByDescending(s => s.ConfidenceScore).First())
+                .ToList();
+
+            // Check for priority flags
+            var hasInvasive = uniqueSpecies.Any(s => s.IsInvasive);
+            var hasConservationConcern = uniqueSpecies.Any(s => s.IsConservationConcern);
+            var requiresExpertReview = uniqueSpecies.Any(s => s.RequiresExpertVerification);
+
+            return Results.Ok(new
+            {
+                observationId = id,
+                species = uniqueSpecies,
+                summary = new
+                {
+                    totalSpeciesIdentified = uniqueSpecies.Count,
+                    hasInvasiveSpecies = hasInvasive,
+                    hasConservationConcern,
+                    requiresExpertReview,
+                    photosAnalyzed = observation.Photos.Count,
+                    errors = errors.Count > 0 ? errors : null
+                },
+                alerts = new
+                {
+                    invasive = hasInvasive ? "ALERT: Invasive species detected - consider removal" : null,
+                    conservation = hasConservationConcern ? "NOTE: Conservation-concern species detected" : null
+                }
+            });
+        })
+        .WithName("ClassifyObservationSpecies")
+        .WithDescription("Use AI to identify marine species in observation photos")
+        .Produces<object>()
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status503ServiceUnavailable);
+
         // GET /api/observations/geojson - Get observations as GeoJSON
         group.MapGet("/geojson", async (
             IMarineDbContext dbContext,

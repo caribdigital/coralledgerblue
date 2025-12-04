@@ -89,6 +89,9 @@ if (!app.Environment.IsEnvironment("Testing"))
 
     // Seed the database with Bahamas MPA data
     await BahamasMpaSeeder.SeedAsync(context);
+
+    // Seed the database with Bahamian species
+    await BahamianSpeciesSeeder.SeedAsync(context);
 }
 
 if (!app.Environment.IsDevelopment())
@@ -137,6 +140,7 @@ app.MapAlertEndpoints();
 app.MapAisEndpoints();
 app.MapExportEndpoints();
 app.MapAdminEndpoints();
+app.MapSpeciesEndpoints();
 
 // Map SignalR hub
 app.MapHub<AlertHub>("/hubs/alerts");

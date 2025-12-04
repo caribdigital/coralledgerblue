@@ -54,6 +54,7 @@ public static class DependencyInjection
         services.Configure<MarineAIOptions>(
             configuration.GetSection(MarineAIOptions.SectionName));
         services.AddScoped<IMarineAIService, MarineAIService>();
+        services.AddScoped<ISpeciesClassificationService, SpeciesClassificationService>();
 
         // Register Alert services
         services.AddScoped<IAlertRuleEngine, AlertRuleEngine>();
