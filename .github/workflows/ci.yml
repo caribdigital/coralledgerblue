@@ -49,13 +49,19 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      - name: Run Unit Tests
-        run: dotnet test tests/CoralLedger.Application.Tests --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=unit-tests.trx" --collect:"XPlat Code Coverage"
+      - name: Run Domain Tests
+        run: dotnet test tests/CoralLedger.Domain.Tests --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=domain-tests.trx" --collect:"XPlat Code Coverage"
+
+      - name: Run Application Tests
+        run: dotnet test tests/CoralLedger.Application.Tests --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=application-tests.trx" --collect:"XPlat Code Coverage"
+
+      - name: Run Infrastructure Tests
+        run: dotnet test tests/CoralLedger.Infrastructure.Tests --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=infrastructure-tests.trx" --collect:"XPlat Code Coverage"
 
       - name: Run Integration Tests
         run: dotnet test tests/CoralLedger.Integration.Tests --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-tests.trx"
         env:
-          ConnectionStrings__marinedb: "Host=localhost;Port=5432;Database=coralledger_test;Username=postgres;Password=postgres"
+          ConnectionStrings__coralledger-db: "Host=localhost;Port=5432;Database=coralledger_test;Username=postgres;Password=postgres"
           ASPNETCORE_ENVIRONMENT: Testing
 
       - name: Upload Test Results
