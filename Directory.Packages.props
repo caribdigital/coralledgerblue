@@ -46,6 +46,8 @@
     <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.13.1" />
     <!-- Azure Storage -->
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.22.2" />
+    <!-- Redis Caching -->
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.0" />
     <!-- AI / Semantic Kernel -->
     <PackageVersion Include="Microsoft.SemanticKernel" Version="1.31.0" />
     <PackageVersion Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.31.0" />

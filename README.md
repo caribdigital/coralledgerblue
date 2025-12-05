@@ -71,6 +71,7 @@ We're actively looking for contributors in these areas:
 | **Frontend** | Blazor Server + WebAssembly (Auto mode) |
 | **Mapping** | Leaflet.js 1.9.4 with OpenStreetMap |
 | **Database** | PostgreSQL 16 + PostGIS 3.4 |
+| **Caching** | Redis (StackExchange.Redis) with Azure Cache support |
 | **ORM** | Entity Framework Core 10 |
 | **Spatial** | NetTopologySuite 2.6 |
 | **CQRS** | MediatR 12.4 |
@@ -236,6 +237,17 @@ dotnet user-secrets set "GlobalFishingWatch:Enabled" "true" --project src/CoralL
 
 NOAA Coral Reef Watch data is publicly available and requires no authentication.
 
+### Redis Cache (Local Development)
+
+The application uses Redis for distributed caching. To run Redis locally:
+
+```bash
+# Using Docker (recommended)
+docker run -d -p 6379:6379 --name coralledger-redis redis:7-alpine
+```
+
+The application will automatically connect to `localhost:6379`. See [Redis Setup Guide](docs/REDIS.md) for detailed configuration options, Azure Cache for Redis setup, and troubleshooting.
+
 ### Production Deployment
 
 For production, use one of these secure options:
@@ -248,6 +260,7 @@ See [.NET Secret Management](https://learn.microsoft.com/en-us/aspnet/core/secur
 ## Documentation
 
 - [Architecture Overview](docs/architecture.md)
+- [Redis Caching Guide](docs/REDIS.md) - Distributed caching setup and configuration
 - [Phase 1 Delivery](docs/phase1-delivery.md)
 - [Phase 2 Delivery](docs/phase2-delivery.md)
 - [Contributing Guide](docs/CONTRIBUTING.md)

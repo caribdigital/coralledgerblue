@@ -25,17 +25,20 @@ public class SyncMpaFromWdpaCommandHandler : IRequestHandler<SyncMpaFromWdpaComm
     private readonly IMarineDbContext _context;
     private readonly IProtectedPlanetClient _protectedPlanetClient;
     private readonly ISpatialValidationService _spatialValidation;
+    private readonly ICacheService _cache;
     private readonly ILogger<SyncMpaFromWdpaCommandHandler> _logger;
 
     public SyncMpaFromWdpaCommandHandler(
         IMarineDbContext context,
         IProtectedPlanetClient protectedPlanetClient,
         ISpatialValidationService spatialValidation,
+        ICacheService cache,
         ILogger<SyncMpaFromWdpaCommandHandler> logger)
     {
         _context = context;
         _protectedPlanetClient = protectedPlanetClient;
         _spatialValidation = spatialValidation;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -104,6 +107,9 @@ public class SyncMpaFromWdpaCommandHandler : IRequestHandler<SyncMpaFromWdpaComm
         // Generate simplified geometries using PostGIS
         await GenerateSimplifiedGeometriesAsync(mpa.Id, cancellationToken);
 
+        // Invalidate all MPA-related cache entries
+        await InvalidateMpaCacheAsync(mpa.Id, cancellationToken);
+
         _logger.LogInformation(
             "Successfully synced MPA {MpaName} from WDPA. New area: {AreaKm2:F2} km²",
             mpa.Name, mpa.AreaSquareKm);
@@ -136,6 +142,25 @@ public class SyncMpaFromWdpaCommandHandler : IRequestHandler<SyncMpaFromWdpaComm
         {
             _logger.LogError(ex, "Failed to generate simplified geometries for MPA {MpaId}", mpaId);
             // Don't fail the whole sync if simplification fails
+        }
+    }
+
+    private async Task InvalidateMpaCacheAsync(Guid mpaId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Invalidate all MPA GeoJSON cache entries (all resolutions)
+            await _cache.RemoveByPrefixAsync(CacheKeys.MpaPrefix, cancellationToken);
+
+            // Also invalidate specific MPA detail cache
+            await _cache.RemoveAsync(CacheKeys.ForMpa(mpaId), cancellationToken);
+
+            _logger.LogDebug("Invalidated cache for MPA {MpaId}", mpaId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to invalidate cache for MPA {MpaId}", mpaId);
+            // Don't fail the whole sync if cache invalidation fails
         }
     }
 }

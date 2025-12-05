@@ -16,6 +16,8 @@ public class CoralReefWatchClient : ICoralReefWatchClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<CoralReefWatchClient> _logger;
+    private readonly ICacheService _cache;
+    private readonly Microsoft.Extensions.Options.IOptions<RedisCacheOptions> _cacheOptions;
 
     // NOAA ERDDAP base URL for Coral Reef Watch DHW dataset
     private const string ErddapBaseUrl = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
@@ -31,10 +33,14 @@ public class CoralReefWatchClient : ICoralReefWatchClient
 
     public CoralReefWatchClient(
         HttpClient httpClient,
-        ILogger<CoralReefWatchClient> logger)
+        ILogger<CoralReefWatchClient> logger,
+        ICacheService cache,
+        Microsoft.Extensions.Options.IOptions<RedisCacheOptions> cacheOptions)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _cache = cache;
+        _cacheOptions = cacheOptions;
 
         _httpClient.BaseAddress = new Uri(ErddapBaseUrl);
         _httpClient.Timeout = TimeSpan.FromSeconds(30); // Reduced for better UX
@@ -48,6 +54,35 @@ public class CoralReefWatchClient : ICoralReefWatchClient
     }
 
     public async Task<CrwBleachingData?> GetBleachingDataAsync(
+        double longitude,
+        double latitude,
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+    {
+        // Use cache with point-specific key
+        var cacheKey = CacheKeys.ForBleachingPoint(longitude, latitude, date);
+        var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.NoaaBleachingCacheTtlHours);
+
+        // Try to get from cache first
+        var cached = await _cache.GetAsync<CrwBleachingDataWrapper>(cacheKey, cancellationToken);
+        if (cached is not null)
+        {
+            return cached.Data;
+        }
+
+        // Fetch fresh data
+        var data = await FetchBleachingDataAsync(longitude, latitude, date, cancellationToken);
+        
+        // Cache the result (even if null, wrap it)
+        if (data is not null)
+        {
+            await _cache.SetAsync(cacheKey, new CrwBleachingDataWrapper { Data = data }, cacheTtl, cancellationToken);
+        }
+
+        return data;
+    }
+
+    private async Task<CrwBleachingData?> FetchBleachingDataAsync(
         double longitude,
         double latitude,
         DateOnly date,
@@ -89,6 +124,35 @@ public class CoralReefWatchClient : ICoralReefWatchClient
     }
 
     public async Task<IEnumerable<CrwBleachingData>> GetBleachingDataForRegionAsync(
+        double minLon,
+        double minLat,
+        double maxLon,
+        double maxLat,
+        DateOnly startDate,
+        DateOnly endDate,
+        CancellationToken cancellationToken = default)
+    {
+        // Use cache with region-specific key
+        var cacheKey = CacheKeys.ForBleachingRegion(minLon, minLat, maxLon, maxLat, startDate, endDate);
+        var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.NoaaBleachingCacheTtlHours);
+
+        // Try to get from cache first
+        var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken);
+        if (cached?.Data is not null)
+        {
+            return cached.Data;
+        }
+
+        // Fetch fresh data
+        var data = await FetchBleachingDataForRegionAsync(minLon, minLat, maxLon, maxLat, startDate, endDate, cancellationToken);
+        
+        // Cache the result
+        await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = data }, cacheTtl, cancellationToken);
+
+        return data;
+    }
+
+    private async Task<IEnumerable<CrwBleachingData>> FetchBleachingDataForRegionAsync(
         double minLon,
         double minLat,
         double maxLon,
@@ -143,6 +207,33 @@ public class CoralReefWatchClient : ICoralReefWatchClient
     }
 
     public async Task<IEnumerable<CrwBleachingData>> GetBleachingTimeSeriesAsync(
+        double longitude,
+        double latitude,
+        DateOnly startDate,
+        DateOnly endDate,
+        CancellationToken cancellationToken = default)
+    {
+        // Use cache with time series-specific key
+        var cacheKey = CacheKeys.ForBleachingTimeSeries(longitude, latitude, startDate, endDate);
+        var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.NoaaBleachingCacheTtlHours);
+
+        // Try to get from cache first
+        var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken);
+        if (cached?.Data is not null)
+        {
+            return cached.Data;
+        }
+
+        // Fetch fresh data
+        var data = await FetchBleachingTimeSeriesAsync(longitude, latitude, startDate, endDate, cancellationToken);
+        
+        // Cache the result
+        await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = data }, cacheTtl, cancellationToken);
+
+        return data;
+    }
+
+    private async Task<IEnumerable<CrwBleachingData>> FetchBleachingTimeSeriesAsync(
         double longitude,
         double latitude,
         DateOnly startDate,
@@ -271,5 +362,40 @@ public class CoralReefWatchClient : ICoralReefWatchClient
     {
         var d = GetDoubleValue(element);
         return d.HasValue ? (int)d.Value : null;
+    }
+}
+
+/// <summary>
+/// Generic wrapper class for caching data types, including nullable values and collections.
+/// 
+/// Note: These wrappers are necessary because:
+/// 1. IDistributedCache requires non-null values for serialization
+/// 2. IEnumerable<T> needs wrapping to serialize correctly as JSON
+/// 3. Nullable reference types (T?) don't satisfy the 'where T : class' constraint
+/// 
+/// While this adds some complexity, it provides type-safe caching with proper null handling.
+/// </summary>
+internal class CacheWrapper<T>
+{
+    public T? Data { get; set; }
+}
+
+/// <summary>
+/// Wrapper class for caching nullable CrwBleachingData
+/// For backward compatibility with existing cache keys
+/// </summary>
+internal class CrwBleachingDataWrapper : CacheWrapper<CrwBleachingData>
+{
+}
+
+/// <summary>
+/// Wrapper class for caching collections of CrwBleachingData
+/// For backward compatibility with existing cache keys
+/// </summary>
+internal class CrwBleachingDataCollectionWrapper : CacheWrapper<IEnumerable<CrwBleachingData>>
+{
+    public CrwBleachingDataCollectionWrapper()
+    {
+        Data = Enumerable.Empty<CrwBleachingData>();
     }
 }

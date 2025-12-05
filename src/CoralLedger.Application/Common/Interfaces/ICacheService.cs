@@ -36,24 +36,45 @@ public interface ICacheService
 /// </summary>
 public static class CacheKeys
 {
-    public const string MpaList = "mpas:list";
-    public const string MpaGeoJson = "mpas:geojson";
-    public const string MpaStats = "mpas:stats";
-    public const string MpaDetail = "mpas:detail:{0}";
+    // MPA cache keys with versioning
+    public const string MpaList = "mpas:list:v1";
+    public const string MpaGeoJson = "mpas:geojson:{0}:v1"; // {0} = resolution (full/medium/low)
+    public const string MpaStats = "mpas:stats:v1";
+    public const string MpaDetail = "mpas:detail:{0}:v1"; // {0} = mpa id
+    public const string MpaPrefix = "mpas:";
 
-    public const string BleachingAlerts = "bleaching:alerts";
-    public const string BleachingLatest = "bleaching:latest:{0}";
+    // Bleaching cache keys with versioning
+    public const string BleachingAlerts = "noaa:bleaching:alerts:v1";
+    public const string BleachingLatest = "noaa:bleaching:{0}:v1"; // {0} = mpa id
+    public const string BleachingRegion = "noaa:bleaching:region:{0}:{1}:{2}:v1"; // {0} = region hash, {1} = start date, {2} = end date
+    public const string BleachingPoint = "noaa:bleaching:point:{0}:{1}:{2}:v1"; // {0} = lon, {1} = lat, {2} = date
+    public const string BleachingTimeSeries = "noaa:bleaching:timeseries:{0}:{1}:{2}:{3}:v1"; // {0} = lon, {1} = lat, {2} = start date, {3} = end date
+    public const string BleachingPrefix = "noaa:bleaching:";
 
-    public const string VesselPositions = "vessels:positions";
-    public const string VesselEvents = "vessels:events";
+    // Vessel cache keys
+    public const string VesselPositions = "vessels:positions:v1";
+    public const string VesselEvents = "vessels:events:v1";
 
-    public const string AlertsActive = "alerts:active";
-    public const string AlertRules = "alerts:rules";
+    // Alert cache keys
+    public const string AlertsActive = "alerts:active:v1";
+    public const string AlertRules = "alerts:rules:v1";
 
-    public const string DashboardStats = "admin:dashboard";
+    // Dashboard cache keys
+    public const string DashboardStats = "admin:dashboard:v1";
 
+    // Helper methods for key generation
     public static string ForMpa(Guid id) => string.Format(MpaDetail, id);
+    public static string ForMpaGeoJson(string resolution) => string.Format(MpaGeoJson, resolution.ToLowerInvariant());
     public static string ForBleaching(Guid mpaId) => string.Format(BleachingLatest, mpaId);
+    public static string ForBleachingPoint(double lon, double lat, DateOnly date) =>
+        string.Format(BleachingPoint, lon.ToString("F6"), lat.ToString("F6"), date.ToString("yyyy-MM-dd"));
+    public static string ForBleachingRegion(double minLon, double minLat, double maxLon, double maxLat, DateOnly startDate, DateOnly endDate)
+    {
+        var regionHash = $"{minLon:F2}_{minLat:F2}_{maxLon:F2}_{maxLat:F2}".GetHashCode().ToString("X");
+        return string.Format(BleachingRegion, regionHash, startDate.ToString("yyyy-MM-dd"), endDate.ToString("yyyy-MM-dd"));
+    }
+    public static string ForBleachingTimeSeries(double lon, double lat, DateOnly startDate, DateOnly endDate) =>
+        string.Format(BleachingTimeSeries, lon.ToString("F6"), lat.ToString("F6"), startDate.ToString("yyyy-MM-dd"), endDate.ToString("yyyy-MM-dd"));
 }
 
 /// <summary>

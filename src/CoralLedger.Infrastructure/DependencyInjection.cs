@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Quartz;
 
 namespace CoralLedger.Infrastructure;
@@ -77,14 +78,87 @@ public static class DependencyInjection
         // Register MPA Proximity Service (spatial analysis)
         services.AddScoped<IMpaProximityService, MpaProximityService>();
 
-        // Register Cache service
-        services.AddMemoryCache();
-        services.AddSingleton<ICacheService, MemoryCacheService>();
+        // Register Cache service (Redis or in-memory fallback)
+        var redisOptions = configuration.GetSection(RedisCacheOptions.SectionName).Get<RedisCacheOptions>()
+            ?? new RedisCacheOptions();
+
+        // Override connection string from environment variable if set
+        var connectionStringFromEnv = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
+        if (!string.IsNullOrEmpty(connectionStringFromEnv))
+        {
+            redisOptions.ConnectionString = connectionStringFromEnv;
+        }
+
+        if (redisOptions.Enabled)
+        {
+            // Test Redis connection before registering services
+            bool redisAvailable = false;
+            try
+            {
+                var testConnectionString = redisOptions.ConnectionString + ",connectTimeout=5000,abortConnect=false";
+                using var testConnection = StackExchange.Redis.ConnectionMultiplexer.Connect(testConnectionString);
+                redisAvailable = testConnection.IsConnected;
+                testConnection.Close();
+
+                if (redisAvailable)
+                {
+                    Console.WriteLine($"Redis connection successful: {redisOptions.ConnectionString}");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Redis is not available, will fall back to in-memory cache
+                Console.WriteLine($"Redis connection failed: {ex.Message}. Falling back to in-memory cache.");
+                redisAvailable = false;
+            }
+
+            if (redisAvailable)
+            {
+                // Redis is available, register Redis cache
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = redisOptions.ConnectionString;
+                    options.InstanceName = redisOptions.InstanceName;
+                });
+
+                // Register Redis connection multiplexer for advanced operations (prefix-based removal)
+                services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
+                {
+                    return StackExchange.Redis.ConnectionMultiplexer.Connect(redisOptions.ConnectionString);
+                });
+
+                services.AddSingleton<ICacheService, RedisCacheService>();
+            }
+            else
+            {
+                // Redis connection test failed, fall back to in-memory cache
+                Console.WriteLine("Using in-memory cache as fallback.");
+                AddInMemoryCache(services);
+            }
+        }
+        else
+        {
+            // Use in-memory cache when Redis is disabled
+            Console.WriteLine("Redis disabled in configuration. Using in-memory cache.");
+            AddInMemoryCache(services);
+        }
+
+        services.Configure<RedisCacheOptions>(
+            configuration.GetSection(RedisCacheOptions.SectionName));
 
         // Register Metrics
         services.AddSingleton<MarineMetrics>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers in-memory cache as fallback when Redis is unavailable or disabled
+    /// </summary>
+    private static void AddInMemoryCache(IServiceCollection services)
+    {
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheService, MemoryCacheService>();
     }
 
     /// <summary>

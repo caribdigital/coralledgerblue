@@ -75,13 +75,35 @@ public class MpaGeoJsonProperties
 public class GetMpasGeoJsonQueryHandler : IRequestHandler<GetMpasGeoJsonQuery, MpaGeoJsonCollection>
 {
     private readonly IMarineDbContext _context;
+    private readonly ICacheService _cache;
+    private readonly Microsoft.Extensions.Options.IOptions<RedisCacheOptions> _cacheOptions;
 
-    public GetMpasGeoJsonQueryHandler(IMarineDbContext context)
+    public GetMpasGeoJsonQueryHandler(
+        IMarineDbContext context,
+        ICacheService cache,
+        Microsoft.Extensions.Options.IOptions<RedisCacheOptions> cacheOptions)
     {
         _context = context;
+        _cache = cache;
+        _cacheOptions = cacheOptions;
     }
 
     public async Task<MpaGeoJsonCollection> Handle(
+        GetMpasGeoJsonQuery request,
+        CancellationToken cancellationToken)
+    {
+        // Use cache with resolution-specific key
+        var cacheKey = CacheKeys.ForMpaGeoJson(request.Resolution.ToString());
+        var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.MpaGeoJsonCacheTtlHours);
+
+        return await _cache.GetOrSetAsync(
+            cacheKey,
+            async () => await GenerateGeoJsonAsync(request, cancellationToken),
+            cacheTtl,
+            cancellationToken);
+    }
+
+    private async Task<MpaGeoJsonCollection> GenerateGeoJsonAsync(
         GetMpasGeoJsonQuery request,
         CancellationToken cancellationToken)
     {

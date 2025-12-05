@@ -13,10 +13,21 @@ namespace CoralLedger.Infrastructure.Tests.ExternalServices;
 public class CoralReefWatchClientTests
 {
     private readonly Mock<ILogger<CoralReefWatchClient>> _loggerMock;
+    private readonly Mock<ICacheService> _cacheMock;
+    private readonly Mock<Microsoft.Extensions.Options.IOptions<RedisCacheOptions>> _optionsMock;
 
     public CoralReefWatchClientTests()
     {
         _loggerMock = new Mock<ILogger<CoralReefWatchClient>>();
+        // Use loose mock behavior to return null for unmatched calls
+        _cacheMock = new Mock<ICacheService>(MockBehavior.Loose);
+        _optionsMock = new Mock<Microsoft.Extensions.Options.IOptions<RedisCacheOptions>>();
+
+        // Setup default cache options
+        _optionsMock.Setup(o => o.Value).Returns(new RedisCacheOptions
+        {
+            NoaaBleachingCacheTtlHours = 12
+        });
     }
 
     private CoralReefWatchClient CreateClient(HttpMessageHandler? handler = null)
@@ -25,7 +36,7 @@ public class CoralReefWatchClientTests
             ? new HttpClient(handler)
             : new HttpClient(new FakeHttpMessageHandler());
 
-        return new CoralReefWatchClient(httpClient, _loggerMock.Object);
+        return new CoralReefWatchClient(httpClient, _loggerMock.Object, _cacheMock.Object, _optionsMock.Object);
     }
 
     [Fact]

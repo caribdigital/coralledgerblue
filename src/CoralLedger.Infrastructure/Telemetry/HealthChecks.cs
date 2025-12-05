@@ -322,7 +322,7 @@ public class SignalRHealthCheck : IHealthCheck
 }
 
 /// <summary>
-/// Health check for MemoryCache service
+/// Health check for cache service (Redis or in-memory fallback)
 /// Tests read/write operations to verify cache is working
 /// </summary>
 public class CacheHealthCheck : IHealthCheck
