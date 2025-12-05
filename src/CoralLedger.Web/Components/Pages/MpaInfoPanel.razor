@@ -74,6 +74,15 @@
                     <small class="text-muted d-block mt-1">Loading NOAA data...</small>
                 </div>
             }
+            else if (_bleachingError)
+            {
+                <div class="alert alert-warning py-2 small mb-2">
+                    <i class="bi bi-exclamation-triangle"></i> @_bleachingErrorMessage
+                </div>
+                <button class="btn btn-sm btn-outline-primary" @onclick="RetryBleachingDataAsync">
+                    <i class="bi bi-arrow-clockwise"></i> Retry
+                </button>
+            }
             else if (_bleachingData is not null)
             {
                 <div class="row g-2 mb-3">
@@ -211,6 +220,8 @@
     private Guid? _loadedMpaId;
     private CrwBleachingData? _bleachingData;
     private bool _bleachingLoading;
+    private bool _bleachingError;
+    private string _bleachingErrorMessage = "";
     private IReadOnlyList<BleachingHistoryDto>? _historyData;
     private bool _historyLoading;
 
@@ -220,6 +231,8 @@
         {
             _loading = true;
             _bleachingData = null;
+            _bleachingError = false;
+            _bleachingErrorMessage = "";
             _historyData = null;
             _detail = await Mediator.Send(new GetMpaByIdQuery(SelectedMpaId.Value));
             _loadedMpaId = SelectedMpaId;
@@ -235,6 +248,8 @@
             _detail = null;
             _loadedMpaId = null;
             _bleachingData = null;
+            _bleachingError = false;
+            _bleachingErrorMessage = "";
             _historyData = null;
         }
     }
@@ -246,17 +261,46 @@
         try
         {
             _bleachingLoading = true;
+            _bleachingError = false;
+            _bleachingErrorMessage = "";
             StateHasChanged();
+
+            // Use a 15-second timeout for better UX
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
 
             var yesterday = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
             _bleachingData = await CrwClient.GetBleachingDataAsync(
                 _detail.CentroidLongitude,
                 _detail.CentroidLatitude,
-                yesterday);
+                yesterday,
+                cts.Token);
+
+            // If we got no data, show a helpful message
+            if (_bleachingData is null)
+            {
+                _bleachingError = true;
+                _bleachingErrorMessage = "No bleaching data available for this location";
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Bleaching data request timed out");
+            _bleachingError = true;
+            _bleachingErrorMessage = "Request timed out. NOAA service may be slow.";
+            _bleachingData = null;
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"HTTP error loading bleaching data: {ex.Message}");
+            _bleachingError = true;
+            _bleachingErrorMessage = "Unable to reach NOAA service";
+            _bleachingData = null;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading bleaching data: {ex.Message}");
+            _bleachingError = true;
+            _bleachingErrorMessage = "Failed to load bleaching data";
             _bleachingData = null;
         }
         finally
@@ -264,6 +308,11 @@
             _bleachingLoading = false;
             StateHasChanged();
         }
+    }
+
+    private async Task RetryBleachingDataAsync()
+    {
+        await LoadBleachingDataAsync();
     }
 
     private string GetProtectionBadgeClass(string level) => level switch

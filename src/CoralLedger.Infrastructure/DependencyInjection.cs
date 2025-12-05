@@ -33,7 +33,7 @@ public static class DependencyInjection
         // Register NOAA Coral Reef Watch client
         services.AddHttpClient<ICoralReefWatchClient, CoralReefWatchClient>(client =>
         {
-            client.Timeout = TimeSpan.FromMinutes(5);
+            client.Timeout = TimeSpan.FromSeconds(30); // Reduced from 5 min for better UX
         });
 
         // Register Protected Planet WDPA client

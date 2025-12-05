@@ -275,6 +275,62 @@ public class MapTests : PlaywrightFixture
     }
 
     [Test]
+    [Description("Verifies selecting an MPA shows info panel with bleaching data or timeout error")]
+    public async Task Map_SelectMpaShowsInfoPanel()
+    {
+        // Capture console messages for debugging
+        var consoleMessages = new List<string>();
+        Page.Console += (_, msg) => consoleMessages.Add($"[{msg.Type}] {msg.Text}");
+
+        // Navigate to map page
+        await Page.GotoAsync($"{BaseUrl}/map");
+        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+        await Task.Delay(6000); // Wait for map to load
+
+        // Click on an MPA from the sidebar list
+        var mpaListItem = Page.Locator(".list-group-item").First;
+        if (await mpaListItem.IsVisibleAsync())
+        {
+            await mpaListItem.ClickAsync();
+            await Task.Delay(18000); // Wait for 15-second timeout + buffer
+
+            // Check if info panel shows MPA details
+            var cardTitle = Page.Locator(".card-title").First;
+            (await cardTitle.IsVisibleAsync()).Should().BeTrue("MPA name should be visible in info panel");
+
+            // Check for bleaching section
+            var bleachingSection = Page.GetByText("Coral Bleaching Status");
+            (await bleachingSection.IsVisibleAsync()).Should().BeTrue("Bleaching section header should be visible");
+
+            // Check for either bleaching data OR error with retry button
+            var bleachingData = Page.Locator(".card.bg-light").First; // SST card
+            var retryButton = Page.GetByRole(AriaRole.Button, new() { Name = "Retry" });
+            var hasBleachingData = await bleachingData.IsVisibleAsync();
+            var hasRetryButton = await retryButton.IsVisibleAsync();
+
+            (hasBleachingData || hasRetryButton).Should().BeTrue(
+                "Should show either bleaching data or retry button after timeout");
+
+            // Take screenshot to see what's displayed
+            var screenshotPath = Path.Combine(
+                TestContext.CurrentContext.TestDirectory,
+                "playwright-artifacts",
+                "mpa-info-panel.png");
+            Directory.CreateDirectory(Path.GetDirectoryName(screenshotPath)!);
+            await Page.ScreenshotAsync(new() { Path = screenshotPath, FullPage = true });
+
+            // Log any errors
+            var errors = consoleMessages.Where(m => m.StartsWith("[error]")).ToList();
+            if (errors.Any())
+            {
+                Console.WriteLine("Console errors:");
+                foreach (var err in errors)
+                    Console.WriteLine(err);
+            }
+        }
+    }
+
+    [Test]
     [Description("Debug test to capture all console output for MPA layer loading")]
     public async Task Map_DebugConsoleOutput()
     {

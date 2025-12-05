@@ -37,7 +37,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         _logger = logger;
 
         _httpClient.BaseAddress = new Uri(ErddapBaseUrl);
-        _httpClient.Timeout = TimeSpan.FromMinutes(5); // ERDDAP requests can be slow
+        _httpClient.Timeout = TimeSpan.FromSeconds(30); // Reduced for better UX
 
         _jsonOptions = new JsonSerializerOptions
         {
