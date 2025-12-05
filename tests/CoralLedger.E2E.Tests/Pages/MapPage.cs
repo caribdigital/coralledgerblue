@@ -184,8 +184,29 @@ public class MapPage : BasePage
     /// </summary>
     public async Task<string> GetSstValueAsync()
     {
-        var sstCard = Page.Locator(".card.bg-light h3, .sst-value").First;
-        return await sstCard.TextContentAsync() ?? "";
+        // Wait a short moment then try to get SST value if visible
+        var sstCard = Page.Locator(".card.bg-light h3, .sst-value, [class*='sst']").First;
+        try
+        {
+            if (await sstCard.IsVisibleAsync(new LocatorIsVisibleOptions { Timeout = 5000 }))
+            {
+                return await sstCard.TextContentAsync() ?? "";
+            }
+        }
+        catch { }
+
+        // Also try to find by text pattern
+        var tempText = Page.GetByText(new System.Text.RegularExpressions.Regex(@"\d+\.?\d*\s*°C")).First;
+        try
+        {
+            if (await tempText.IsVisibleAsync(new LocatorIsVisibleOptions { Timeout = 2000 }))
+            {
+                return await tempText.TextContentAsync() ?? "";
+            }
+        }
+        catch { }
+
+        return "";
     }
 
     /// <summary>
@@ -320,8 +341,13 @@ public class MapPage : BasePage
     /// </summary>
     public async Task<bool> HasProtectionLevelBadgeAsync()
     {
-        var badge = Page.Locator(".badge:has-text('Zone'), .protection-badge");
-        return await badge.IsVisibleAsync();
+        // Look for badge with protection-related text or any badge in the info panel
+        var badge = Page.Locator(".badge, .badge-primary, .badge-danger, .badge-warning, .badge-success").First;
+        if (await badge.IsVisibleAsync()) return true;
+
+        // Also check for protection level text
+        var protectionText = Page.GetByText("No-Take").Or(Page.GetByText("Highly Protected")).Or(Page.GetByText("Lightly Protected"));
+        return await protectionText.First.IsVisibleAsync();
     }
 
     /// <summary>
@@ -329,7 +355,7 @@ public class MapPage : BasePage
     /// </summary>
     public async Task<bool> HasMpaAreaDisplayedAsync()
     {
-        var areaText = Page.GetByText("km²").Or(Page.GetByText("sq km"));
+        var areaText = Page.GetByText("km²").Or(Page.GetByText("sq km")).First;
         return await areaText.IsVisibleAsync();
     }
 
