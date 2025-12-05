@@ -18,6 +18,11 @@ public class RedisCacheServiceTests
     private readonly Mock<ILogger<RedisCacheService>> _loggerMock;
     private readonly RedisCacheService _service;
 
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+    };
+
     public RedisCacheServiceTests()
     {
         _distributedCacheMock = new Mock<IDistributedCache>();
@@ -32,10 +37,7 @@ public class RedisCacheServiceTests
         // Arrange
         var key = "test:key";
         var testObject = new TestCacheObject { Id = 1, Name = "Test" };
-        var json = System.Text.Json.JsonSerializer.Serialize(testObject, new System.Text.Json.JsonSerializerOptions
-        {
-            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-        });
+        var json = System.Text.Json.JsonSerializer.Serialize(testObject, JsonOptions);
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
 
         _distributedCacheMock
@@ -100,12 +102,7 @@ public class RedisCacheServiceTests
         capturedOptions!.AbsoluteExpirationRelativeToNow.Should().Be(expiration);
 
         var json = System.Text.Encoding.UTF8.GetString(capturedBytes!);
-        var deserialized = System.Text.Json.JsonSerializer.Deserialize<TestCacheObject>(
-            json,
-            new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-            });
+        var deserialized = System.Text.Json.JsonSerializer.Deserialize<TestCacheObject>(json, JsonOptions);
         deserialized!.Id.Should().Be(1);
         deserialized.Name.Should().Be("Test");
     }
@@ -157,10 +154,7 @@ public class RedisCacheServiceTests
         // Arrange
         var key = "test:key";
         var testObject = new TestCacheObject { Id = 1, Name = "Test" };
-        var json = System.Text.Json.JsonSerializer.Serialize(testObject, new System.Text.Json.JsonSerializerOptions
-        {
-            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-        });
+        var json = System.Text.Json.JsonSerializer.Serialize(testObject, JsonOptions);
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
 
         _distributedCacheMock

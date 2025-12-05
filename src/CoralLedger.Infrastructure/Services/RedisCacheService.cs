@@ -109,18 +109,56 @@ public class RedisCacheService : ICacheService
             // If direct Redis access is available, use server-side key scanning
             if (_redis is not null)
             {
-                var server = _redis.GetServer(_redis.GetEndPoints().First());
+                var endpoints = _redis.GetEndPoints();
+                if (endpoints.Length == 0)
+                {
+                    _logger.LogWarning("No Redis endpoints available for prefix-based cache removal");
+                    return;
+                }
+
+                // Try to find an available server
+                IServer? server = null;
+                foreach (var endpoint in endpoints)
+                {
+                    try
+                    {
+                        var candidate = _redis.GetServer(endpoint);
+                        if (candidate.IsConnected)
+                        {
+                            server = candidate;
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to connect to Redis endpoint: {Endpoint}", endpoint);
+                    }
+                }
+
+                if (server is null)
+                {
+                    _logger.LogWarning("No available Redis server found for prefix-based cache removal");
+                    return;
+                }
+
                 var pattern = $"{prefix}*";
-                var keysToRemove = new List<string>();
+                var keysToRemove = new List<RedisKey>();
 
                 await foreach (var key in server.KeysAsync(pattern: pattern))
                 {
-                    keysToRemove.Add(key.ToString());
+                    keysToRemove.Add(key);
                 }
 
-                foreach (var key in keysToRemove)
+                if (keysToRemove.Count > 0)
                 {
-                    await _cache.RemoveAsync(key, ct);
+                    // Use batch removal for better performance
+                    var db = _redis.GetDatabase();
+                    var tasks = new List<Task>();
+                    foreach (var key in keysToRemove)
+                    {
+                        tasks.Add(db.KeyDeleteAsync(key));
+                    }
+                    await Task.WhenAll(tasks);
                 }
 
                 _logger.LogDebug("Cache removed {Count} entries with prefix: {Prefix}", keysToRemove.Count, prefix);

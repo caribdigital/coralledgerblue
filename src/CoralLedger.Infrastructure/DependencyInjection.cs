@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Quartz;
 
 namespace CoralLedger.Infrastructure;
@@ -101,13 +102,27 @@ public static class DependencyInjection
 
                 // Register Redis connection multiplexer for advanced operations (prefix-based removal)
                 services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
-                    StackExchange.Redis.ConnectionMultiplexer.Connect(redisOptions.ConnectionString));
+                {
+                    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+                    var logger = loggerFactory.CreateLogger("Redis");
+                    try
+                    {
+                        return StackExchange.Redis.ConnectionMultiplexer.Connect(redisOptions.ConnectionString);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Failed to connect to Redis at {ConnectionString}. Falling back to in-memory cache.", 
+                            redisOptions.ConnectionString);
+                        throw; // Re-throw to trigger fallback
+                    }
+                });
 
                 services.AddSingleton<ICacheService, RedisCacheService>();
             }
             catch (Exception)
             {
-                // If Redis connection fails, fall back to in-memory cache
+                // If Redis connection fails during configuration, fall back to in-memory cache
+                // Note: Actual connection happens lazily, so this mainly catches configuration errors
                 services.AddMemoryCache();
                 services.AddSingleton<ICacheService, MemoryCacheService>();
             }

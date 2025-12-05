@@ -138,7 +138,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
 
         // Try to get from cache first
         var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken);
-        if (cached is not null)
+        if (cached?.Data is not null)
         {
             return cached.Data;
         }
@@ -219,7 +219,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
 
         // Try to get from cache first
         var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken);
-        if (cached is not null)
+        if (cached?.Data is not null)
         {
             return cached.Data;
         }
@@ -366,17 +366,29 @@ public class CoralReefWatchClient : ICoralReefWatchClient
 }
 
 /// <summary>
-/// Wrapper class for caching nullable CrwBleachingData
+/// Generic wrapper class for caching data types, including nullable values and collections
 /// </summary>
-internal class CrwBleachingDataWrapper
+internal class CacheWrapper<T>
 {
-    public CrwBleachingData? Data { get; set; }
+    public T? Data { get; set; }
+}
+
+/// <summary>
+/// Wrapper class for caching nullable CrwBleachingData
+/// For backward compatibility with existing cache keys
+/// </summary>
+internal class CrwBleachingDataWrapper : CacheWrapper<CrwBleachingData>
+{
 }
 
 /// <summary>
 /// Wrapper class for caching collections of CrwBleachingData
+/// For backward compatibility with existing cache keys
 /// </summary>
-internal class CrwBleachingDataCollectionWrapper
+internal class CrwBleachingDataCollectionWrapper : CacheWrapper<IEnumerable<CrwBleachingData>>
 {
-    public IEnumerable<CrwBleachingData> Data { get; set; } = Enumerable.Empty<CrwBleachingData>();
+    public CrwBleachingDataCollectionWrapper()
+    {
+        Data = Enumerable.Empty<CrwBleachingData>();
+    }
 }
