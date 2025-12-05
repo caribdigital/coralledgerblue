@@ -74,6 +74,9 @@ public static class DependencyInjection
         // Register Reef Health Calculator (spatial intelligence)
         services.AddScoped<IReefHealthCalculator, ReefHealthCalculator>();
 
+        // Register MPA Proximity Service (spatial analysis)
+        services.AddScoped<IMpaProximityService, MpaProximityService>();
+
         // Register Cache service
         services.AddMemoryCache();
         services.AddSingleton<ICacheService, MemoryCacheService>();
