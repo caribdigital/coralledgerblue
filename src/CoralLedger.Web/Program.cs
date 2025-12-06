@@ -7,12 +7,16 @@ using CoralLedger.Web.Components;
 using CoralLedger.Web.Endpoints;
 using CoralLedger.Web.Hubs;
 using CoralLedger.Web.Security;
+using CoralLedger.Web.Theme;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
+
+// Provide the shared UI theme for CSS variable overrides.
+builder.Services.AddSingleton(CoralLedgerTheme.Dark);
 
 // Add Blazor components with Interactive Server mode + WebAssembly Auto mode
 builder.Services.AddRazorComponents()

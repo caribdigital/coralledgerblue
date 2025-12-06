@@ -1,14 +1,31 @@
 @inherits LayoutComponentBase
+
 @using CoralLedger.Web.Client.Components
+@using CoralLedger.Web.Theme
+
+@inject CoralLedgerTheme Theme
+
+<HeadContent>
+    <style>
+        :root {
+@foreach (var variable in Theme.Variables)
+        {
+            @($"{variable.Key}: {variable.Value};")
+        }
+        }
+    </style>
+</HeadContent>
 
 <CoralLedger.Web.Client.Components.OfflineIndicator />
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
 <div class="page">
     <div class="sidebar desktop-nav">
         <NavMenu />
     </div>
 
-    <main class="main-content">
+    <main id="main-content" class="main-content">
         <div class="top-row px-4 d-none d-md-flex">
             <a href="/admin" class="me-3">Admin</a>
             <a href="https://github.com/caribdigital/coralledgerblue" target="_blank">GitHub</a>

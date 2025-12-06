@@ -22,23 +22,23 @@
     --safe-area-right: env(safe-area-inset-right, 0px);
 
     /* CoralLedger Blue colors */
-    --cl-primary: #0077B6;
-    --cl-primary-dark: #005f92;
-    --cl-secondary: #00B4D8;
+    --cl-primary: var(--color-primary);
+    --cl-primary-dark: var(--color-primary-dark);
+    --cl-secondary: var(--color-secondary);
     --cl-accent: #90E0EF;
-    --cl-warning: #F4A261;
-    --cl-danger: #E76F51;
-    --cl-success: #2A9D8F;
-    --cl-text: #264653;
-    --cl-text-light: #6c757d;
-    --cl-bg: #F8F9FA;
-    --cl-card-bg: #FFFFFF;
+    --cl-warning: var(--color-warning);
+    --cl-danger: var(--color-error);
+    --cl-success: var(--color-success);
+    --cl-text: var(--color-text);
+    --cl-text-light: var(--color-text-muted);
+    --cl-bg: var(--color-surface);
+    --cl-card-bg: var(--color-surface-alt);
 
     /* Map colors */
-    --cl-mpa-fill: rgba(0, 119, 182, 0.3);
-    --cl-mpa-stroke: #0077B6;
-    --cl-vessel-normal: #2A9D8F;
-    --cl-vessel-alert: #E76F51;
+    --cl-mpa-fill: rgba(46, 227, 255, 0.25);
+    --cl-mpa-stroke: var(--color-primary);
+    --cl-vessel-normal: var(--color-success);
+    --cl-vessel-alert: var(--color-error);
 
     /* Transitions */
     --transition-fast: 150ms ease;
