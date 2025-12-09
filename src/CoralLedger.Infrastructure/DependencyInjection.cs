@@ -82,6 +82,10 @@ public static class DependencyInjection
         // Register MPA Proximity Service (spatial analysis)
         services.AddScoped<IMpaProximityService, MpaProximityService>();
 
+        // Register Batch Containment Service (optimized point-in-polygon queries)
+        // Sprint 3.3 US-3.3.2: <100ms for 10K positions
+        services.AddScoped<IBatchContainmentService, BatchContainmentService>();
+
         // Register Cache service (Redis or in-memory fallback)
         var redisOptions = configuration.GetSection(RedisCacheOptions.SectionName).Get<RedisCacheOptions>()
             ?? new RedisCacheOptions();
