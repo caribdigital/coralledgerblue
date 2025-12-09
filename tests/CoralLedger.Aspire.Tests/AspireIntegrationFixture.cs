@@ -27,10 +27,10 @@ public class AspireIntegrationFixture : IAsyncLifetime
         await _app.StartAsync();
 
         // Get the HTTP client for the web resource
-        _webClient = _app.CreateHttpClient("coralledger-web");
+        _webClient = _app.CreateHttpClient("web");
 
         // Get the base URL from the endpoint using the correct API
-        _webBaseUrl = _app.GetEndpoint("coralledger-web", "https")?.AbsoluteUri.TrimEnd('/')
+        _webBaseUrl = _app.GetEndpoint("web", "https")?.AbsoluteUri.TrimEnd('/')
             ?? "https://localhost:7232";
 
         // Wait for application to be fully ready using our own readiness polling

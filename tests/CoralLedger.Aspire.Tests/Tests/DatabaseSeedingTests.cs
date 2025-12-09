@@ -20,7 +20,7 @@ public class DatabaseSeedingTests
     public async Task Database_ContainsBahamasMpas()
     {
         // Act
-        var response = await _fixture.WebClient.GetAsync("/api/mpa");
+        var response = await _fixture.WebClient.GetAsync("/api/mpas");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);

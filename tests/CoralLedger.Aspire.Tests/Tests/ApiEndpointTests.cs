@@ -20,7 +20,7 @@ public class ApiEndpointTests
     public async Task MpaEndpoint_ReturnsData()
     {
         // Act
-        var response = await _fixture.WebClient.GetAsync("/api/mpa");
+        var response = await _fixture.WebClient.GetAsync("/api/mpas");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -33,8 +33,8 @@ public class ApiEndpointTests
     [Fact]
     public async Task BleachingEndpoint_ReturnsData()
     {
-        // Act
-        var response = await _fixture.WebClient.GetAsync("/api/bleaching");
+        // Act - Use bahamas endpoint which has data without parameters
+        var response = await _fixture.WebClient.GetAsync("/api/bleaching/bahamas");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -44,8 +44,8 @@ public class ApiEndpointTests
     [Fact]
     public async Task VesselEndpoint_ReturnsData()
     {
-        // Act
-        var response = await _fixture.WebClient.GetAsync("/api/vessel");
+        // Act - Use search endpoint which works without required parameters
+        var response = await _fixture.WebClient.GetAsync("/api/vessels/search");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
