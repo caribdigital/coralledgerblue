@@ -211,6 +211,116 @@ public static class AIEndpoints
         .WithDescription("Get list of vague terms that will trigger disambiguation prompts in queries")
         .Produces<object>();
 
+        // Sprint 5.2.5: Semantic Search Endpoints
+
+        // GET /api/ai/semantic/status - Check if semantic search is configured
+        group.MapGet("/semantic/status", (ISemanticSearchService searchService) =>
+        {
+            return Results.Ok(new
+            {
+                configured = searchService.IsConfigured,
+                message = searchService.IsConfigured
+                    ? "Semantic search with vector embeddings is enabled"
+                    : "Semantic search is not configured. Set MarineAI:EnableEmbeddings in configuration."
+            });
+        })
+        .WithName("GetSemanticSearchStatus")
+        .WithDescription("Check if semantic search with vector embeddings is configured (Sprint 5.2.5)")
+        .Produces<object>();
+
+        // POST /api/ai/semantic/search - Search marine data using semantic similarity
+        group.MapPost("/semantic/search", async (
+            SemanticSearchRequest request,
+            ISemanticSearchService searchService,
+            CancellationToken ct = default) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Query))
+            {
+                return Results.BadRequest(new { error = "Query is required" });
+            }
+
+            var results = await searchService.SearchMarineDataAsync(
+                request.Query,
+                request.EntityType,
+                request.MaxResults ?? 10,
+                ct);
+
+            return Results.Ok(new
+            {
+                query = request.Query,
+                entityType = request.EntityType ?? "All",
+                resultCount = results.Count,
+                results = results.Select(r => new
+                {
+                    id = r.Id,
+                    content = r.Content,
+                    entityType = r.EntityType,
+                    similarityScore = r.SimilarityScore,
+                    metadata = r.Metadata
+                })
+            });
+        })
+        .WithName("SemanticSearch")
+        .WithDescription("Search marine data using vector embeddings and semantic similarity")
+        .Produces<object>()
+        .Produces(StatusCodes.Status400BadRequest);
+
+        // GET /api/ai/semantic/suggestions - Get contextual query suggestions
+        group.MapGet("/semantic/suggestions", async (
+            string? partialQuery,
+            ISemanticSearchService searchService,
+            CancellationToken ct = default) =>
+        {
+            var suggestions = await searchService.GetContextualSuggestionsAsync(
+                partialQuery ?? "",
+                maxSuggestions: 5,
+                ct);
+
+            return Results.Ok(new
+            {
+                partialQuery = partialQuery ?? "",
+                suggestions
+            });
+        })
+        .WithName("GetSemanticSuggestions")
+        .WithDescription("Get contextual query suggestions based on partial input and similar past queries")
+        .Produces<object>();
+
+        // POST /api/ai/semantic/similar - Find similar past queries
+        group.MapPost("/semantic/similar", async (
+            SemanticSearchRequest request,
+            ISemanticSearchService searchService,
+            CancellationToken ct = default) =>
+        {
+            if (string.IsNullOrWhiteSpace(request.Query))
+            {
+                return Results.BadRequest(new { error = "Query is required" });
+            }
+
+            var similarQueries = await searchService.FindSimilarQueriesAsync(
+                request.Query,
+                request.MaxResults ?? 5,
+                request.MinSimilarity ?? 0.7f,
+                ct);
+
+            return Results.Ok(new
+            {
+                query = request.Query,
+                resultCount = similarQueries.Count,
+                similarQueries = similarQueries.Select(r => new
+                {
+                    originalQuery = r.Content,
+                    similarityScore = r.SimilarityScore,
+                    interpretedAs = r.Metadata?.GetValueOrDefault("InterpretedAs"),
+                    persona = r.Metadata?.GetValueOrDefault("Persona")
+                })
+            });
+        })
+        .WithName("FindSimilarQueries")
+        .WithDescription("Find similar past queries using vector embeddings")
+        .Produces<object>()
+        .Produces(StatusCodes.Status400BadRequest);
+
         return endpoints;
     }
 
@@ -226,3 +336,10 @@ public static class AIEndpoints
 }
 
 public record AIQueryRequest(string Query, UserPersona? Persona = null);
+
+// Sprint 5.2.5: Request for semantic search endpoints
+public record SemanticSearchRequest(
+    string Query,
+    string? EntityType = null,
+    int? MaxResults = null,
+    float? MinSimilarity = null);

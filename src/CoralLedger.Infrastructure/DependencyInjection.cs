@@ -61,6 +61,9 @@ public static class DependencyInjection
         services.AddScoped<IMarineAIService, MarineAIService>();
         services.AddScoped<ISpeciesClassificationService, SpeciesClassificationService>();
 
+        // Sprint 5.2.5: Register Semantic Search service (vector embeddings)
+        services.AddScoped<ISemanticSearchService, SemanticSearchService>();
+
         // Register Alert services
         services.AddScoped<IAlertRuleEngine, AlertRuleEngine>();
         services.AddScoped<IAlertNotificationService, AlertNotificationService>();

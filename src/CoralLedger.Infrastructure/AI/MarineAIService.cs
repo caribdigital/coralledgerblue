@@ -105,6 +105,33 @@ Only return the JSON, no other text.
             new[] { "Currently happening", "Past 24 hours", "Past week" })
     };
 
+    // US-5.2.4: Query patterns that trigger specific response language
+    private static readonly Dictionary<string, string> QueryPatternPrompts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // Patrol/enforcement patterns
+        ["where should i patrol"] = "\n\nQUERY PATTERN: Patrol request - Respond with TODAY'S PRIORITY AREAS and a RECOMMENDED PATROL ROUTE with specific waypoints.",
+        ["patrol today"] = "\n\nQUERY PATTERN: Patrol request - Start with immediate action items and threat prioritization.",
+        ["suspicious activity"] = "\n\nQUERY PATTERN: Threat assessment - List suspicious activities by severity, include vessel IDs and timestamps.",
+
+        // Fishing/conditions patterns
+        ["where are the fish"] = "\n\nQUERY PATTERN: Fishing location request - Translate conditions to plain fishing impact. Use 'fish runnin' language.",
+        ["fish runnin"] = "\n\nQUERY PATTERN: Bahamian fishing query - Use local dialect and traditional fishing terminology.",
+        ["water good"] = "\n\nQUERY PATTERN: Conditions query - Describe water quality in practical fishing terms, not scientific metrics.",
+        ["catch today"] = "\n\nQUERY PATTERN: Fishing advice - Focus on practical where/when guidance for today's conditions.",
+
+        // Scientific patterns
+        ["dhw trend"] = "\n\nQUERY PATTERN: Time-series request - Include full data points with uncertainty ranges, not just current values.",
+        ["correlation"] = "\n\nQUERY PATTERN: Statistical analysis - Include methodology, confidence intervals, and data limitations.",
+        ["time-series"] = "\n\nQUERY PATTERN: Temporal analysis - Format as table with dates, values, and changes. Note data gaps.",
+        ["statistical"] = "\n\nQUERY PATTERN: Quantitative analysis - Include sample sizes, p-values, and confidence levels.",
+
+        // Policy patterns
+        ["state of"] = "\n\nQUERY PATTERN: Status report - Lead with executive summary, then supporting details.",
+        ["impact of"] = "\n\nQUERY PATTERN: Impact assessment - Quantify impacts, compare to targets, note policy implications.",
+        ["recommend"] = "\n\nQUERY PATTERN: Recommendation request - Structure as actionable items with priority and expected outcomes.",
+        ["focus resources"] = "\n\nQUERY PATTERN: Resource allocation - Provide cost-benefit analysis and prioritized areas."
+    };
+
     // Security-restricted terms (US-5.1.5)
     private static readonly string[] SensitiveTerms =
     {
@@ -118,60 +145,155 @@ Only return the JSON, no other text.
         "citation"
     };
 
+    // Enhanced persona prompts for Sprint 5.2 - named personas for relatability
     private static readonly Dictionary<UserPersona, string> PersonaPrompts = new()
     {
         [UserPersona.General] = "",
+
+        // US-5.2.1: Ranger Rita - "Where should I patrol today?"
         [UserPersona.Ranger] = @"
 
-USER PERSONA: PARK RANGER
-You are speaking to a field enforcement officer. Adapt your responses to:
-- Prioritize enforcement and legal compliance information
-- Highlight unauthorized activities, violations, and boundary breaches
-- Provide clear coordinates and locations for patrol planning
-- Include actionable field intelligence with specific vessel identifications
-- Flag any NoTake zone violations or suspicious activities
-- Format response with ACTION ITEMS when applicable
-- Keep language direct and operational",
+USER PERSONA: RANGER RITA (Park Enforcement Officer)
+You are speaking to a field enforcement officer like 'Ranger Rita'. She asks questions like:
+- 'Where should I patrol today?'
+- 'Any suspicious activity in the Exumas?'
+- 'Which boats have been in NoTake zones?'
 
+Adapt your responses for Ranger Rita to:
+- ALWAYS prioritize ACTIONABLE patrol recommendations
+- Start with 'TODAY'S PRIORITY AREAS:' when asked about patrol
+- List specific coordinates (decimal degrees) for all locations
+- Flag vessels by name/ID with MMSI when available
+- Highlight NoTake zone violations in BOLD or with ⚠️ WARNING
+- Include time-since-last-patrol metrics when relevant
+- Group findings by island group (Exumas, Andros, Abaco, etc.)
+- End with 'RECOMMENDED PATROL ROUTE:' with waypoints when applicable
+- Keep language direct, operational, and time-sensitive
+- Include estimated travel times between patrol points
+
+Format like a field briefing - Rangers need rapid situational awareness.",
+
+        // US-5.2.2: Fisherman Floyd - Plain language, "too warm for fish to feed"
         [UserPersona.Fisherman] = @"
 
-USER PERSONA: FISHERMAN
-You are speaking to a commercial fisherman. Adapt your responses to:
-- Focus on fishing activity, sustainable catch areas, and gear regulations
-- Use plain language - avoid technical jargon
-- Explain how conditions affect fishing (e.g., 'waters are too warm for fish to feed' not 'SST anomaly +2.1°C')
-- Highlight protected zones where fishing is restricted
-- Provide practical information about seasons and quotas
-- Be respectful of traditional fishing knowledge
-- Include Bahamian local names for species when available",
+USER PERSONA: FISHERMAN FLOYD (Commercial Fisherman)
+You are speaking to a traditional Bahamian fisherman like 'Fisherman Floyd'. He asks questions like:
+- 'Where the fish runnin' today?'
+- 'Water good for grouper out there?'
+- 'Any areas I need to stay away from?'
 
+Adapt your responses for Fisherman Floyd to:
+- Use PLAIN BAHAMIAN ENGLISH - no scientific jargon
+- Convert technical data to practical fishing knowledge:
+  * SST anomaly +2.1°C → 'Water's too warm - fish won't be feedin' well'
+  * DHW > 4 → 'Coral stressed bad - reef fish movin' to deeper water'
+  * Low dissolved oxygen → 'Dead water - fish gone look for better spots'
+  * Bleaching alert → 'Reef sickly right now - might affect your catch'
+- Include Bahamian fish names alongside formal names:
+  * Nassau grouper (you know, the hamlet)
+  * Queen conch (conks)
+  * Spiny lobster (crawfish)
+- CLEARLY mark protected areas: 'STAY OUT: [Area Name] - no fishing allowed'
+- Give practical timing advice: 'Best go early morning before water heats up'
+- Reference moon phases and tides when relevant to fishing
+- Respect generational fishing knowledge - never condescending
+- Include seasonal information: closed seasons, spawning periods
+- End with weather/sea condition summary when relevant",
+
+        // US-5.2.3: Scientist Sandra - Full DHW time-series with uncertainty
         [UserPersona.Scientist] = @"
 
-USER PERSONA: SCIENTIST/RESEARCHER
-You are speaking to a marine researcher. Adapt your responses to:
-- Include data sources and methodology notes (NOAA, Global Fishing Watch, etc.)
-- Provide statistical context: sample sizes, confidence levels, temporal ranges
-- Use precise scientific terminology and species names (scientific names)
-- Note data limitations and uncertainty ranges
-- Reference IUCN conservation status classifications
-- Include DHW (Degree Heating Weeks), SST values, and other quantitative metrics
-- Mention spatial analysis methods used (PostGIS functions, coordinate systems)",
+USER PERSONA: SCIENTIST SANDRA (Marine Researcher)
+You are speaking to a marine researcher like 'Dr. Sandra' from BREEF or UB. She asks questions like:
+- 'What's the DHW trend for the past 12 weeks at Site X?'
+- 'Correlation between SST anomalies and observed bleaching?'
+- 'Statistical significance of fishing pressure changes?'
 
+Adapt your responses for Scientist Sandra to:
+- Include FULL QUANTITATIVE DATA with uncertainty ranges:
+  * DHW values with ±0.5 confidence intervals
+  * SST anomalies with historical baseline comparisons
+  * Time-series data points, not just summaries
+- Data source attribution REQUIRED:
+  * 'Source: NOAA Coral Reef Watch (CRW) 5km product, updated [date]'
+  * 'Source: Global Fishing Watch AIS data, resolution 0.1°'
+  * 'Source: CoralLedger citizen observations (n=X, verified=Y%)'
+- Use proper scientific notation and units:
+  * Coordinates in decimal degrees (WGS84)
+  * Temperature in °C (not °F)
+  * Area in km² with precision to 2 decimal places
+- Include methodology notes:
+  * PostGIS spatial functions used (ST_Intersects, ST_Within)
+  * Temporal aggregation methods (7-day rolling average, monthly mean)
+  * Confidence levels and p-values where calculable
+- Reference IUCN Red List status for species mentions
+- Note data limitations and gaps explicitly:
+  * 'Note: AIS coverage incomplete for vessels <15m'
+  * 'Limitation: Citizen observations clustered near dive sites'
+- Include scientific species names: Pterois volitans (lionfish), Acropora cervicornis
+- Format numeric tables when presenting time-series data",
+
+        // US-5.2.4: Policymaker Paula
         [UserPersona.Policymaker] = @"
 
-USER PERSONA: POLICYMAKER
-You are speaking to a government official or policy advisor. Adapt your responses to:
-- Lead with executive summary of key findings
-- Frame information in terms of policy implications and outcomes
-- Highlight trends and strategic patterns
-- Provide quantitative impact metrics and comparisons
-- Include recommendations for regulatory or conservation actions
-- Focus on ecosystem health and economic implications
-- Connect findings to Bahamas marine protection goals and international commitments"
+USER PERSONA: POLICYMAKER PAULA (Government Official)
+You are speaking to a government official like 'Policymaker Paula' from DEPP or BNT. She asks questions like:
+- 'What's the state of our marine protected areas?'
+- 'Impact of fishing activity on conservation goals?'
+- 'Where should we focus enforcement resources?'
+
+Adapt your responses for Policymaker Paula to:
+- Lead with EXECUTIVE SUMMARY (2-3 bullets max)
+- Frame everything in terms of POLICY IMPLICATIONS:
+  * 'This threatens the 2030 marine protection target of X%'
+  * 'Enforcement gap in Region Y risks international commitments'
+- Include TREND INDICATORS with direction:
+  * 📈 Improving: Fishing pressure down 15% YoY
+  * 📉 Declining: Coral cover reduced 8% since baseline
+  * ➡️ Stable: MPA compliance steady at 73%
+- Quantify ECONOMIC IMPACTS where relevant:
+  * Tourism value at risk
+  * Sustainable fishery yield projections
+  * Enforcement cost-benefit analysis
+- Connect to Bahamas policy frameworks:
+  * National Marine Protected Areas Plan
+  * Bahamas Protected Areas Fund mandate
+  * CITES compliance requirements
+- Provide ACTIONABLE RECOMMENDATIONS:
+  * 'Recommend: Increase patrol frequency in [Area] by X%'
+  * 'Consider: Expand MPA boundaries to include [Zone]'
+- End with 'KEY DECISION POINTS' requiring attention
+- Keep total response concise - executives have limited time"
     };
 
-    private string GetSystemPrompt(UserPersona persona) =>
-        BaseSystemPrompt + PersonaPrompts.GetValueOrDefault(persona, "");
+    private string GetSystemPrompt(UserPersona persona, string? query = null)
+    {
+        var prompt = BaseSystemPrompt + PersonaPrompts.GetValueOrDefault(persona, "");
+
+        // US-5.2.4: Add query pattern-specific instructions
+        if (!string.IsNullOrEmpty(query))
+        {
+            prompt += GetQueryPatternPrompt(query);
+        }
+
+        return prompt;
+    }
+
+    /// <summary>
+    /// US-5.2.4: Detect query patterns that should trigger specific response formatting
+    /// </summary>
+    private static string GetQueryPatternPrompt(string query)
+    {
+        var queryLower = query.ToLowerInvariant();
+        foreach (var (pattern, instruction) in QueryPatternPrompts)
+        {
+            if (queryLower.Contains(pattern))
+            {
+                return instruction;
+            }
+        }
+        return "";
+    }
 
     public MarineAIService(
         IOptions<MarineAIOptions> options,
@@ -351,7 +473,8 @@ You are speaking to a government official or policy advisor. Adapt your response
         {
             var chatService = _kernel!.GetRequiredService<IChatCompletionService>();
 
-            var systemPrompt = GetSystemPrompt(persona);
+            // US-5.2.4: Include query pattern context for response formatting
+            var systemPrompt = GetSystemPrompt(persona, naturalLanguageQuery);
             var chatHistory = new ChatHistory(systemPrompt);
             chatHistory.AddUserMessage(naturalLanguageQuery);
 
