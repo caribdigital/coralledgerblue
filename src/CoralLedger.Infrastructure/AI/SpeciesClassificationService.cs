@@ -1,5 +1,6 @@
 using System.Text.Json;
 using CoralLedger.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
@@ -155,16 +156,37 @@ If no marine species are identifiable, return an empty array: []
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                 ?? new List<IdentifiedSpeciesDto>();
 
-            var result = species.Select(s => new IdentifiedSpecies(
-                s.ScientificName ?? "Unknown",
-                s.CommonName ?? "Unknown",
-                s.ConfidenceScore,
-                s.RequiresExpertVerification || s.ConfidenceScore < 85,
-                s.IsInvasive,
-                s.IsConservationConcern,
-                s.HealthStatus,
-                s.Notes
-            )).ToList();
+            // Lookup local Bahamian names from database (Sprint 4.3 US-4.3.6)
+            var scientificNames = species
+                .Where(s => !string.IsNullOrEmpty(s.ScientificName))
+                .Select(s => s.ScientificName!.ToLower())
+                .ToList();
+
+            var localNameLookup = await _context.BahamianSpecies
+                .AsNoTracking()
+                .Where(bs => scientificNames.Contains(bs.ScientificName.ToLower()))
+                .ToDictionaryAsync(
+                    bs => bs.ScientificName.ToLower(),
+                    bs => new { bs.Id, bs.LocalName },
+                    cancellationToken);
+
+            var result = species.Select(s =>
+            {
+                var key = (s.ScientificName ?? "").ToLower();
+                localNameLookup.TryGetValue(key, out var dbInfo);
+
+                return new IdentifiedSpecies(
+                    s.ScientificName ?? "Unknown",
+                    s.CommonName ?? "Unknown",
+                    dbInfo?.LocalName,  // Local Bahamian name from database
+                    s.ConfidenceScore,
+                    s.RequiresExpertVerification || s.ConfidenceScore < 85,
+                    s.IsInvasive,
+                    s.IsConservationConcern,
+                    s.HealthStatus,
+                    s.Notes,
+                    dbInfo?.Id);  // Database species ID for linking
+            }).ToList();
 
             _logger.LogInformation(
                 "Classified {Count} species from photo. Invasive: {Invasive}, Conservation concern: {Conservation}",

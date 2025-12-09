@@ -23,12 +23,18 @@ public record SpeciesClassificationResult(
     IReadOnlyList<IdentifiedSpecies> Species,
     string? Error = null);
 
+/// <summary>
+/// Species identified by AI classification
+/// Sprint 4.3 US-4.3.6: Includes local Bahamian name alongside scientific and common names
+/// </summary>
 public record IdentifiedSpecies(
     string ScientificName,
     string CommonName,
+    string? LocalName,
     double ConfidenceScore,
     bool RequiresExpertVerification,
     bool IsInvasive,
     bool IsConservationConcern,
     string? HealthStatus,
-    string? Notes);
+    string? Notes,
+    Guid? DatabaseSpeciesId = null);

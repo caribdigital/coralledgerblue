@@ -1,6 +1,7 @@
 using CoralLedger.Application.Common.Interfaces;
 using CoralLedger.Application.Features.Species.Queries.GetAllSpecies;
 using CoralLedger.Application.Features.Species.Queries.SearchSpecies;
+using CoralLedger.Domain.Entities;
 using CoralLedger.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -120,6 +121,148 @@ public static class SpeciesEndpoints
         .WithName("GetConservationStatuses")
         .WithDescription("Get list of IUCN conservation statuses");
 
+        // POST /api/species/misidentification - Report a species misidentification
+        // Sprint 4.3 US-4.3.4: 'Report Misidentification' feedback loop to improve the model
+        group.MapPost("/misidentification", async (
+            ReportMisidentificationRequest request,
+            IMarineDbContext context,
+            CancellationToken ct) =>
+        {
+            // Validate the species observation exists
+            var observation = await context.SpeciesObservations
+                .FirstOrDefaultAsync(o => o.Id == request.SpeciesObservationId, ct);
+
+            if (observation is null)
+            {
+                return Results.NotFound(new { error = "Species observation not found" });
+            }
+
+            // Check for corrected species if ID provided
+            Guid? correctedSpeciesId = null;
+            if (!string.IsNullOrEmpty(request.CorrectedScientificName))
+            {
+                var correctedSpecies = await context.BahamianSpecies
+                    .FirstOrDefaultAsync(s =>
+                        s.ScientificName.ToLower() == request.CorrectedScientificName.ToLower(), ct);
+                correctedSpeciesId = correctedSpecies?.Id;
+            }
+
+            // Parse expertise enum
+            if (!Enum.TryParse<ReporterExpertise>(request.Expertise, true, out var expertise))
+            {
+                expertise = ReporterExpertise.CitizenScientist;
+            }
+
+            // Create the report
+            var report = SpeciesMisidentificationReport.Create(
+                request.SpeciesObservationId,
+                request.IncorrectScientificName,
+                request.Reason,
+                request.CorrectedScientificName,
+                correctedSpeciesId,
+                request.ReporterEmail,
+                request.ReporterName,
+                expertise);
+
+            context.MisidentificationReports.Add(report);
+            await context.SaveChangesAsync(ct);
+
+            return Results.Created($"/api/species/misidentification/{report.Id}", new
+            {
+                reportId = report.Id,
+                status = report.Status.ToString(),
+                message = "Thank you for your feedback. Your report will be reviewed by our team."
+            });
+        })
+        .WithName("ReportMisidentification")
+        .WithDescription("Report an AI species misidentification (Sprint 4.3 US-4.3.4 feedback loop)")
+        .Produces(StatusCodes.Status201Created)
+        .Produces(StatusCodes.Status404NotFound);
+
+        // GET /api/species/misidentification - Get pending misidentification reports (moderator view)
+        group.MapGet("/misidentification", async (
+            string? status,
+            int limit,
+            IMarineDbContext context,
+            CancellationToken ct) =>
+        {
+            var query = context.MisidentificationReports
+                .AsNoTracking()
+                .Include(r => r.SpeciesObservation)
+                .Include(r => r.CorrectedSpecies)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(status) &&
+                Enum.TryParse<MisidentificationReportStatus>(status, true, out var statusEnum))
+            {
+                query = query.Where(r => r.Status == statusEnum);
+            }
+            else
+            {
+                // Default to pending reports
+                query = query.Where(r => r.Status == MisidentificationReportStatus.Pending);
+            }
+
+            var reports = await query
+                .OrderByDescending(r => r.ReportedAt)
+                .Take(limit > 0 ? limit : 50)
+                .Select(r => new MisidentificationReportDto(
+                    r.Id,
+                    r.SpeciesObservationId,
+                    r.IncorrectScientificName,
+                    r.CorrectedScientificName,
+                    r.CorrectedSpeciesId,
+                    r.Reason,
+                    r.ReporterName,
+                    r.Expertise.ToString(),
+                    r.Status.ToString(),
+                    r.ReportedAt,
+                    r.ReviewedAt,
+                    r.ReviewNotes))
+                .ToListAsync(ct);
+
+            return Results.Ok(reports);
+        })
+        .WithName("GetMisidentificationReports")
+        .WithDescription("Get species misidentification reports (for moderators)")
+        .Produces<IReadOnlyList<MisidentificationReportDto>>();
+
+        // PATCH /api/species/misidentification/{id}/review - Review a misidentification report
+        group.MapPatch("/misidentification/{id:guid}/review", async (
+            Guid id,
+            ReviewMisidentificationRequest request,
+            IMarineDbContext context,
+            CancellationToken ct) =>
+        {
+            var report = await context.MisidentificationReports
+                .FirstOrDefaultAsync(r => r.Id == id, ct);
+
+            if (report is null)
+            {
+                return Results.NotFound(new { error = "Misidentification report not found" });
+            }
+
+            if (!Enum.TryParse<MisidentificationReportStatus>(request.Status, true, out var newStatus))
+            {
+                return Results.BadRequest(new { error = "Invalid status. Use: Confirmed, Rejected, or Inconclusive" });
+            }
+
+            report.MarkAsReviewed(newStatus, request.ReviewNotes);
+            await context.SaveChangesAsync(ct);
+
+            return Results.Ok(new
+            {
+                reportId = report.Id,
+                status = report.Status.ToString(),
+                reviewedAt = report.ReviewedAt
+            });
+        })
+        .WithName("ReviewMisidentification")
+        .WithDescription("Review and update a misidentification report status")
+        .Produces<object>()
+        .Produces(StatusCodes.Status404NotFound)
+        .Produces(StatusCodes.Status400BadRequest);
+
         return endpoints;
     }
 
@@ -137,3 +280,39 @@ public static class SpeciesEndpoints
         _ => status.ToString()
     };
 }
+
+/// <summary>
+/// Request to report a species misidentification
+/// </summary>
+public record ReportMisidentificationRequest(
+    Guid SpeciesObservationId,
+    string IncorrectScientificName,
+    string Reason,
+    string? CorrectedScientificName = null,
+    string? ReporterEmail = null,
+    string? ReporterName = null,
+    string? Expertise = "CitizenScientist");
+
+/// <summary>
+/// Request to review a misidentification report
+/// </summary>
+public record ReviewMisidentificationRequest(
+    string Status,
+    string? ReviewNotes = null);
+
+/// <summary>
+/// DTO for misidentification report
+/// </summary>
+public record MisidentificationReportDto(
+    Guid Id,
+    Guid SpeciesObservationId,
+    string IncorrectScientificName,
+    string? CorrectedScientificName,
+    Guid? CorrectedSpeciesId,
+    string Reason,
+    string? ReporterName,
+    string Expertise,
+    string Status,
+    DateTime ReportedAt,
+    DateTime? ReviewedAt,
+    string? ReviewNotes);
