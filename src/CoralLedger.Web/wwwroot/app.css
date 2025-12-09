@@ -32,6 +32,26 @@ a,
     box-shadow: 0 0 0 0.15rem rgba(88, 166, 255, 0.4), 0 0 0 0.35rem var(--focus-ring);
 }
 
+.theme-toggle {
+    border-color: rgba(255, 255, 255, 0.6);
+    transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.4);
+}
+
+:root[data-theme='light'] .theme-toggle {
+    border-color: rgba(6, 22, 47, 0.5);
+    color: var(--color-text);
+}
+
+:root[data-theme='light'] .theme-toggle:hover,
+:root[data-theme='light'] .theme-toggle:focus-visible {
+    box-shadow: 0 0 0 0.2rem rgba(6, 22, 47, 0.35);
+}
+
 .content {
     padding-top: 1.1rem;
     color: var(--color-text);

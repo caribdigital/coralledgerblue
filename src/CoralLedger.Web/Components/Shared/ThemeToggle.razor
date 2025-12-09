@@ -1,0 +1,22 @@
+@using CoralLedger.Web.Theme
+@inject IThemeState ThemeState
+
+<button class="btn btn-outline-light btn-sm theme-toggle d-flex align-items-center gap-2"
+        type="button"
+        @onclick="ToggleModeAsync"
+        aria-live="polite"
+        aria-pressed="@(ThemeState.CurrentMode == ThemeMode.Light ? "true" : "false")"
+        title="@ButtonLabel">
+    <i class="@IconClass" aria-hidden="true"></i>
+    <span>@ButtonLabel</span>
+</button>
+
+@code {
+    private string ButtonLabel => ThemeState.CurrentMode == ThemeMode.Dark ? "Light mode" : "Dark mode";
+    private string IconClass => ThemeState.CurrentMode == ThemeMode.Dark ? "bi-brightness-high" : "bi-moon";
+
+    private async Task ToggleModeAsync()
+    {
+        await ThemeState.ToggleModeAsync();
+    }
+}
