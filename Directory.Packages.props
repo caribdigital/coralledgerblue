@@ -50,6 +50,8 @@
     <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.13.1" />
     <!-- Azure Storage -->
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.22.2" />
+    <!-- Image Metadata / EXIF Extraction -->
+    <PackageVersion Include="MetadataExtractor" Version="2.8.1" />
     <!-- Redis Caching -->
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.0" />
     <!-- AI / Semantic Kernel -->

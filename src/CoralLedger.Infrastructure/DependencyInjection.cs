@@ -86,6 +86,10 @@ public static class DependencyInjection
         // Sprint 3.3 US-3.3.2: <100ms for 10K positions
         services.AddScoped<IBatchContainmentService, BatchContainmentService>();
 
+        // Register Observation Validation Service (citizen science validation)
+        // Sprint 4.2 US-4.2.2/4.2.3/4.2.6: EXIF, geofencing, plausibility checks
+        services.AddScoped<IObservationValidationService, ObservationValidationService>();
+
         // Register Cache service (Redis or in-memory fallback)
         var redisOptions = configuration.GetSection(RedisCacheOptions.SectionName).Get<RedisCacheOptions>()
             ?? new RedisCacheOptions();
