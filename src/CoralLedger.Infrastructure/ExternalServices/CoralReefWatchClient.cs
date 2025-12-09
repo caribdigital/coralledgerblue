@@ -1,9 +1,13 @@
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CoralLedger.Application.Common.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace CoralLedger.Infrastructure.ExternalServices;
 
@@ -18,6 +22,8 @@ public class CoralReefWatchClient : ICoralReefWatchClient
     private readonly ILogger<CoralReefWatchClient> _logger;
     private readonly ICacheService _cache;
     private readonly Microsoft.Extensions.Options.IOptions<RedisCacheOptions> _cacheOptions;
+    private readonly CoralReefWatchOptions _options;
+    private readonly IReadOnlyList<CrwBleachingData>? _mockData;
 
     // NOAA ERDDAP base URL for Coral Reef Watch DHW dataset
     private const string ErddapBaseUrl = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/";
@@ -35,12 +41,14 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         HttpClient httpClient,
         ILogger<CoralReefWatchClient> logger,
         ICacheService cache,
-        Microsoft.Extensions.Options.IOptions<RedisCacheOptions> cacheOptions)
+        Microsoft.Extensions.Options.IOptions<RedisCacheOptions> cacheOptions,
+        IOptions<CoralReefWatchOptions> options)
     {
         _httpClient = httpClient;
         _logger = logger;
         _cache = cache;
         _cacheOptions = cacheOptions;
+        _options = options.Value;
 
         _httpClient.BaseAddress = new Uri(ErddapBaseUrl);
         _httpClient.Timeout = TimeSpan.FromSeconds(30); // Reduced for better UX
@@ -51,6 +59,22 @@ public class CoralReefWatchClient : ICoralReefWatchClient
             PropertyNameCaseInsensitive = true,
             NumberHandling = JsonNumberHandling.AllowReadingFromString
         };
+
+        if (_options.UseMockData)
+        {
+            var mockPath = Path.Combine(AppContext.BaseDirectory, _options.MockDataPath);
+            if (File.Exists(mockPath))
+            {
+                _mockData = JsonSerializer.Deserialize<List<CrwBleachingData>>(
+                    File.ReadAllText(mockPath), _jsonOptions) ?? new List<CrwBleachingData>();
+                _logger.LogInformation("Loaded {Count} mock bleaching records from {Path}", _mockData.Count, mockPath);
+            }
+            else
+            {
+                _mockData = Array.Empty<CrwBleachingData>();
+                _logger.LogWarning("Mock bleaching data not found at {Path}", mockPath);
+            }
+        }
     }
 
     public async Task<CrwBleachingData?> GetBleachingDataAsync(
@@ -59,6 +83,11 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         DateOnly date,
         CancellationToken cancellationToken = default)
     {
+        if (TryGetMockData(out var mockData))
+        {
+            return mockData.FirstOrDefault(record => MatchesPoint(record, longitude, latitude, date));
+        }
+
         // Use cache with point-specific key
         var cacheKey = CacheKeys.ForBleachingPoint(longitude, latitude, date);
         var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.NoaaBleachingCacheTtlHours);
@@ -132,6 +161,19 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         DateOnly endDate,
         CancellationToken cancellationToken = default)
     {
+        if (TryGetMockData(out var mockData))
+        {
+            return mockData
+                .Where(record =>
+                    record.Longitude >= minLon &&
+                    record.Longitude <= maxLon &&
+                    record.Latitude >= minLat &&
+                    record.Latitude <= maxLat &&
+                    record.Date >= startDate &&
+                    record.Date <= endDate)
+                .ToList();
+        }
+
         // Use cache with region-specific key
         var cacheKey = CacheKeys.ForBleachingRegion(minLon, minLat, maxLon, maxLat, startDate, endDate);
         var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.NoaaBleachingCacheTtlHours);
@@ -213,6 +255,17 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         DateOnly endDate,
         CancellationToken cancellationToken = default)
     {
+        if (TryGetMockData(out var mockData))
+        {
+            return mockData
+                .Where(record =>
+                    IsSameLocation(record, longitude, latitude) &&
+                    record.Date >= startDate &&
+                    record.Date <= endDate)
+                .OrderBy(record => record.Date)
+                .ToList();
+        }
+
         // Use cache with time series-specific key
         var cacheKey = CacheKeys.ForBleachingTimeSeries(longitude, latitude, startDate, endDate);
         var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.NoaaBleachingCacheTtlHours);
@@ -331,6 +384,22 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         }
 
         return results;
+    }
+
+    private bool TryGetMockData(out IReadOnlyList<CrwBleachingData> data)
+    {
+        data = _mockData ?? Array.Empty<CrwBleachingData>();
+        return _options.UseMockData && data.Count > 0;
+    }
+
+    private static bool MatchesPoint(CrwBleachingData record, double longitude, double latitude, DateOnly date)
+        => IsSameLocation(record, longitude, latitude) && record.Date == date;
+
+    private static bool IsSameLocation(CrwBleachingData record, double longitude, double latitude)
+    {
+        const double tolerance = 0.5;
+        return Math.Abs(record.Longitude - longitude) <= tolerance &&
+               Math.Abs(record.Latitude - latitude) <= tolerance;
     }
 
     private static double? GetDoubleValue(JsonElement element)
