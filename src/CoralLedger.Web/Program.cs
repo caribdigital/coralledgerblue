@@ -8,6 +8,7 @@ using CoralLedger.Web.Endpoints;
 using CoralLedger.Web.Hubs;
 using CoralLedger.Web.Security;
 using CoralLedger.Web.Theme;
+using MudBlazor.Services;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,10 @@ builder.AddServiceDefaults();
 
 // Provide the shared UI theme for CSS variable overrides.
 builder.Services.AddSingleton(CoralLedgerTheme.Dark);
+builder.Services.AddScoped<IThemeState, ThemeState>();
+
+// Add MudBlazor services
+builder.Services.AddMudServices();
 
 // Add Blazor components with Interactive Server mode + WebAssembly Auto mode
 builder.Services.AddRazorComponents()

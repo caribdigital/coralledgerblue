@@ -5,6 +5,28 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    <script>
+        (function () {
+            const storageKey = 'coral-theme-mode';
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const parseMode = value => value === 'light' ? 'light' : 'dark';
+            const applyMode = mode => document.documentElement.setAttribute('data-theme', mode);
+            const getStored = () => {
+                const stored = localStorage.getItem(storageKey);
+                return stored ? parseMode(stored) : (prefersDark ? 'dark' : 'light');
+            };
+            window.CoralLedgerThemeManager = {
+                getMode: () => getStored(),
+                setMode: mode => {
+                    const parsed = parseMode(mode);
+                    localStorage.setItem(storageKey, parsed);
+                    applyMode(parsed);
+                },
+                applyMode: mode => applyMode(parseMode(mode))
+            };
+            applyMode(getStored());
+        })();
+    </script>
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#00bcd4" />
@@ -20,6 +42,7 @@
     <link rel="apple-touch-icon" href="images/icons/icon-152x152.png" />
 
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -30,15 +53,22 @@
     <script src="lib/leaflet/leaflet.js"></script>
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="CoralLedger.Web.styles.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="shortcut icon" href="images/logos/favicons/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="images/logos/favicons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="images/logos/favicons/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="images/logos/favicons/apple-touch-icon.png" />
     <HeadOutlet />
 </head>
 
 <body>
+    <MudPopoverProvider />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
     <Routes />
     <!-- Leaflet Map Interop (Leaflet.js is loaded in head) -->
     <script src="js/leaflet-map.js"></script>
     <script src="_framework/blazor.web.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 
     <!-- Service Worker Registration -->
     <script>

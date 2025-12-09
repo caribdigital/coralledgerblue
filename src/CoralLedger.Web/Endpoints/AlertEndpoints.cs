@@ -108,9 +108,7 @@ public static class AlertEndpoints
             if (alert == null)
                 return Results.NotFound();
 
-            alert.IsAcknowledged = true;
-            alert.AcknowledgedBy = request.AcknowledgedBy ?? "System";
-            alert.AcknowledgedAt = DateTime.UtcNow;
+            alert.Acknowledge(request.AcknowledgedBy ?? "System");
 
             await context.SaveChangesAsync(ct);
 
@@ -166,19 +164,23 @@ public static class AlertEndpoints
             if (!Enum.TryParse<AlertSeverity>(request.Severity, true, out var severity))
                 severity = AlertSeverity.Medium;
 
-            var rule = new AlertRule
+            var rule = AlertRule.Create(
+                name: request.Name,
+                type: alertType,
+                conditions: request.Conditions,
+                description: request.Description,
+                severity: severity,
+                marineProtectedAreaId: request.MarineProtectedAreaId,
+                notificationChannels: request.NotificationChannels ?? NotificationChannel.Dashboard | NotificationChannel.RealTime,
+                notificationEmails: request.NotificationEmails,
+                cooldownPeriod: TimeSpan.FromMinutes(request.CooldownMinutes ?? 60)
+            );
+
+            // Deactivate if requested
+            if (request.IsActive == false)
             {
-                Name = request.Name,
-                Description = request.Description,
-                Type = alertType,
-                Severity = severity,
-                IsActive = request.IsActive ?? true,
-                Conditions = request.Conditions,
-                MarineProtectedAreaId = request.MarineProtectedAreaId,
-                NotificationChannels = request.NotificationChannels ?? NotificationChannel.Dashboard | NotificationChannel.RealTime,
-                NotificationEmails = request.NotificationEmails,
-                CooldownPeriod = TimeSpan.FromMinutes(request.CooldownMinutes ?? 60)
-            };
+                rule.Deactivate();
+            }
 
             context.AlertRules.Add(rule);
             await context.SaveChangesAsync(ct);
@@ -200,17 +202,36 @@ public static class AlertEndpoints
             if (rule == null)
                 return Results.NotFound();
 
+            // Update basic properties
             if (request.Name != null) rule.Name = request.Name;
             if (request.Description != null) rule.Description = request.Description;
-            if (request.IsActive.HasValue) rule.IsActive = request.IsActive.Value;
-            if (request.Conditions != null) rule.Conditions = request.Conditions;
-            if (request.Severity != null && Enum.TryParse<AlertSeverity>(request.Severity, true, out var sev))
-                rule.Severity = sev;
-            if (request.NotificationChannels.HasValue) rule.NotificationChannels = request.NotificationChannels.Value;
-            if (request.NotificationEmails != null) rule.NotificationEmails = request.NotificationEmails;
-            if (request.CooldownMinutes.HasValue) rule.CooldownPeriod = TimeSpan.FromMinutes(request.CooldownMinutes.Value);
 
-            rule.UpdatedAt = DateTime.UtcNow;
+            // Update conditions using domain method
+            if (request.Conditions != null) rule.UpdateConditions(request.Conditions);
+
+            // Update severity using domain method
+            if (request.Severity != null && Enum.TryParse<AlertSeverity>(request.Severity, true, out var sev))
+                rule.UpdateSeverity(sev);
+
+            // Update active state using domain methods
+            if (request.IsActive.HasValue)
+            {
+                if (request.IsActive.Value)
+                    rule.Activate();
+                else
+                    rule.Deactivate();
+            }
+
+            // Update notification settings using domain method
+            if (request.NotificationChannels.HasValue || request.NotificationEmails != null || request.CooldownMinutes.HasValue)
+            {
+                var channels = request.NotificationChannels ?? rule.NotificationChannels;
+                var emails = request.NotificationEmails ?? rule.NotificationEmails;
+                var cooldown = request.CooldownMinutes.HasValue
+                    ? TimeSpan.FromMinutes(request.CooldownMinutes.Value)
+                    : (TimeSpan?)null;
+                rule.UpdateNotificationSettings(channels, emails, cooldown);
+            }
             await context.SaveChangesAsync(ct);
 
             return Results.Ok(new { rule.Id, rule.Name, rule.IsActive });
