@@ -1,0 +1,114 @@
+@namespace CoralLedger.Web.Components.Shared
+
+@* Data Freshness Indicator - Sprint 4.1 US-4.1.4 *@
+@* Addresses Dr. Bethel Risk 1.4: Temporal Misalignment *@
+
+<div class="data-freshness @GetFreshnessClass()" title="@GetTooltip()">
+    <span class="freshness-icon">@GetIcon()</span>
+    <span class="freshness-text">@GetDisplayText()</span>
+</div>
+
+@code {
+    [Parameter]
+    public DateTime? LastUpdated { get; set; }
+
+    [Parameter]
+    public bool IsOffline { get; set; }
+
+    [Parameter]
+    public bool IsStale { get; set; }
+
+    [Parameter]
+    public string DataSource { get; set; } = "Data";
+
+    [Parameter]
+    public TimeSpan? StalenessThreshold { get; set; }
+
+    private TimeSpan EffectiveThreshold => StalenessThreshold ?? TimeSpan.FromMinutes(30);
+
+    private bool IsDataStale()
+    {
+        if (IsStale) return true;
+        if (!LastUpdated.HasValue) return true;
+
+        return DateTime.UtcNow - LastUpdated.Value > EffectiveThreshold;
+    }
+
+    private string GetFreshnessClass()
+    {
+        if (IsOffline) return "freshness-offline";
+        if (IsDataStale()) return "freshness-stale";
+        return "freshness-fresh";
+    }
+
+    private string GetIcon()
+    {
+        if (IsOffline) return "📶"; // Offline icon
+        if (IsDataStale()) return "⏰"; // Clock for stale
+        return "✓"; // Checkmark for fresh
+    }
+
+    private string GetDisplayText()
+    {
+        if (IsOffline)
+        {
+            return LastUpdated.HasValue
+                ? $"Offline - Cached {FormatTimeAgo(LastUpdated.Value)}"
+                : "Offline - No cached data";
+        }
+
+        if (!LastUpdated.HasValue)
+        {
+            return "No data available";
+        }
+
+        var timeAgo = FormatTimeAgo(LastUpdated.Value);
+
+        if (IsDataStale())
+        {
+            return $"Last updated: {timeAgo} (may be outdated)";
+        }
+
+        return $"Updated {timeAgo}";
+    }
+
+    private string GetTooltip()
+    {
+        if (IsOffline)
+        {
+            return "You are offline. Showing cached data.";
+        }
+
+        if (IsDataStale())
+        {
+            return $"{DataSource} may be outdated. Last sync was more than {FormatDuration(EffectiveThreshold)} ago.";
+        }
+
+        return $"{DataSource} is up to date.";
+    }
+
+    private string FormatTimeAgo(DateTime dateTime)
+    {
+        var timeSpan = DateTime.UtcNow - dateTime;
+
+        if (timeSpan.TotalMinutes < 1)
+            return "just now";
+        if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes} min ago";
+        if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours} hour{((int)timeSpan.TotalHours == 1 ? "" : "s")} ago";
+        if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays} day{((int)timeSpan.TotalDays == 1 ? "" : "s")} ago";
+
+        return dateTime.ToString("MMM d, yyyy");
+    }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalMinutes < 60)
+            return $"{(int)duration.TotalMinutes} minutes";
+        if (duration.TotalHours < 24)
+            return $"{(int)duration.TotalHours} hours";
+        return $"{(int)duration.TotalDays} days";
+    }
+}

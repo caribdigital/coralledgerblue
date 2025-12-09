@@ -1,9 +1,10 @@
 // CoralLedger Blue Service Worker
-// Version: 3.0.0 - Fixed CSS caching and offline detection
-const CACHE_VERSION = 'v3';
+// Version: 4.0.0 - Sprint 4.1: PWA Offline Support & Geometry Pre-caching
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `coralledger-static-${CACHE_VERSION}`;
 const API_CACHE = `coralledger-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `coralledger-images-${CACHE_VERSION}`;
+const GEOMETRY_CACHE = `coralledger-geometry-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
 // Static assets to cache immediately on install
@@ -17,6 +18,14 @@ const STATIC_ASSETS = [
     '/js/mobile.js',
     '/lib/bootstrap/dist/css/bootstrap.min.css',
     '/offline.html'
+];
+
+// Geometry endpoints to pre-cache for offline map rendering (Sprint 4.1 US-4.1.3)
+const GEOMETRY_ENDPOINTS = [
+    '/api/mpas/geojson?resolution=low',      // Low resolution for offline
+    '/api/mpas/geojson?resolution=medium',   // Medium for better connectivity
+    '/api/mpas',                              // MPA list
+    '/api/mpas/stats'                         // Statistics
 ];
 
 // API routes with caching configuration
@@ -76,20 +85,50 @@ async function openDB() {
 // Service Worker Events
 // ==========================================================================
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing service worker v2...');
+    console.log('[SW] Installing service worker v4...');
     event.waitUntil(
         Promise.all([
             caches.open(STATIC_CACHE).then((cache) => {
                 console.log('[SW] Caching static assets');
                 return cache.addAll(STATIC_ASSETS);
             }),
-            openDB()
+            openDB(),
+            // Pre-cache geometry for offline map support (Sprint 4.1 US-4.1.3)
+            preCacheGeometry()
         ]).then(() => self.skipWaiting())
     );
 });
 
+// Pre-cache geometry endpoints for offline map rendering
+async function preCacheGeometry() {
+    console.log('[SW] Pre-caching geometry for offline maps...');
+    const cache = await caches.open(GEOMETRY_CACHE);
+
+    for (const endpoint of GEOMETRY_ENDPOINTS) {
+        try {
+            const response = await fetch(endpoint);
+            if (response.ok) {
+                // Add cache metadata
+                const headers = new Headers(response.headers);
+                headers.set('sw-cached-at', Date.now().toString());
+                headers.set('sw-cache-type', 'geometry');
+
+                await cache.put(endpoint, new Response(await response.blob(), {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: headers
+                }));
+                console.log(`[SW] Pre-cached: ${endpoint}`);
+            }
+        } catch (error) {
+            console.log(`[SW] Failed to pre-cache ${endpoint}:`, error.message);
+            // Don't fail install if geometry pre-caching fails
+        }
+    }
+}
+
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating service worker v2...');
+    console.log('[SW] Activating service worker v4...');
     event.waitUntil(
         Promise.all([
             // Clean up old caches
@@ -100,7 +139,8 @@ self.addEventListener('activate', (event) => {
                             return name.startsWith('coralledger-') &&
                                    name !== STATIC_CACHE &&
                                    name !== API_CACHE &&
-                                   name !== IMAGE_CACHE;
+                                   name !== IMAGE_CACHE &&
+                                   name !== GEOMETRY_CACHE;
                         })
                         .map((name) => {
                             console.log('[SW] Deleting old cache:', name);
@@ -132,7 +172,9 @@ self.addEventListener('fetch', (event) => {
     }
 
     // Handle different resource types
-    if (url.pathname.startsWith('/api/')) {
+    if (isGeometryRequest(url)) {
+        event.respondWith(handleGeometryRequest(request, url));
+    } else if (url.pathname.startsWith('/api/')) {
         event.respondWith(handleApiRequest(request, url));
     } else if (isImageRequest(request)) {
         event.respondWith(handleImageRequest(request));
@@ -140,6 +182,68 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(handleStaticRequest(request));
     }
 });
+
+// Check if request is for geometry data (Sprint 4.1 US-4.1.3)
+function isGeometryRequest(url) {
+    return url.pathname.includes('/api/mpas/geojson') ||
+           (url.pathname === '/api/mpas' && url.search === '');
+}
+
+// Handle geometry requests with offline-first strategy
+async function handleGeometryRequest(request, url) {
+    // Try geometry cache first for offline support
+    const geometryCache = await caches.open(GEOMETRY_CACHE);
+    const cachedResponse = await geometryCache.match(request);
+
+    if (cachedResponse) {
+        // Refresh cache in background
+        fetch(request)
+            .then(async (networkResponse) => {
+                if (networkResponse.ok) {
+                    const headers = new Headers(networkResponse.headers);
+                    headers.set('sw-cached-at', Date.now().toString());
+                    headers.set('sw-cache-type', 'geometry');
+                    await geometryCache.put(request, new Response(await networkResponse.blob(), {
+                        status: networkResponse.status,
+                        statusText: networkResponse.statusText,
+                        headers: headers
+                    }));
+                }
+            })
+            .catch(() => { /* Ignore background fetch errors */ });
+
+        return cachedResponse;
+    }
+
+    // No cache, try network
+    try {
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+            const headers = new Headers(networkResponse.headers);
+            headers.set('sw-cached-at', Date.now().toString());
+            headers.set('sw-cache-type', 'geometry');
+            await geometryCache.put(request, new Response(await networkResponse.clone().blob(), {
+                status: networkResponse.status,
+                statusText: networkResponse.statusText,
+                headers: headers
+            }));
+        }
+        return networkResponse;
+    } catch (error) {
+        // Return offline response for geometry
+        return new Response(
+            JSON.stringify({
+                error: 'Offline',
+                message: 'Geometry data not available offline',
+                offline: true
+            }),
+            {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' }
+            }
+        );
+    }
+}
 
 // ==========================================================================
 // Request Handlers
@@ -466,4 +570,4 @@ async function storeOfflineObservation(observation) {
     }
 }
 
-console.log('[SW] CoralLedger Blue Service Worker v2 loaded');
+console.log('[SW] CoralLedger Blue Service Worker v4 loaded - Sprint 4.1 PWA Offline Support');
