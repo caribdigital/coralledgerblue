@@ -138,6 +138,13 @@ dotnet test
 - Add XML comments for public APIs
 - Keep code self-documenting where possible
 
+### Visual regression & accessibility docs
+
+- Start the Aspire stack with `Scripts/coralledgerblue/Start-CoralLedgerBlueAspire.ps1 -Detached` before running `dotnet test tests/CoralLedger.E2E.Tests/CoralLedger.E2E.Tests.csproj`. The Playwright fixture now probes HTTP/HTTPS and stores failure screenshots under `tests/CoralLedger.E2E.Tests/playwright-artifacts/`.
+- Set `CoralReefWatch__UseMockData=true` when running the host for visual regression so the Coral Reef Watch client uses the local mock dataset (`mock-bleaching-data.json`) instead of hitting NOAA.
+- Record Lighthouse/axe output in `docs/accessibility-audit.md` every time the UI changes so regressions are apparent and priorities are traceable.
+- Keep `docs/brand-guidelines.md` updated whenever logos, favicons, `github-header.png`, or `og-image.png` change; re-run `python scripts/create_brand_assets.py` / `python scripts/create_favicons.py` and commit the regenerated assets.
+
 ## Code of Conduct
 
 - Be respectful and inclusive

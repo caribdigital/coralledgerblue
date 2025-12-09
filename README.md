@@ -1,5 +1,9 @@
 # 🐚 CoralLedger Blue
 
+![CoralLedger Blue](github-header.png)
+
+🪸 Share-ready preview: use `og-image.png` (1200×630) as the repository's `og:image`.
+
 **Open Source Marine Intelligence for the Blue Economy**
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
@@ -56,6 +60,7 @@ We're actively looking for contributors in these areas:
 | 🇭🇹 **Haitian Creole** | Easy | Support Bahamian fishing communities |
 | 🗺️ **GIS Optimization** | Advanced | Improve PostGIS query performance |
 | 📝 **Documentation** | Easy | Expand guides and tutorials |
+| ? **Brand & assets** | Medium | Refresh github-header.png, og-image.png, or favicons; see docs/brand-guidelines.md |
 
 👉 **[See all Good First Issues](https://github.com/caribdigital/coralledgerblue/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)**
 
@@ -78,6 +83,17 @@ We're actively looking for contributors in these areas:
 | **Jobs** | Quartz.NET 3.13 |
 | **Orchestration** | .NET Aspire 13.0 |
 | **Containers** | Docker |
+
+## Visual Regression & Accessibility
+
+### Visual regression
+- Start the Aspire stack with `Scripts/coralledgerblue/Start-CoralLedgerBlueAspire.ps1 -Detached`, then run `dotnet test tests/CoralLedger.E2E.Tests/CoralLedger.E2E.Tests.csproj` to exercise the Playwright suite and capture visual baselines. The fixture now probes HTTP/HTTPS before navigating and stores failure screenshots under `tests/CoralLedger.E2E.Tests/playwright-artifacts/`.
+- Store the Lighthouse/axe reports and summary screenshots near `docs/accessibility-audit.md` so regressions are traceable.
+
+### Accessibility
+- The design system tokens (`wwwroot/css/base/_variables.css`) and `docs/design-system.md` guarantee consistent focus, contrast, and typography, but the audit doc records the current gaps and remediation plan.
+- Brand usage (logo, favicons, hero assets) is described in `docs/brand-guidelines.md`; re-run `scripts/create_brand_assets.py` and `scripts/create_favicons.py` whenever the palette or tagline changes so the README hero and `og:image` stay aligned.
+- Protected Planet API tokens live in `docs/DEVELOPER.md` (section covering `ProtectedPlanet:ApiToken`) and `secrets.template.json`. Keep them in user secrets or environment variables rather than checked in.
 
 ## Architecture
 
@@ -263,6 +279,8 @@ See [.NET Secret Management](https://learn.microsoft.com/en-us/aspnet/core/secur
 - [Redis Caching Guide](docs/REDIS.md) - Distributed caching setup and configuration
 - [Phase 1 Delivery](docs/phase1-delivery.md)
 - [Phase 2 Delivery](docs/phase2-delivery.md)
+- [Accessibility audit plan](docs/accessibility-audit.md)
+- [Brand guidelines](docs/brand-guidelines.md)
 - [Contributing Guide](docs/CONTRIBUTING.md)
 
 ## Community
