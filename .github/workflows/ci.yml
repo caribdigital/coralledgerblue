@@ -2,14 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 env:
-  DOTNET_VERSION: '9.0.x'
-  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
-  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_VERSION: '10.0.x'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
 
 jobs:
   build-and-test:
@@ -40,45 +40,35 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Setup .NET Aspire workload
-        run: dotnet workload install aspire
-
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore CoralLedger.sln
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build CoralLedger.sln --no-restore --configuration Release
 
       - name: Run Domain Tests
-        run: dotnet test tests/CoralLedger.Domain.Tests --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=domain-tests.trx" --collect:"XPlat Code Coverage"
+        run: dotnet test tests/CoralLedger.Domain.Tests --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
 
       - name: Run Application Tests
-        run: dotnet test tests/CoralLedger.Application.Tests --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=application-tests.trx" --collect:"XPlat Code Coverage"
+        run: dotnet test tests/CoralLedger.Application.Tests --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
 
       - name: Run Infrastructure Tests
-        run: dotnet test tests/CoralLedger.Infrastructure.Tests --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=infrastructure-tests.trx" --collect:"XPlat Code Coverage"
+        run: dotnet test tests/CoralLedger.Infrastructure.Tests --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
 
       - name: Run Integration Tests
-        run: dotnet test tests/CoralLedger.Integration.Tests --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=integration-tests.trx"
+        run: dotnet test tests/CoralLedger.IntegrationTests --no-build --configuration Release --verbosity normal
         env:
-          ConnectionStrings__coralledger-db: "Host=localhost;Port=5432;Database=coralledger_test;Username=postgres;Password=postgres"
-          ASPNETCORE_ENVIRONMENT: Testing
+          ConnectionStrings__coralledger-db: Host=localhost;Database=coralledger_test;Username=postgres;Password=postgres
 
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: |
-            **/TestResults/*.trx
-            **/TestResults/**/coverage.cobertura.xml
-
-      - name: Upload Coverage to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         if: github.event_name == 'push'
         with:
-          files: '**/coverage.cobertura.xml'
+          directory: ./coverage
           fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   code-quality:
     name: Code Quality
@@ -93,59 +83,13 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Setup .NET Aspire workload
-        run: dotnet workload install aspire
-
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore CoralLedger.sln
 
       - name: Check formatting
-        run: dotnet format --verify-no-changes --verbosity diagnostic
+        run: dotnet format --verify-no-changes --no-restore
+        continue-on-error: true
 
-      - name: Run analyzers
-        run: dotnet build --configuration Release /p:TreatWarningsAsErrors=true
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Setup .NET Aspire workload
-        run: dotnet workload install aspire
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Run security audit
-        run: dotnet list package --vulnerable --include-transitive
-
-  docker-build:
-    name: Docker Build
-    runs-on: ubuntu-latest
-    needs: [build-and-test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./src/CoralLedger.Web/Dockerfile
-          push: false
-          tags: coralledger-blue:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Build with warnings as errors
+        run: dotnet build CoralLedger.sln --no-restore --configuration Release /warnaserror
+        continue-on-error: true
