@@ -7,6 +7,7 @@
     <PackageReference Include="Mapsui.Blazor" />
     <PackageReference Include="Mapsui.Nts" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+    <PackageReference Include="Radzen.Blazor" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">

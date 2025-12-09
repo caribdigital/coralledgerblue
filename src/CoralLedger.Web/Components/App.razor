@@ -20,6 +20,8 @@
     <link rel="apple-touch-icon" href="images/icons/icon-152x152.png" />
 
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Radzen Blazor CSS -->
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/material3-dark-base.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -35,10 +37,14 @@
 </head>
 
 <body>
+    <!-- Radzen Component Providers -->
+    <RadzenComponents />
     <Routes />
     <!-- Leaflet Map Interop (Leaflet.js is loaded in head) -->
     <script src="js/leaflet-map.js"></script>
     <script src="_framework/blazor.web.js"></script>
+    <!-- Radzen Blazor JS -->
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
 
     <!-- Service Worker Registration -->
     <script>
