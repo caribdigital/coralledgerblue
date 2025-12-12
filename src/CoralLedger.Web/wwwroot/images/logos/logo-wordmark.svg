@@ -1,0 +1,23 @@
+<svg width="640" height="160" viewBox="0 0 640 160" role="img" aria-label="CoralLedger Blue wordmark" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wordmark-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2EE3FF"/>
+      <stop offset="60%" stop-color="#00C5A1"/>
+      <stop offset="100%" stop-color="#1BA8C3"/>
+    </linearGradient>
+    <filter id="soft-glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="640" height="160" fill="none"/>
+  <text x="20" y="90" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="64" font-weight="700" fill="url(#wordmark-gradient)" filter="url(#soft-glow)">
+    CoralLedger
+  </text>
+  <text x="20" y="126" font-family="JetBrains Mono, 'IBM Plex Mono', monospace" font-size="26" letter-spacing="0.2em" fill="#F4FBFF" opacity="0.8">
+    BLUE ECONOMY INTELLIGENCE
+  </text>
+</svg>

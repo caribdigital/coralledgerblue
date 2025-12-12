@@ -1,0 +1,17 @@
+<svg width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="CoralLedger Blue icon" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="coral-arc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2EE3FF"/>
+      <stop offset="50%" stop-color="#00C5A1"/>
+      <stop offset="100%" stop-color="#1BA8C3"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0C1B33"/>
+      <stop offset="100%" stop-color="#050C1A"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="40" ry="40" fill="url(#sky)" />
+  <circle cx="100" cy="100" r="80" fill="none" stroke="url(#coral-arc)" stroke-width="12" opacity="0.85" />
+  <path d="M70 140 Q100 120 130 140 Q120 110 130 90 Q100 80 80 90 Q90 110 70 140" fill="url(#coral-arc)" opacity="0.9" />
+  <path d="M90 70 Q110 50 140 70" stroke="#F4FBFF" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.7" />
+</svg>
