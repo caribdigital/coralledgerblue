@@ -139,7 +139,7 @@ public class PlaywrightFixture : PageTest
         ReplacePage(this, newPage);
     }
     
-    private async Task<string> ResolveBaseUrlAsync(string primary, string? alternate)
+    private async Task<string> ResolveBaseUrlAsync(string? primary, string? alternate)
     {
         // Only target the web app, never the Aspire dashboard (17088)
         // The Aspire dashboard has a strict CSP that blocks Playwright tests

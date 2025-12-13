@@ -188,10 +188,8 @@ public class MapPage : BasePage
         var sstCard = Page.Locator(".card.bg-light h3, .sst-value, [class*='sst']").First;
         try
         {
-            if (await sstCard.IsVisibleAsync(new LocatorIsVisibleOptions { Timeout = 5000 }))
-            {
-                return await sstCard.TextContentAsync() ?? "";
-            }
+            await sstCard.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 5000 });
+            return await sstCard.TextContentAsync() ?? "";
         }
         catch { }
 
@@ -199,10 +197,8 @@ public class MapPage : BasePage
         var tempText = Page.GetByText(new System.Text.RegularExpressions.Regex(@"\d+\.?\d*\s*°C")).First;
         try
         {
-            if (await tempText.IsVisibleAsync(new LocatorIsVisibleOptions { Timeout = 2000 }))
-            {
-                return await tempText.TextContentAsync() ?? "";
-            }
+            await tempText.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 2000 });
+            return await tempText.TextContentAsync() ?? "";
         }
         catch { }
 
