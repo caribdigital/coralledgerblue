@@ -1,6 +1,6 @@
 # 🐚 CoralLedger Blue
 
-![CoralLedger Blue](github-header.png)
+![CoralLedger Blue](hero.jpg)
 
 🪸 Share-ready preview: use `og-image.png` (1200×630) as the repository's `og:image`.
 
@@ -11,8 +11,6 @@
 [![PostGIS](https://img.shields.io/badge/PostGIS-3.4-336791)](https://postgis.net/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![GitHub](https://img.shields.io/github/stars/caribdigital/coralledgerblue?style=social)](https://github.com/caribdigital/coralledgerblue)
-
-<!-- TODO: Add hero screenshot of the map with MPAs, bleaching panel, and fishing events visible -->
 
 > **Real-time coral bleaching monitoring. Fishing vessel tracking. 8 Marine Protected Areas. One command to run.**
 
@@ -67,16 +65,16 @@ We're actively looking for contributors in these areas:
 ## Screenshots
 
 ### Marine Intelligence Dashboard
-![Dashboard with KPI cards, map preview, alerts, and MPA table](docs/screenshots/dashboard-dark.png)
-*The dashboard features real-time KPI cards for Protected Areas, Sea Temperature, and Bleaching Alerts, with an integrated map preview and MPA summary table.*
+![Dashboard with KPI cards, map preview, and alerts panel](docs/screenshots/dashboard-dark.png)
+*The dashboard features real-time KPI cards for Protected Areas (8 MPAs), Total Protected area (2,835 km²), Sea Temperature, and Bleaching Alerts. The integrated map preview and recent alerts panel provide at-a-glance monitoring.*
 
 ### Interactive Map with Dark Theme
 ![Interactive map with CartoDB Dark Matter tiles and MPA polygons](docs/screenshots/map-dark-with-legend.png)
-*The interactive map displays all 8 Bahamas MPAs with protection level styling, CartoDB Dark Matter tiles, and a dynamic legend.*
+*The interactive map displays all 8 Bahamas MPAs with protection level styling (No-Take, Highly Protected, Lightly Protected), CartoDB Dark Matter tiles, and a dynamic legend. The sidebar lists all MPAs with their protection status badges.*
 
-### MPA Detail Panel with Live Data
-![MPA detail panel showing bleaching status and DHW trend](docs/screenshots/mpa-panel-with-bleaching.png)
-*Select any MPA to view live NOAA bleaching data, sea surface temperature, DHW trend sparklines, and alert status.*
+### Light Theme with MPA List
+![Interactive map with OpenStreetMap tiles and full MPA list](docs/screenshots/map-light-with-mpa-list.png)
+*Switch to light mode for a clean view with OpenStreetMap tiles. The MPA list shows all protected areas with quick-access badges for protection levels.*
 
 > **Note:** To see the app in action, run `dotnet run --project src/CoralLedger.AppHost`
 
