@@ -39,16 +39,15 @@
     @* US-2.2.3: Map Control Panel with theme toggle - appears on hover *@
     @if (_mapInitialized && !_loading)
     {
-        <div class="map-controls">
-            <div class="map-control-group">
-                <button class="map-control-btn @(UseDarkTheme ? "active" : "")"
-                        @onclick="ToggleTheme"
-                        title="@(UseDarkTheme ? "Switch to light map tiles" : "Switch to dark map tiles")"
-                        aria-label="@(UseDarkTheme ? "Switch to light map tiles" : "Switch to dark map tiles")">
-                    <i class="bi @(UseDarkTheme ? "bi-sun" : "bi-moon")"></i>
-                    <span class="map-control-label">@(UseDarkTheme ? "Light Tiles" : "Dark Tiles")</span>
-                </button>
-            </div>
+        <div class="map-tile-toggle">
+            <button type="button"
+                    class="tile-toggle-btn"
+                    @onclick="ToggleTheme"
+                    title="@(UseDarkTheme ? "Switch to light map tiles" : "Switch to dark map tiles")"
+                    aria-label="@(UseDarkTheme ? "Switch to light map tiles" : "Switch to dark map tiles")">
+                <i class="bi @(UseDarkTheme ? "bi-sun-fill" : "bi-moon-fill")"></i>
+                <span>@(UseDarkTheme ? "Light" : "Dark")</span>
+            </button>
         </div>
     }
 
@@ -92,52 +91,55 @@
         z-index: 1000;
     }
 
-    /* US-2.2.3: Map controls positioned top-left - visible on hover */
-    .map-controls {
+    /* US-2.2.3: Map tile toggle - positioned top-left, visible on hover */
+    .map-tile-toggle {
         position: absolute;
         top: 10px;
         left: 10px;
         z-index: 1000;
         opacity: 0;
-        transition: opacity 0.2s ease-in-out;
+        transition: opacity 0.25s ease-in-out;
     }
 
-    .leaflet-map-container:hover .map-controls,
-    .map-controls:hover,
-    .map-controls:focus-within {
+    .leaflet-map-container:hover .map-tile-toggle,
+    .map-tile-toggle:hover,
+    .map-tile-toggle:focus-within {
         opacity: 1;
     }
 
-    .map-control-btn {
-        display: flex;
+    .tile-toggle-btn {
+        display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: rgba(5, 12, 26, 0.92);
-        backdrop-filter: blur(8px);
-        border: 1px solid var(--color-border, rgba(255,255,255,0.18));
-        border-radius: 8px;
-        padding: 8px 12px;
-        color: var(--color-primary, #2EE3FF);
+        background: #ffffff;
+        border: 2px solid #0d6efd;
+        border-radius: 6px;
+        padding: 6px 12px;
+        color: #0d6efd;
         cursor: pointer;
-        font-size: 0.85rem;
-        font-weight: 500;
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: inherit;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         transition: all 0.2s ease;
     }
 
-    .map-control-btn:hover {
-        background: rgba(46, 227, 255, 0.15);
-        border-color: var(--color-primary, #2EE3FF);
+    .tile-toggle-btn:hover {
+        background: #0d6efd;
+        color: #ffffff;
+        box-shadow: 0 3px 8px rgba(13, 110, 253, 0.3);
     }
 
-    .map-control-btn.active {
-        background: rgba(46, 227, 255, 0.2);
+    .tile-toggle-btn:focus {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
     }
 
-    .map-control-btn i {
-        font-size: 1rem;
+    .tile-toggle-btn i {
+        font-size: 0.9rem;
     }
 
-    .map-control-label {
+    .tile-toggle-btn span {
         white-space: nowrap;
     }
 
