@@ -4,17 +4,25 @@
 @inject IThemeState ThemeState
 @implements IDisposable
 
-<RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-px-4 rz-py-2">
-    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-        <RadzenText TextStyle="TextStyle.H6" class="rz-m-0">CoralLedger Blue</RadzenText>
-        <ConnectionStatus PendingCount="@_pendingActions" IsSyncing="@_isSyncing" OnManualSync="HandleManualSyncAsync" />
+<nav aria-label="Main navigation" class="header-nav">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" class="rz-px-4 rz-py-2">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.H6" class="rz-m-0">CoralLedger Blue</RadzenText>
+            <ConnectionStatus PendingCount="@_pendingActions" IsSyncing="@_isSyncing" OnManualSync="HandleManualSyncAsync" />
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+            <ThemeToggle />
+            <RadzenLink Path="/admin" Text="Admin" title="Go to admin panel" />
+            <a href="https://github.com/caribdigital/coralledgerblue"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="rz-link"
+               aria-label="View source code on GitHub (opens in new tab)">
+                GitHub
+            </a>
+        </RadzenStack>
     </RadzenStack>
-    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-        <ThemeToggle />
-        <RadzenLink Path="/admin" Text="Admin" />
-        <RadzenLink Path="https://github.com/caribdigital/coralledgerblue" Text="GitHub" Target="_blank" />
-    </RadzenStack>
-</RadzenStack>
+</nav>
 
 @code {
     private int _pendingActions = 2;
