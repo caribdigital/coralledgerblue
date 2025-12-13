@@ -168,6 +168,45 @@ a,
 }
 
 /* ========================================
+   MPA Labels on Map (CoralLedger Blue Design System)
+   Targets Leaflet tooltip structure specifically
+   ======================================== */
+.leaflet-tooltip.mpa-label {
+    background: rgba(22, 27, 34, 0.92) !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 229, 204, 0.4) !important;
+    border-radius: 6px !important;
+    padding: 4px 10px !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #E6EDF3 !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+
+/* Hide Leaflet's default tooltip arrow */
+.leaflet-tooltip.mpa-label::before {
+    display: none !important;
+    border: none !important;
+}
+
+/* Ensure permanent tooltips don't interfere with map interaction */
+.leaflet-tooltip-pane .mpa-label {
+    pointer-events: none;
+}
+
+:root[data-theme='light'] .leaflet-tooltip.mpa-label {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(88, 166, 255, 0.5) !important;
+    color: #0D1117 !important;
+    text-shadow: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
    US-2.2.3: Map Control Panel Styles
    ======================================== */
 .map-controls {

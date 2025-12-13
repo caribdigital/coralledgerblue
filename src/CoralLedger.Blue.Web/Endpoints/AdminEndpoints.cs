@@ -1,6 +1,8 @@
 using CoralLedger.Blue.Application.Common.Interfaces;
+using CoralLedger.Blue.Domain.Entities;
 using CoralLedger.Blue.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 
 namespace CoralLedger.Blue.Web.Endpoints;
 
@@ -246,6 +248,167 @@ public static class AdminEndpoints
             });
         })
         .WithName("GetDataSummary")
+        .Produces<object>();
+
+        // POST /api/admin/dev/seed-fishing-events - Seed sample fishing events for development
+        group.MapPost("/dev/seed-fishing-events", async (
+            IMarineDbContext context,
+            CancellationToken ct = default) =>
+        {
+            var geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+            var random = new Random(42); // Fixed seed for reproducible data
+
+            // Check if sample vessels already exist
+            var existingVessel = await context.Vessels
+                .FirstOrDefaultAsync(v => v.Name == "F/V Sample Trawler", ct);
+
+            if (existingVessel != null)
+            {
+                return Results.Ok(new
+                {
+                    message = "Sample fishing data already exists",
+                    vesselsCreated = 0,
+                    eventsCreated = 0
+                });
+            }
+
+            // Create sample vessels with Bahamian and Caribbean flags
+            var sampleVessels = new[]
+            {
+                Vessel.Create("F/V Sample Trawler", mmsi: "311000001", flag: "BHS", vesselType: VesselType.Fishing, gearType: GearType.Trawlers),
+                Vessel.Create("F/V Nassau Pride", mmsi: "311000002", flag: "BHS", vesselType: VesselType.Fishing, gearType: GearType.Longliners),
+                Vessel.Create("F/V Caribbean Star", mmsi: "352000001", flag: "PAN", vesselType: VesselType.Fishing, gearType: GearType.PurseSeiners),
+                Vessel.Create("F/V Freeport Fisher", mmsi: "311000003", flag: "BHS", vesselType: VesselType.Fishing, gearType: GearType.Trawlers),
+                Vessel.Create("F/V Island Catch", mmsi: "319000001", flag: "CYM", vesselType: VesselType.Fishing, gearType: GearType.Longliners)
+            };
+
+            foreach (var vessel in sampleVessels)
+            {
+                context.Vessels.Add(vessel);
+            }
+
+            // Get MPAs for violation detection
+            var mpas = await context.MarineProtectedAreas
+                .Select(m => new { m.Id, m.Name, m.Boundary })
+                .ToListAsync(ct);
+
+            // Sample fishing event locations (mix of inside and outside MPAs)
+            var fishingLocations = new[]
+            {
+                // Outside MPAs - legitimate fishing areas
+                (Lon: -77.35, Lat: 24.75, Description: "West of Andros"),
+                (Lon: -76.80, Lat: 25.10, Description: "Nassau Deep Water"),
+                (Lon: -78.50, Lat: 26.50, Description: "Grand Bahama Banks"),
+                (Lon: -77.00, Lat: 24.00, Description: "South Andros"),
+                (Lon: -75.50, Lat: 23.75, Description: "Cat Island Area"),
+                (Lon: -76.15, Lat: 24.05, Description: "Exuma Sound"),
+                (Lon: -77.80, Lat: 25.80, Description: "Berry Islands"),
+                (Lon: -73.50, Lat: 21.00, Description: "Great Inagua Waters"),
+                (Lon: -77.10, Lat: 26.60, Description: "Abaco Banks"),
+                (Lon: -74.85, Lat: 23.65, Description: "Long Island"),
+                // Some locations that might be inside MPAs (potential violations)
+                (Lon: -77.46, Lat: 24.31, Description: "Near Andros MPA"),
+                (Lon: -75.78, Lat: 23.52, Description: "Near Exumas MPA"),
+                (Lon: -77.33, Lat: 25.05, Description: "Central Bahamas")
+            };
+
+            var eventsCreated = 0;
+            var now = DateTime.UtcNow;
+
+            // Create fishing events spread over the last 30 days
+            foreach (var vessel in sampleVessels)
+            {
+                var eventCount = random.Next(3, 8); // 3-7 events per vessel
+
+                for (int i = 0; i < eventCount; i++)
+                {
+                    var location = fishingLocations[random.Next(fishingLocations.Length)];
+                    var daysAgo = random.Next(1, 30);
+                    var startTime = now.AddDays(-daysAgo).AddHours(random.Next(0, 24));
+                    var durationHours = random.Next(2, 12) + random.NextDouble();
+                    var endTime = startTime.AddHours(durationHours);
+
+                    var point = geometryFactory.CreatePoint(new Coordinate(location.Lon, location.Lat));
+
+                    var fishingEvent = VesselEvent.CreateFishingEvent(
+                        vessel.Id,
+                        point,
+                        startTime,
+                        endTime,
+                        durationHours,
+                        random.Next(5, 50) + random.NextDouble(), // Distance in km
+                        $"SAMPLE-{Guid.NewGuid():N}"[..24]
+                    );
+
+                    // Check if inside any MPA
+                    var insideMpa = mpas.FirstOrDefault(m => m.Boundary.Contains(point));
+                    if (insideMpa != null)
+                    {
+                        fishingEvent.SetMpaContext(true, insideMpa.Id);
+                    }
+                    else
+                    {
+                        fishingEvent.SetMpaContext(false, null);
+                    }
+
+                    context.VesselEvents.Add(fishingEvent);
+                    eventsCreated++;
+                }
+            }
+
+            await context.SaveChangesAsync(ct);
+
+            return Results.Ok(new
+            {
+                message = "Sample fishing data created successfully",
+                vesselsCreated = sampleVessels.Length,
+                eventsCreated
+            });
+        })
+        .WithName("SeedFishingEvents")
+        .WithDescription("Seed sample fishing events for development/demo (creates vessels and events)")
+        .Produces<object>();
+
+        // DELETE /api/admin/dev/clear-sample-data - Clear sample fishing data
+        group.MapDelete("/dev/clear-sample-data", async (
+            IMarineDbContext context,
+            CancellationToken ct = default) =>
+        {
+            // Find sample vessels by name pattern
+            var sampleVessels = await context.Vessels
+                .Where(v => v.Name.StartsWith("F/V Sample") ||
+                            v.Name.StartsWith("F/V Nassau Pride") ||
+                            v.Name.StartsWith("F/V Caribbean Star") ||
+                            v.Name.StartsWith("F/V Freeport Fisher") ||
+                            v.Name.StartsWith("F/V Island Catch"))
+                .ToListAsync(ct);
+
+            if (!sampleVessels.Any())
+            {
+                return Results.Ok(new { message = "No sample data found to clear" });
+            }
+
+            var vesselIds = sampleVessels.Select(v => v.Id).ToList();
+
+            // Delete related events first
+            var events = await context.VesselEvents
+                .Where(e => vesselIds.Contains(e.VesselId))
+                .ToListAsync(ct);
+
+            context.VesselEvents.RemoveRange(events);
+            context.Vessels.RemoveRange(sampleVessels);
+
+            await context.SaveChangesAsync(ct);
+
+            return Results.Ok(new
+            {
+                message = "Sample data cleared",
+                vesselsDeleted = sampleVessels.Count,
+                eventsDeleted = events.Count
+            });
+        })
+        .WithName("ClearSampleData")
+        .WithDescription("Clear sample fishing data created for development")
         .Produces<object>();
 
         return endpoints;

@@ -168,6 +168,14 @@ window.leafletMap = {
                     <small>Area: ${props.AreaSquareKm.toFixed(1)} km²</small>
                 `);
 
+                // Add permanent tooltip label for MPA name (visible on dark tiles)
+                layer.bindTooltip(props.Name, {
+                    permanent: true,
+                    direction: 'center',
+                    className: 'mpa-label',
+                    opacity: 0.9
+                });
+
                 layer.on({
                     mouseover: (e) => {
                         e.target.setStyle(highlightStyle);
