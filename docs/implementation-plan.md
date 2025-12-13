@@ -5,14 +5,14 @@ This is a focused execution checklist that builds on the UI & map plan in C:/Pro
 ## Phase 1 Foundation (done but needs artifacts)
 
 1. **Design system & tokens**
-   - Central profile lives in src/CoralLedger.Web/wwwroot/css/base/_variables.css, CoralLedgerTheme, and ThemeState, which push the variables into MudBlazor controls.
-   - Theme toggle markup is in src/CoralLedger.Web/Components/Shared/ThemeToggle.razor.
+   - Central profile lives in src/CoralLedger.Blue.Web/wwwroot/css/base/_variables.css, CoralLedgerTheme, and ThemeState, which push the variables into MudBlazor controls.
+   - Theme toggle markup is in src/CoralLedger.Blue.Web/Components/Shared/ThemeToggle.razor.
    - Ensure docs/design-system.md mirrors any future token changes.
 
 2. **Brand assets & tooling**
-   - Vector and raster logos sit under src/CoralLedger.Web/wwwroot/images/logos/.
+   - Vector and raster logos sit under src/CoralLedger.Blue.Web/wwwroot/images/logos/.
    - scripts/create_brand_assets.py and scripts/create_favicons.py regenerate the README/og header plus favicons; re-run when the palette or tagline changes.
-   - Manifest and favicon tags were updated in src/CoralLedger.Web/Components/App.razor and wwwroot/manifest.json.
+   - Manifest and favicon tags were updated in src/CoralLedger.Blue.Web/Components/App.razor and wwwroot/manifest.json.
 
 3. **Playwright fixture**
    - tests/CoralLedger.E2E.Tests/PlaywrightFixture.cs now builds HTTPS-ignoring contexts and loads tests/CoralLedger.E2E.Tests/appsettings.e2e.json.
@@ -45,6 +45,6 @@ This is a focused execution checklist that builds on the UI & map plan in C:/Pro
 
 ## Dependencies / Risks
 
-- The app depends on Postgres/PostGIS, Redis, and outbound calls to NOAA/Global Fishing Watch/Protected Planet. The Protected Planet API key is configured via ProtectedPlanetOptions in src/CoralLedger.Infrastructure/ExternalServices/ProtectedPlanetClient.cs; set it with `dotnet user-secrets set "ProtectedPlanet:ApiToken" "your-token"` or the secrets template.
+- The app depends on Postgres/PostGIS, Redis, and outbound calls to NOAA/Global Fishing Watch/Protected Planet. The Protected Planet API key is configured via ProtectedPlanetOptions in src/CoralLedger.Blue.Infrastructure/ExternalServices/ProtectedPlanetClient.cs; set it with `dotnet user-secrets set "ProtectedPlanet:ApiToken" "your-token"` or the secrets template.
 - Visual/E2E runs rely on Playwright with an HTTPS context - our fixture ignores invalid certs, but the host still needs to respond quickly. If remote APIs time out, mock or cache those calls so the suite avoids ERR_TIMED_OUT failures.
 - Capture every relevant script or asset change in these docs so contributors know how to restart Aspire, rerun scripts/create_*, and keep the roadmap aligned.

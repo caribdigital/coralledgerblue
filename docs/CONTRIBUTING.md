@@ -21,7 +21,7 @@ Thank you for your interest in contributing to CoralLedger Blue! This project ai
    ```
 3. Run the application:
    ```bash
-   dotnet run --project src/CoralLedger.AppHost
+   dotnet run --project src/CoralLedger.Blue.AppHost
    ```
 
 ## How to Contribute
@@ -105,12 +105,12 @@ Look for issues labeled `good-first-issue`:
 
 ```
 src/
-├── CoralLedger.Domain/        # Business entities (no deps)
-├── CoralLedger.Application/   # Use cases, CQRS
-├── CoralLedger.Infrastructure/ # Data access, external services
-├── CoralLedger.Web/           # Blazor UI
-├── CoralLedger.AppHost/       # Aspire orchestration
-└── CoralLedger.ServiceDefaults/
+├── CoralLedger.Blue.Domain/        # Business entities (no deps)
+├── CoralLedger.Blue.Application/   # Use cases, CQRS
+├── CoralLedger.Blue.Infrastructure/ # Data access, external services
+├── CoralLedger.Blue.Web/           # Blazor UI
+├── CoralLedger.Blue.AppHost/       # Aspire orchestration
+└── CoralLedger.Blue.ServiceDefaults/
 ```
 
 ## Testing
@@ -121,9 +121,9 @@ dotnet test
 ```
 
 ### Test Structure
-- Unit tests: `tests/CoralLedger.Domain.Tests/`
-- Integration tests: `tests/CoralLedger.Infrastructure.Tests/`
-- E2E tests: `tests/CoralLedger.Web.Tests/`
+- Unit tests: `tests/CoralLedger.Blue.Domain.Tests/`
+- Integration tests: `tests/CoralLedger.Blue.Infrastructure.Tests/`
+- E2E tests: `tests/CoralLedger.Blue.Web.Tests/`
 
 ### Writing Tests
 - Use xUnit

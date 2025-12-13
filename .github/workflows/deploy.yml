@@ -69,7 +69,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./src/CoralLedger.Web/Dockerfile
+          file: ./src/CoralLedger.Blue.Web/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -133,5 +133,5 @@ jobs:
       - name: Notify on success
         if: success()
         run: |
-          echo "=€ Production deployment successful!"
+          echo "=ï¿½ Production deployment successful!"
           echo "Image: ${{ needs.build.outputs.image-tag }}"

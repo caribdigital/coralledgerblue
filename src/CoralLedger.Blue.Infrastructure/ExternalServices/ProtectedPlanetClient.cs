@@ -49,7 +49,7 @@ public class ProtectedPlanetClient : IProtectedPlanetClient
                 "ProtectedPlanet is enabled but ApiToken is not configured. " +
                 "API calls will fail. Request a token at https://api.protectedplanet.net/request " +
                 "and set it using: " +
-                "dotnet user-secrets set \"ProtectedPlanet:ApiToken\" \"your-token\" --project src/CoralLedger.Web");
+                "dotnet user-secrets set \"ProtectedPlanet:ApiToken\" \"your-token\" --project src/CoralLedger.Blue.Web");
         }
     }
 

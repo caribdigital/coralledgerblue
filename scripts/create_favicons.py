@@ -3,7 +3,7 @@ from PIL import Image, ImageDraw
 
 colors = [(46, 227, 255), (0, 197, 161)]
 background = (5, 12, 26)
-logo_dir = Path("C:/Projects/CoralLedgerBlue/src/CoralLedger.Web/wwwroot/images/logos/favicons")
+logo_dir = Path("C:/Projects/CoralLedgerBlue/src/CoralLedger.Blue.Web/wwwroot/images/logos/favicons")
 logo_dir.mkdir(parents=True, exist_ok=True)
 
 def draw_circle_gradient(img, draw):

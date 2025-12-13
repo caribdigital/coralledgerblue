@@ -6,7 +6,7 @@
 # Prerequisites: .NET 10 SDK + Docker Desktop
 git clone https://github.com/caribdigital/coralledgerblue.git
 cd coralledgerblue
-dotnet run --project src/CoralLedger.AppHost
+dotnet run --project src/CoralLedger.Blue.AppHost
 ```
 
 The Aspire dashboard opens at `https://localhost:17088` with links to all services.
@@ -16,16 +16,16 @@ The Aspire dashboard opens at `https://localhost:17088` with links to all servic
 ```
 CoralLedgerBlue/
 ├── src/
-│   ├── CoralLedger.AppHost/        # .NET Aspire orchestration
-│   ├── CoralLedger.ServiceDefaults/ # Shared service configuration
-│   ├── CoralLedger.Domain/          # Domain entities, enums, value objects
-│   ├── CoralLedger.Application/     # CQRS commands/queries, interfaces
-│   ├── CoralLedger.Infrastructure/  # EF Core, external APIs, services
-│   └── CoralLedger.Web/             # Blazor Server + WASM frontend
+│   ├── CoralLedger.Blue.AppHost/        # .NET Aspire orchestration
+│   ├── CoralLedger.Blue.ServiceDefaults/ # Shared service configuration
+│   ├── CoralLedger.Blue.Domain/          # Domain entities, enums, value objects
+│   ├── CoralLedger.Blue.Application/     # CQRS commands/queries, interfaces
+│   ├── CoralLedger.Blue.Infrastructure/  # EF Core, external APIs, services
+│   └── CoralLedger.Blue.Web/             # Blazor Server + WASM frontend
 ├── tests/
-│   ├── CoralLedger.Domain.Tests/        # Domain entity unit tests
-│   ├── CoralLedger.Infrastructure.Tests/ # Service integration tests
-│   └── CoralLedger.E2E.Tests/           # Playwright E2E tests
+│   ├── CoralLedger.Blue.Domain.Tests/        # Domain entity unit tests
+│   ├── CoralLedger.Blue.Infrastructure.Tests/ # Service integration tests
+│   └── CoralLedger.Blue.E2E.Tests/           # Playwright E2E tests
 ├── docs/                            # Documentation
 └── scripts/                         # Utility scripts
 ```
@@ -57,7 +57,7 @@ CoralLedgerBlue/
 
 ```bash
 # Initialize user secrets
-cd src/CoralLedger.Web
+cd src/CoralLedger.Blue.Web
 dotnet user-secrets init
 
 # Set API keys
@@ -84,8 +84,8 @@ MarineAI__Endpoint=https://your-endpoint.openai.azure.com/
 dotnet test --filter "FullyQualifiedName!~E2E"
 
 # E2E tests (requires app running)
-dotnet run --project src/CoralLedger.AppHost &
-dotnet test tests/CoralLedger.E2E.Tests
+dotnet run --project src/CoralLedger.Blue.AppHost &
+dotnet test tests/CoralLedger.Blue.E2E.Tests
 
 # Specific test category
 dotnet test --filter "Map"
@@ -158,7 +158,7 @@ dotnet test --filter "Map"
 docker ps | grep postgres
 
 # Reset Aspire resources
-dotnet run --project src/CoralLedger.AppHost -- --reset
+dotnet run --project src/CoralLedger.Blue.AppHost -- --reset
 ```
 
 ### Map Not Loading
@@ -171,7 +171,7 @@ dotnet run --project src/CoralLedger.AppHost -- --reset
 
 ```bash
 # Install Playwright browsers
-pwsh tests/CoralLedger.E2E.Tests/bin/Debug/net10.0/playwright.ps1 install
+pwsh tests/CoralLedger.Blue.E2E.Tests/bin/Debug/net10.0/playwright.ps1 install
 
 # Run with headed browser for debugging
 dotnet test --filter "MapTests" -- Playwright.LaunchOptions.Headless=false

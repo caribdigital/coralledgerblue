@@ -45,7 +45,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
             _logger.LogWarning(
                 "GlobalFishingWatch is enabled but ApiToken is not configured. " +
                 "API calls will fail. Set it using: " +
-                "dotnet user-secrets set \"GlobalFishingWatch:ApiToken\" \"your-token\" --project src/CoralLedger.Web");
+                "dotnet user-secrets set \"GlobalFishingWatch:ApiToken\" \"your-token\" --project src/CoralLedger.Blue.Web");
         }
 
         _httpClient.BaseAddress = new Uri("https://gateway.api.globalfishingwatch.org/");

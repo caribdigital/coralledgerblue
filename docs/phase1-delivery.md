@@ -22,7 +22,7 @@ Build the foundational architecture for an open-source marine intelligence platf
 | Common Build Properties | Directory.Build.props | ✅ Complete |
 | Git Repository | Initialized with .gitignore | ✅ Complete |
 
-### 2. Domain Layer (`CoralLedger.Domain`)
+### 2. Domain Layer (`CoralLedger.Blue.Domain`)
 
 **Entities:**
 - `MarineProtectedArea` - Aggregate root with spatial boundaries
@@ -39,7 +39,7 @@ Build the foundational architecture for an open-source marine intelligence platf
 - `IAggregateRoot` - Marker interface for aggregates
 - `IAuditableEntity` - Audit trail properties (CreatedAt, ModifiedAt, etc.)
 
-### 3. Application Layer (`CoralLedger.Application`)
+### 3. Application Layer (`CoralLedger.Blue.Application`)
 
 **Interfaces:**
 - `IMarineDbContext` - Database context abstraction
@@ -57,7 +57,7 @@ Build the foundational architecture for an open-source marine intelligence platf
 - MediatR configuration
 - FluentValidation registration
 
-### 4. Infrastructure Layer (`CoralLedger.Infrastructure`)
+### 4. Infrastructure Layer (`CoralLedger.Blue.Infrastructure`)
 
 **Database:**
 - `MarineDbContext` - EF Core DbContext with PostGIS extensions
@@ -74,7 +74,7 @@ Build the foundational architecture for an open-source marine intelligence platf
 **Services:**
 - `DateTimeService` - IDateTimeService implementation
 
-### 5. Web Layer (`CoralLedger.Web`)
+### 5. Web Layer (`CoralLedger.Blue.Web`)
 
 **Pages:**
 - `Home.razor` - Landing page with feature overview
@@ -90,7 +90,7 @@ Build the foundational architecture for an open-source marine intelligence platf
 - MediatR integration
 - Database initialization and seeding on startup
 
-### 6. Aspire Orchestration (`CoralLedger.AppHost`)
+### 6. Aspire Orchestration (`CoralLedger.Blue.AppHost`)
 
 **Configured Resources:**
 - PostgreSQL with PostGIS image (`postgis/postgis:16-3.4`)
@@ -213,7 +213,7 @@ LICENSE (to be added)
 ### Start Command
 ```bash
 cd C:\Projects\CoralLedger-Blue
-dotnet run --project src/CoralLedger.AppHost
+dotnet run --project src/CoralLedger.Blue.AppHost
 ```
 
 ### Access Points

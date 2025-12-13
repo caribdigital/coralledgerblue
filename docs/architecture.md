@@ -11,16 +11,16 @@ CoralLedger Blue is built using **Clean Architecture** principles, implemented a
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Presentation Layer                        │
-│                  (CoralLedger.Web - Blazor)                 │
+│                  (CoralLedger.Blue.Web - Blazor)                 │
 ├─────────────────────────────────────────────────────────────┤
 │                   Infrastructure Layer                       │
-│      (CoralLedger.Infrastructure - EF Core, PostGIS)        │
+│      (CoralLedger.Blue.Infrastructure - EF Core, PostGIS)        │
 ├─────────────────────────────────────────────────────────────┤
 │                    Application Layer                         │
-│        (CoralLedger.Application - MediatR, CQRS)            │
+│        (CoralLedger.Blue.Application - MediatR, CQRS)            │
 ├─────────────────────────────────────────────────────────────┤
 │                      Domain Layer                            │
-│     (CoralLedger.Domain - Entities, Value Objects)          │
+│     (CoralLedger.Blue.Domain - Entities, Value Objects)          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -38,7 +38,7 @@ Dependencies flow **inward** - outer layers depend on inner layers, never the re
 ```
 CoralLedger-Blue/
 ├── src/
-│   ├── CoralLedger.Domain/
+│   ├── CoralLedger.Blue.Domain/
 │   │   ├── Common/
 │   │   │   ├── BaseEntity.cs
 │   │   │   ├── IAggregateRoot.cs
@@ -52,7 +52,7 @@ CoralLedger-Blue/
 │   │       ├── ProtectionLevel.cs
 │   │       └── ReefHealth.cs
 │   │
-│   ├── CoralLedger.Application/
+│   ├── CoralLedger.Blue.Application/
 │   │   ├── Common/
 │   │   │   └── Interfaces/
 │   │   │       ├── IMarineDbContext.cs
@@ -67,7 +67,7 @@ CoralLedger-Blue/
 │   │   │           └── GetMpaById/
 │   │   └── DependencyInjection.cs
 │   │
-│   ├── CoralLedger.Infrastructure/
+│   ├── CoralLedger.Blue.Infrastructure/
 │   │   ├── Data/
 │   │   │   ├── MarineDbContext.cs
 │   │   │   ├── Configurations/
@@ -79,7 +79,7 @@ CoralLedger-Blue/
 │   │   │   └── DateTimeService.cs
 │   │   └── DependencyInjection.cs
 │   │
-│   ├── CoralLedger.Web/
+│   ├── CoralLedger.Blue.Web/
 │   │   ├── Components/
 │   │   │   ├── Layout/
 │   │   │   │   ├── MainLayout.razor
@@ -90,10 +90,10 @@ CoralLedger-Blue/
 │   │   │       └── MpaInfoPanel.razor
 │   │   └── Program.cs
 │   │
-│   ├── CoralLedger.AppHost/
+│   ├── CoralLedger.Blue.AppHost/
 │   │   └── AppHost.cs
 │   │
-│   └── CoralLedger.ServiceDefaults/
+│   └── CoralLedger.Blue.ServiceDefaults/
 │       └── Extensions.cs
 │
 ├── docs/
@@ -104,7 +104,7 @@ CoralLedger-Blue/
 
 ## Layer Details
 
-### Domain Layer (`CoralLedger.Domain`)
+### Domain Layer (`CoralLedger.Blue.Domain`)
 
 The innermost layer containing enterprise business logic and entities.
 
@@ -134,7 +134,7 @@ public class MarineProtectedArea : BaseEntity, IAggregateRoot, IAuditableEntity
 - Factory methods (`Create()`) ensure valid entity creation
 - No dependencies on external frameworks
 
-### Application Layer (`CoralLedger.Application`)
+### Application Layer (`CoralLedger.Blue.Application`)
 
 Contains application-specific business logic and orchestration.
 
@@ -165,7 +165,7 @@ public class GetAllMpasQueryHandler : IRequestHandler<GetAllMpasQuery, IReadOnly
 }
 ```
 
-### Infrastructure Layer (`CoralLedger.Infrastructure`)
+### Infrastructure Layer (`CoralLedger.Blue.Infrastructure`)
 
 Implements interfaces defined in Application layer.
 
@@ -199,7 +199,7 @@ builder.HasIndex(e => e.Boundary)
     .HasMethod("GIST");  // PostGIS spatial index
 ```
 
-### Presentation Layer (`CoralLedger.Web`)
+### Presentation Layer (`CoralLedger.Blue.Web`)
 
 Blazor Server application for user interaction.
 
@@ -348,14 +348,14 @@ var nearby = await _context.MarineProtectedAreas
 
 ```
 tests/
-├── CoralLedger.Domain.Tests/
+├── CoralLedger.Blue.Domain.Tests/
 │   └── Entities/
 │       └── MarineProtectedAreaTests.cs
-├── CoralLedger.Application.Tests/
+├── CoralLedger.Blue.Application.Tests/
 │   └── Features/
 │       └── MarineProtectedAreas/
 │           └── GetAllMpasQueryTests.cs
-└── CoralLedger.Infrastructure.Tests/
+└── CoralLedger.Blue.Infrastructure.Tests/
     └── Data/
         └── MarineDbContextTests.cs
 ```

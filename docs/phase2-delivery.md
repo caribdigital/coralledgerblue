@@ -14,7 +14,7 @@ Implement an interactive map visualization for Marine Protected Areas using Maps
 
 ## Delivered Components
 
-### 1. Blazor WebAssembly Client (`CoralLedger.Web.Client`)
+### 1. Blazor WebAssembly Client (`CoralLedger.Blue.Web.Client`)
 
 | Component | Description | Status |
 |-----------|-------------|--------|
@@ -23,7 +23,7 @@ Implement an interactive map visualization for Marine Protected Areas using Maps
 | Package Configuration | Central package management integration | Done |
 
 **New Files:**
-- `CoralLedger.Web.Client.csproj` - WASM library project
+- `CoralLedger.Blue.Web.Client.csproj` - WASM library project
 - `_Imports.razor` - Shared component imports
 - `Components/MpaMapComponent.razor` - Interactive map component
 
@@ -87,17 +87,17 @@ Implement an interactive map visualization for Marine Protected Areas using Maps
 
 ### Before (Phase 1)
 ```
-CoralLedger.Web (Blazor Server)
+CoralLedger.Blue.Web (Blazor Server)
     └── Components/Pages/Map.razor (Table view only)
 ```
 
 ### After (Phase 2)
 ```
-CoralLedger.Web (Blazor Server + WASM Host)
+CoralLedger.Blue.Web (Blazor Server + WASM Host)
     ├── Components/Pages/Map.razor (View toggle)
     └── Endpoints/MpaEndpoints.cs (GeoJSON API)
 
-CoralLedger.Web.Client (Blazor WebAssembly)
+CoralLedger.Blue.Web.Client (Blazor WebAssembly)
     └── Components/MpaMapComponent.razor (Mapsui map)
 ```
 
@@ -110,17 +110,17 @@ CoralLedger.Web.Client (Blazor WebAssembly)
 
 ### New Files (7)
 ```
-src/CoralLedger.Web.Client/
-├── CoralLedger.Web.Client.csproj
+src/CoralLedger.Blue.Web.Client/
+├── CoralLedger.Blue.Web.Client.csproj
 ├── _Imports.razor
 └── Components/
     └── MpaMapComponent.razor
 
-src/CoralLedger.Web/
+src/CoralLedger.Blue.Web/
 └── Endpoints/
     └── MpaEndpoints.cs
 
-src/CoralLedger.Application/
+src/CoralLedger.Blue.Application/
 └── Features/MarineProtectedAreas/Queries/GetMpasGeoJson/
     └── GetMpasGeoJsonQuery.cs
 
@@ -132,8 +132,8 @@ docs/
 ```
 CoralLedger.sln                    # Added Web.Client project
 Directory.Packages.props           # New packages, version updates
-src/CoralLedger.Web/
-├── CoralLedger.Web.csproj        # WASM hosting, client reference
+src/CoralLedger.Blue.Web/
+├── CoralLedger.Blue.Web.csproj        # WASM hosting, client reference
 ├── Program.cs                     # API endpoints, WASM config
 └── Components/Pages/Map.razor     # View toggle, map integration
 ```
@@ -228,7 +228,7 @@ The following interactive features have been implemented:
 
 ```bash
 cd C:\Projects\CoralLedger-Blue
-dotnet run --project src/CoralLedger.AppHost
+dotnet run --project src/CoralLedger.Blue.AppHost
 ```
 
 Access the Aspire Dashboard at https://localhost:17088 to find the web application URL.

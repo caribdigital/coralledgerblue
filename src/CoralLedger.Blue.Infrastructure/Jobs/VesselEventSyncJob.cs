@@ -52,7 +52,7 @@ public class VesselEventSyncJob : IJob
         {
             _logger.LogWarning(
                 "VesselEventSyncJob skipped: GlobalFishingWatch API is not configured. " +
-                "Set the API token using: dotnet user-secrets set \"GlobalFishingWatch:ApiToken\" \"your-token\" --project src/CoralLedger.Web");
+                "Set the API token using: dotnet user-secrets set \"GlobalFishingWatch:ApiToken\" \"your-token\" --project src/CoralLedger.Blue.Web");
             return;
         }
 

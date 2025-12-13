@@ -42,8 +42,8 @@ $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $LogsDir = Join-Path $ProjectRoot "logs"
 $Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $LogFile = Join-Path $LogsDir "e2e-$Timestamp.log"
-$AspireProject = Join-Path $ProjectRoot "src\CoralLedger.AppHost\CoralLedger.AppHost.csproj"
-$E2ETestProject = Join-Path $ProjectRoot "tests\CoralLedger.E2E.Tests\CoralLedger.E2E.Tests.csproj"
+$AspireProject = Join-Path $ProjectRoot "src\CoralLedger.Blue.AppHost\CoralLedger.Blue.AppHost.csproj"
+$E2ETestProject = Join-Path $ProjectRoot "tests\CoralLedger.Blue.E2E.Tests\CoralLedger.Blue.E2E.Tests.csproj"
 $HttpsPort = 7232
 
 # Ensure logs directory exists

@@ -24,7 +24,7 @@ Built with .NET 10, Blazor, PostGIS, and .NET Aspire—because saving reefs shou
 # Clone and run (requires .NET 10 SDK + Docker)
 git clone https://github.com/caribdigital/coralledgerblue.git
 cd coralledgerblue
-dotnet run --project src/CoralLedger.AppHost
+dotnet run --project src/CoralLedger.Blue.AppHost
 ```
 
 The Aspire dashboard opens at `https://localhost:17088` with links to the web app, pgAdmin, and PostgreSQL.
@@ -76,7 +76,7 @@ We're actively looking for contributors in these areas:
 ![Interactive map with OpenStreetMap tiles and full MPA list](docs/screenshots/map-light-with-mpa-list.png)
 *Switch to light mode for a clean view with OpenStreetMap tiles. The MPA list shows all protected areas with quick-access badges for protection levels.*
 
-> **Note:** To see the app in action, run `dotnet run --project src/CoralLedger.AppHost`
+> **Note:** To see the app in action, run `dotnet run --project src/CoralLedger.Blue.AppHost`
 
 ## Technology Stack
 
@@ -97,7 +97,7 @@ We're actively looking for contributors in these areas:
 ## Visual Regression & Accessibility
 
 ### Visual regression
-- Start the Aspire stack with `Scripts/coralledgerblue/Start-CoralLedgerBlueAspire.ps1 -Detached`, then run `dotnet test tests/CoralLedger.E2E.Tests/CoralLedger.E2E.Tests.csproj` to exercise the Playwright suite and capture visual baselines. The fixture now probes HTTP/HTTPS before navigating and stores failure screenshots under `tests/CoralLedger.E2E.Tests/playwright-artifacts/`.
+- Start the Aspire stack with `Scripts/coralledgerblue/Start-CoralLedgerBlueAspire.ps1 -Detached`, then run `dotnet test tests/CoralLedger.Blue.E2E.Tests/CoralLedger.Blue.E2E.Tests.csproj` to exercise the Playwright suite and capture visual baselines. The fixture now probes HTTP/HTTPS before navigating and stores failure screenshots under `tests/CoralLedger.Blue.E2E.Tests/playwright-artifacts/`.
 - Store the Lighthouse/axe reports and summary screenshots near `docs/accessibility-audit.md` so regressions are traceable.
 
 ### Accessibility
@@ -111,13 +111,13 @@ CoralLedger Blue follows **Clean Architecture** principles with a modular monoli
 
 ```
 src/
-├── CoralLedger.Domain/          # Entities, Value Objects, Enums
-├── CoralLedger.Application/     # CQRS (MediatR), DTOs, Interfaces
-├── CoralLedger.Infrastructure/  # EF Core, PostGIS, Quartz Jobs
-├── CoralLedger.Web/             # Blazor Server Host + API
-├── CoralLedger.Web.Client/      # Blazor WebAssembly Components
-├── CoralLedger.AppHost/         # .NET Aspire Orchestrator
-└── CoralLedger.ServiceDefaults/ # Shared Aspire Configuration
+├── CoralLedger.Blue.Domain/          # Entities, Value Objects, Enums
+├── CoralLedger.Blue.Application/     # CQRS (MediatR), DTOs, Interfaces
+├── CoralLedger.Blue.Infrastructure/  # EF Core, PostGIS, Quartz Jobs
+├── CoralLedger.Blue.Web/             # Blazor Server Host + API
+├── CoralLedger.Blue.Web.Client/      # Blazor WebAssembly Components
+├── CoralLedger.Blue.AppHost/         # .NET Aspire Orchestrator
+└── CoralLedger.Blue.ServiceDefaults/ # Shared Aspire Configuration
 ```
 
 ## API Endpoints
@@ -254,11 +254,11 @@ For vessel tracking features, obtain a free API key from [Global Fishing Watch](
 
 ```bash
 # Initialize user secrets (one-time)
-dotnet user-secrets init --project src/CoralLedger.Web
+dotnet user-secrets init --project src/CoralLedger.Blue.Web
 
 # Set Global Fishing Watch API token
-dotnet user-secrets set "GlobalFishingWatch:ApiToken" "your-token-here" --project src/CoralLedger.Web
-dotnet user-secrets set "GlobalFishingWatch:Enabled" "true" --project src/CoralLedger.Web
+dotnet user-secrets set "GlobalFishingWatch:ApiToken" "your-token-here" --project src/CoralLedger.Blue.Web
+dotnet user-secrets set "GlobalFishingWatch:Enabled" "true" --project src/CoralLedger.Blue.Web
 ```
 
 NOAA Coral Reef Watch data is publicly available and requires no authentication.
