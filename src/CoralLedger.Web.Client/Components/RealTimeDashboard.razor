@@ -366,7 +366,10 @@
     private List<VesselDto> _vessels = new();
     private DashboardStats _stats = new();
     private int _unacknowledgedCount = 0;
+    // Future SignalR hub connection for real-time updates
+#pragma warning disable CS0649
     private IJSObjectReference? _hubConnection;
+#pragma warning restore CS0649
     private System.Threading.Timer? _refreshTimer;
 
     protected override async Task OnInitializedAsync()

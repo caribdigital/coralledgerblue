@@ -141,22 +141,32 @@ public class PlaywrightFixture : PageTest
     
     private async Task<string> ResolveBaseUrlAsync(string primary, string? alternate)
     {
+        // Only target the web app, never the Aspire dashboard (17088)
+        // The Aspire dashboard has a strict CSP that blocks Playwright tests
         var candidates = new List<string?>
         {
             primary,
             alternate,
             "https://localhost:7232",
-            "http://localhost:7232",
-            "https://localhost:17088",
-            "http://localhost:17088"
+            "http://localhost:7232"
         };
 
-        foreach (var candidate in candidates.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct(StringComparer.OrdinalIgnoreCase))
+        // Retry with longer timeout to allow app to fully start
+        for (int retry = 0; retry < 3; retry++)
         {
-            if (await IsUrlResponsiveAsync(candidate!))
+            foreach (var candidate in candidates.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                TestContext.Progress.WriteLine($"Playwright targeting {candidate}");
-                return candidate!;
+                if (await IsUrlResponsiveAsync(candidate!))
+                {
+                    TestContext.Progress.WriteLine($"Playwright targeting {candidate}");
+                    return candidate!;
+                }
+            }
+
+            if (retry < 2)
+            {
+                TestContext.Progress.WriteLine($"No responsive URL found, retrying in 5 seconds... (attempt {retry + 1}/3)");
+                await Task.Delay(5000);
             }
         }
 
