@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter</value>
+  </resheader>
+
+  <!-- Navigation -->
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>Panel de Control</value>
+  </data>
+  <data name="Nav_Map" xml:space="preserve">
+    <value>Mapa</value>
+  </data>
+  <data name="Nav_Observations" xml:space="preserve">
+    <value>Observaciones</value>
+  </data>
+  <data name="Nav_Bleaching" xml:space="preserve">
+    <value>Blanqueamiento</value>
+  </data>
+  <data name="Nav_About" xml:space="preserve">
+    <value>Acerca de</value>
+  </data>
+
+  <!-- Map Controls -->
+  <data name="Map_Controls" xml:space="preserve">
+    <value>Controles del Mapa</value>
+  </data>
+  <data name="Map_MarineProtectedAreas" xml:space="preserve">
+    <value>Areas Marinas Protegidas</value>
+  </data>
+  <data name="Map_FishingActivity" xml:space="preserve">
+    <value>Actividad Pesquera</value>
+  </data>
+  <data name="Map_ActiveAlerts" xml:space="preserve">
+    <value>Alertas Activas</value>
+  </data>
+  <data name="Map_LocateMe" xml:space="preserve">
+    <value>Mi Ubicacion</value>
+  </data>
+  <data name="Map_ResetView" xml:space="preserve">
+    <value>Restablecer Vista</value>
+  </data>
+  <data name="Map_Fullscreen" xml:space="preserve">
+    <value>Pantalla Completa</value>
+  </data>
+  <data name="Map_Exit" xml:space="preserve">
+    <value>Salir</value>
+  </data>
+  <data name="Map_Shortcuts" xml:space="preserve">
+    <value>atajos</value>
+  </data>
+  <data name="Map_KeyboardShortcuts" xml:space="preserve">
+    <value>Atajos de Teclado</value>
+  </data>
+  <data name="Map_Close" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+
+  <!-- Legend -->
+  <data name="Legend_Title" xml:space="preserve">
+    <value>Leyenda</value>
+  </data>
+  <data name="Legend_ProtectionLevels" xml:space="preserve">
+    <value>Niveles de Proteccion</value>
+  </data>
+  <data name="Legend_NoTakeZone" xml:space="preserve">
+    <value>Zona de No Extraccion</value>
+  </data>
+  <data name="Legend_HighlyProtected" xml:space="preserve">
+    <value>Altamente Protegida</value>
+  </data>
+  <data name="Legend_LightlyProtected" xml:space="preserve">
+    <value>Ligeramente Protegida</value>
+  </data>
+  <data name="Legend_FishingActivity" xml:space="preserve">
+    <value>Actividad Pesquera</value>
+  </data>
+  <data name="Legend_Last7Days" xml:space="preserve">
+    <value>Ultimos 7 dias</value>
+  </data>
+  <data name="Legend_8to14Days" xml:space="preserve">
+    <value>8-14 dias</value>
+  </data>
+  <data name="Legend_15to30Days" xml:space="preserve">
+    <value>15-30 dias</value>
+  </data>
+  <data name="Legend_MPAViolation" xml:space="preserve">
+    <value>Violacion de AMP</value>
+  </data>
+
+  <!-- Dashboard -->
+  <data name="Dashboard_Title" xml:space="preserve">
+    <value>Panel de Inteligencia Marina</value>
+  </data>
+  <data name="Dashboard_Subtitle" xml:space="preserve">
+    <value>Monitoreo en tiempo real de la Economia Azul de Las Bahamas</value>
+  </data>
+  <data name="Dashboard_TotalMPAs" xml:space="preserve">
+    <value>Total de AMPs</value>
+  </data>
+  <data name="Dashboard_ActiveAlerts" xml:space="preserve">
+    <value>Alertas Activas</value>
+  </data>
+  <data name="Dashboard_RecentObservations" xml:space="preserve">
+    <value>Observaciones Recientes</value>
+  </data>
+  <data name="Dashboard_MapPreview" xml:space="preserve">
+    <value>Vista Previa del Mapa</value>
+  </data>
+  <data name="Dashboard_ViewFullMap" xml:space="preserve">
+    <value>Ver Mapa Completo</value>
+  </data>
+
+  <!-- Alerts -->
+  <data name="Alert_RecentAlerts" xml:space="preserve">
+    <value>Alertas Recientes</value>
+  </data>
+  <data name="Alert_NoAlerts" xml:space="preserve">
+    <value>Sin alertas activas</value>
+  </data>
+  <data name="Alert_BleachingWarning" xml:space="preserve">
+    <value>Advertencia de Blanqueamiento</value>
+  </data>
+  <data name="Alert_BleachingAlert" xml:space="preserve">
+    <value>Alerta de Blanqueamiento</value>
+  </data>
+  <data name="Alert_HeatStressDetected" xml:space="preserve">
+    <value>Estres termico detectado en aguas de Bahamas</value>
+  </data>
+
+  <!-- Observations -->
+  <data name="Obs_Title" xml:space="preserve">
+    <value>Observaciones de Ciencia Ciudadana</value>
+  </data>
+  <data name="Obs_SubmitNew" xml:space="preserve">
+    <value>Enviar Nueva Observacion</value>
+  </data>
+  <data name="Obs_Location" xml:space="preserve">
+    <value>Ubicacion</value>
+  </data>
+  <data name="Obs_Type" xml:space="preserve">
+    <value>Tipo de Observacion</value>
+  </data>
+  <data name="Obs_Description" xml:space="preserve">
+    <value>Descripcion</value>
+  </data>
+  <data name="Obs_Photo" xml:space="preserve">
+    <value>Foto</value>
+  </data>
+  <data name="Obs_Submit" xml:space="preserve">
+    <value>Enviar</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Cargando...</value>
+  </data>
+  <data name="Common_Error" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Common_Retry" xml:space="preserve">
+    <value>Reintentar</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Common_Offline" xml:space="preserve">
+    <value>Sin conexion - Algunas funciones pueden estar limitadas</value>
+  </data>
+
+  <!-- Footer -->
+  <data name="Footer_Copyright" xml:space="preserve">
+    <value>CoralLedger Blue - Plataforma de Inteligencia Marina para Las Bahamas</value>
+  </data>
+</root>

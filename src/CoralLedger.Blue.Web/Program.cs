@@ -1,3 +1,4 @@
+using System.Globalization;
 using CoralLedger.Blue.Application;
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Infrastructure;
@@ -8,6 +9,7 @@ using CoralLedger.Blue.Web.Endpoints;
 using CoralLedger.Blue.Web.Hubs;
 using CoralLedger.Blue.Web.Security;
 using CoralLedger.Blue.Web.Theme;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
 using Scalar.AspNetCore;
@@ -23,6 +25,30 @@ builder.Services.AddScoped<IThemeState, ThemeState>();
 
 // Add Radzen Blazor services
 builder.Services.AddRadzenComponents();
+
+// Add Localization support (English, Spanish, Haitian Creole)
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[]
+    {
+        new CultureInfo("en"),    // English (default)
+        new CultureInfo("es"),    // Spanish
+        new CultureInfo("ht")     // Haitian Creole
+    };
+
+    options.DefaultRequestCulture = new RequestCulture("en");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+
+    // Accept language from: query string (?culture=es), cookie, or Accept-Language header
+    options.RequestCultureProviders = new List<IRequestCultureProvider>
+    {
+        new QueryStringRequestCultureProvider(),
+        new CookieRequestCultureProvider(),
+        new AcceptLanguageHeaderRequestCultureProvider()
+    };
+});
 
 // Add Blazor components with Interactive Server mode + WebAssembly Auto mode
 builder.Services.AddRazorComponents()
@@ -152,7 +178,10 @@ app.UseSecurityHeaders();
 app.UseStaticFiles();
 app.UseBlazorFrameworkFiles();
 
-// 3. Routing begins here - explicitly add UseRouting()
+// 3. Localization (must be before routing for culture-aware routes)
+app.UseRequestLocalization();
+
+// 4. Routing begins here - explicitly add UseRouting()
 app.UseRouting();
 
 // 4. Middleware that needs to know about the selected endpoint

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter</value>
+  </resheader>
+
+  <!-- Navigation -->
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>Tablo</value>
+  </data>
+  <data name="Nav_Map" xml:space="preserve">
+    <value>Kat</value>
+  </data>
+  <data name="Nav_Observations" xml:space="preserve">
+    <value>Obsèvasyon</value>
+  </data>
+  <data name="Nav_Bleaching" xml:space="preserve">
+    <value>Blanchi</value>
+  </data>
+  <data name="Nav_About" xml:space="preserve">
+    <value>Konsènan</value>
+  </data>
+
+  <!-- Map Controls -->
+  <data name="Map_Controls" xml:space="preserve">
+    <value>Kontwòl Kat</value>
+  </data>
+  <data name="Map_MarineProtectedAreas" xml:space="preserve">
+    <value>Zòn Marin Pwoteje</value>
+  </data>
+  <data name="Map_FishingActivity" xml:space="preserve">
+    <value>Aktivite Lapèch</value>
+  </data>
+  <data name="Map_ActiveAlerts" xml:space="preserve">
+    <value>Alèt Aktif</value>
+  </data>
+  <data name="Map_LocateMe" xml:space="preserve">
+    <value>Jwenn Mwen</value>
+  </data>
+  <data name="Map_ResetView" xml:space="preserve">
+    <value>Retounen Nan Orijin</value>
+  </data>
+  <data name="Map_Fullscreen" xml:space="preserve">
+    <value>Ekran Konplè</value>
+  </data>
+  <data name="Map_Exit" xml:space="preserve">
+    <value>Soti</value>
+  </data>
+  <data name="Map_Shortcuts" xml:space="preserve">
+    <value>rakoursi</value>
+  </data>
+  <data name="Map_KeyboardShortcuts" xml:space="preserve">
+    <value>Rakoursi Klavye</value>
+  </data>
+  <data name="Map_Close" xml:space="preserve">
+    <value>Fèmen</value>
+  </data>
+
+  <!-- Legend -->
+  <data name="Legend_Title" xml:space="preserve">
+    <value>Lejand</value>
+  </data>
+  <data name="Legend_ProtectionLevels" xml:space="preserve">
+    <value>Nivo Pwoteksyon</value>
+  </data>
+  <data name="Legend_NoTakeZone" xml:space="preserve">
+    <value>Zòn San Pran</value>
+  </data>
+  <data name="Legend_HighlyProtected" xml:space="preserve">
+    <value>Byen Pwoteje</value>
+  </data>
+  <data name="Legend_LightlyProtected" xml:space="preserve">
+    <value>Ti Kras Pwoteje</value>
+  </data>
+  <data name="Legend_FishingActivity" xml:space="preserve">
+    <value>Aktivite Lapèch</value>
+  </data>
+  <data name="Legend_Last7Days" xml:space="preserve">
+    <value>Dènye 7 jou</value>
+  </data>
+  <data name="Legend_8to14Days" xml:space="preserve">
+    <value>8-14 jou</value>
+  </data>
+  <data name="Legend_15to30Days" xml:space="preserve">
+    <value>15-30 jou</value>
+  </data>
+  <data name="Legend_MPAViolation" xml:space="preserve">
+    <value>Vyolasyon ZMP</value>
+  </data>
+
+  <!-- Dashboard -->
+  <data name="Dashboard_Title" xml:space="preserve">
+    <value>Tablo Entèlijans Marin</value>
+  </data>
+  <data name="Dashboard_Subtitle" xml:space="preserve">
+    <value>Siveyans an tan reyèl ekonomi ble Bahamas yo</value>
+  </data>
+  <data name="Dashboard_TotalMPAs" xml:space="preserve">
+    <value>Total ZMP</value>
+  </data>
+  <data name="Dashboard_ActiveAlerts" xml:space="preserve">
+    <value>Alèt Aktif</value>
+  </data>
+  <data name="Dashboard_RecentObservations" xml:space="preserve">
+    <value>Obsèvasyon Resan</value>
+  </data>
+  <data name="Dashboard_MapPreview" xml:space="preserve">
+    <value>Apèsi Kat</value>
+  </data>
+  <data name="Dashboard_ViewFullMap" xml:space="preserve">
+    <value>Wè Kat Konplè</value>
+  </data>
+
+  <!-- Alerts -->
+  <data name="Alert_RecentAlerts" xml:space="preserve">
+    <value>Alèt Resan</value>
+  </data>
+  <data name="Alert_NoAlerts" xml:space="preserve">
+    <value>Pa gen alèt aktif</value>
+  </data>
+  <data name="Alert_BleachingWarning" xml:space="preserve">
+    <value>Avètisman Blanchi</value>
+  </data>
+  <data name="Alert_BleachingAlert" xml:space="preserve">
+    <value>Alèt Blanchi</value>
+  </data>
+  <data name="Alert_HeatStressDetected" xml:space="preserve">
+    <value>Yo detekte estrès chalè nan dlo Bahamas</value>
+  </data>
+
+  <!-- Observations -->
+  <data name="Obs_Title" xml:space="preserve">
+    <value>Obsèvasyon Syans Sitwayen</value>
+  </data>
+  <data name="Obs_SubmitNew" xml:space="preserve">
+    <value>Soumèt Nouvo Obsèvasyon</value>
+  </data>
+  <data name="Obs_Location" xml:space="preserve">
+    <value>Kote</value>
+  </data>
+  <data name="Obs_Type" xml:space="preserve">
+    <value>Tip Obsèvasyon</value>
+  </data>
+  <data name="Obs_Description" xml:space="preserve">
+    <value>Deskripsyon</value>
+  </data>
+  <data name="Obs_Photo" xml:space="preserve">
+    <value>Foto</value>
+  </data>
+  <data name="Obs_Submit" xml:space="preserve">
+    <value>Soumèt</value>
+  </data>
+
+  <!-- Common -->
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Chajman...</value>
+  </data>
+  <data name="Common_Error" xml:space="preserve">
+    <value>Erè</value>
+  </data>
+  <data name="Common_Retry" xml:space="preserve">
+    <value>Eseye Ankò</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Sove</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Anile</value>
+  </data>
+  <data name="Common_Offline" xml:space="preserve">
+    <value>San koneksyon - Kèk fonksyon ka limite</value>
+  </data>
+
+  <!-- Footer -->
+  <data name="Footer_Copyright" xml:space="preserve">
+    <value>CoralLedger Blue - Platfòm Entèlijans Marin pou Bahamas</value>
+  </data>
+</root>

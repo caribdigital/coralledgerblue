@@ -27,9 +27,43 @@ Use the table below to log issues discovered during each audit run. Link to scre
 | ID | Severity | Page / Component | Description | Status / Owner | Evidence |
 |----|----------|------------------|-------------|----------------|----------|
 | A11Y-001 | Critical | MainLayout | Skip link is hidden without styles | Open / @ui-team | Link to screenshot |
-| A11Y-002 | Major | Map controls | Toggles do not expose aria-pressed | Open / @map-team | axe JSON path |
+| A11Y-002 | Major | Map controls | Toggles do not expose aria-pressed | **Fixed** | MapControlPanel.razor |
+| A11Y-003 | Major | Map controls | No keyboard shortcuts for layer toggles | **Fixed** | M/F/A/L/R/? keys |
+| A11Y-004 | Major | Map legend | Color is only differentiator | **Fixed** | WCAG patterns + icons |
+| A11Y-005 | Minor | Map controls | No offline state indication | **Fixed** | IsOffline parameter |
+| A11Y-006 | Minor | Map | No hover tooltips on MPA polygons | **Fixed** | leaflet-map.js hover info |
 
 Replace the placeholder entries above with real findings. Aim to close Major/Critical issues before moving to Phase 2 map work.
+
+## Recent Accessibility Improvements (December 2025)
+
+### MapControlPanel Enhancements
+- Added `role="region"` with `aria-label="Map controls"` for screen readers
+- Added `fieldset` and `legend` for proper grouping of layer toggles
+- Added `aria-describedby` for each toggle checkbox
+- Added `accesskey` attributes for direct keyboard access (M, F, A, L, R)
+- Added keyboard shortcuts panel (press `?` to show)
+- Added `aria-pressed` state for fullscreen toggle
+- Added offline warning banner with `role="alert"`
+- Added visible focus indicators (`:focus-visible` outlines)
+
+### Map Legend WCAG Compliance
+- Added pattern overlays (diagonal stripes, dots, waves) alongside colors
+- Added icons (emojis) as secondary visual indicators
+- Added `role="list"` and `role="listitem"` for screen reader navigation
+- Added `tabindex="0"` for keyboard focus
+- Added size differentiation for fishing activity recency dots
+- Added pulse animations with reduced motion fallback
+
+### Hover Information
+- Added MPA hover info box with detailed information
+- Includes name, island group, protection level, and area
+- Uses ARIA `role="status"` with `aria-live="polite"`
+
+### Internationalization
+- Added localization infrastructure with resource files
+- Supported languages: English (default), Spanish, Haitian Creole
+- Culture detection via query string, cookie, or Accept-Language header
 
 ## Severity guidance
 
