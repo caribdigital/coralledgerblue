@@ -1,38 +1,422 @@
 @namespace CoralLedger.Blue.Web.Client.Components
 
-<div class="map-control-panel" role="region" aria-label="Map controls">
-    <h6>Controls</h6>
+<div class="map-control-panel"
+     role="region"
+     aria-label="Map controls"
+     @onkeydown="HandleKeyDown"
+     tabindex="0">
 
-    <div class="control-group">
-        <label class="control-toggle">
-            <input type="checkbox" checked="@MpasLayerVisible" @onchange="OnMpasLayerChanged" />
-            <span>Marine Protected Areas</span>
-        </label>
-        <label class="control-toggle">
-            <input type="checkbox" checked="@FishingEventsVisible" @onchange="OnFishingLayerChanged" />
-            <span>Fishing Activity</span>
-        </label>
-        <label class="control-toggle">
-            <input type="checkbox" checked="@AlertsVisible" @onchange="OnAlertsLayerChanged" />
-            <span>Active Alerts</span>
-        </label>
+    <div class="control-panel-header">
+        <h6 id="map-controls-heading">
+            <i class="bi bi-sliders" aria-hidden="true"></i>
+            Map Controls
+        </h6>
+        <div class="keyboard-hint" aria-hidden="true">
+            <kbd>?</kbd> shortcuts
+        </div>
     </div>
 
-    <div class="control-actions">
-        <button class="btn btn-sm btn-outline-light" type="button" @onclick="OnLocateRequested">
-            <i class="bi bi-geo-alt-fill"></i>
-            Locate Me
+    @if (IsOffline)
+    {
+        <div class="offline-warning" role="alert">
+            <i class="bi bi-wifi-off" aria-hidden="true"></i>
+            <span>Offline - Some features may be limited</span>
+        </div>
+    }
+
+    <fieldset class="control-group" aria-labelledby="layer-toggles-label">
+        <legend id="layer-toggles-label" class="visually-hidden">Layer visibility toggles</legend>
+
+        <label class="control-toggle" id="mpa-layer-toggle">
+            <input type="checkbox"
+                   checked="@MpasLayerVisible"
+                   @onchange="OnMpasLayerChanged"
+                   aria-describedby="mpa-layer-desc"
+                   accesskey="m" />
+            <span class="toggle-indicator" aria-hidden="true">
+                <span class="pattern-stripe pattern-notake"></span>
+            </span>
+            <span class="toggle-label">Marine Protected Areas</span>
+            <span class="toggle-shortcut" aria-hidden="true">M</span>
+        </label>
+        <span id="mpa-layer-desc" class="visually-hidden">Toggle visibility of Marine Protected Areas on the map</span>
+
+        <label class="control-toggle" id="fishing-layer-toggle">
+            <input type="checkbox"
+                   checked="@FishingEventsVisible"
+                   @onchange="OnFishingLayerChanged"
+                   aria-describedby="fishing-layer-desc"
+                   @attributes="@(IsOffline ? new Dictionary<string, object> { { "disabled", true } } : new Dictionary<string, object>())"
+                   accesskey="f" />
+            <span class="toggle-indicator" aria-hidden="true">
+                <span class="pattern-dot"></span>
+            </span>
+            <span class="toggle-label">Fishing Activity</span>
+            <span class="toggle-shortcut" aria-hidden="true">F</span>
+        </label>
+        <span id="fishing-layer-desc" class="visually-hidden">Toggle visibility of fishing activity markers on the map</span>
+
+        <label class="control-toggle" id="alerts-layer-toggle">
+            <input type="checkbox"
+                   checked="@AlertsVisible"
+                   @onchange="OnAlertsLayerChanged"
+                   aria-describedby="alerts-layer-desc"
+                   @attributes="@(IsOffline ? new Dictionary<string, object> { { "disabled", true } } : new Dictionary<string, object>())"
+                   accesskey="a" />
+            <span class="toggle-indicator" aria-hidden="true">
+                <span class="pattern-pulse"></span>
+            </span>
+            <span class="toggle-label">Active Alerts</span>
+            <span class="toggle-shortcut" aria-hidden="true">A</span>
+        </label>
+        <span id="alerts-layer-desc" class="visually-hidden">Toggle visibility of active bleaching and violation alerts</span>
+    </fieldset>
+
+    <div class="control-actions" role="group" aria-label="Map actions">
+        <button class="btn btn-sm btn-control"
+                type="button"
+                @onclick="OnLocateRequested"
+                aria-label="Center map on your current location"
+                title="Locate Me (L)"
+                accesskey="l"
+                @attributes="@(IsOffline ? new Dictionary<string, object> { { "disabled", true } } : new Dictionary<string, object>())">
+            <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+            <span>Locate Me</span>
         </button>
-        <button class="btn btn-sm btn-outline-light" type="button" @onclick="OnResetRequested">
-            <i class="bi bi-arrows-angle-contract"></i>
-            Reset View
+        <button class="btn btn-sm btn-control"
+                type="button"
+                @onclick="OnResetRequested"
+                aria-label="Reset map to show all of Bahamas"
+                title="Reset View (R)"
+                accesskey="r">
+            <i class="bi bi-arrows-angle-contract" aria-hidden="true"></i>
+            <span>Reset View</span>
         </button>
-        <button class="btn btn-sm btn-outline-light" type="button" @onclick="OnFullscreenRequested">
-            <i class="bi bi-fullscreen"></i>
-            Fullscreen
+        <button class="btn btn-sm btn-control"
+                type="button"
+                @onclick="OnFullscreenRequested"
+                aria-label="@(_isFullscreen ? "Exit fullscreen mode" : "Enter fullscreen mode")"
+                title="Fullscreen (Esc to exit)"
+                aria-pressed="@_isFullscreen">
+            <i class="bi @(_isFullscreen ? "bi-fullscreen-exit" : "bi-fullscreen")" aria-hidden="true"></i>
+            <span>@(_isFullscreen ? "Exit" : "Fullscreen")</span>
         </button>
     </div>
+
+    @if (_showShortcutsHelp)
+    {
+        <div class="shortcuts-help" role="dialog" aria-labelledby="shortcuts-title" aria-modal="true">
+            <h6 id="shortcuts-title">Keyboard Shortcuts</h6>
+            <dl class="shortcuts-list">
+                <div class="shortcut-item">
+                    <dt><kbd>M</kbd></dt>
+                    <dd>Toggle MPAs</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>F</kbd></dt>
+                    <dd>Toggle Fishing</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>A</kbd></dt>
+                    <dd>Toggle Alerts</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>L</kbd></dt>
+                    <dd>Locate Me</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>R</kbd></dt>
+                    <dd>Reset View</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>?</kbd></dt>
+                    <dd>Show/hide this help</dd>
+                </div>
+                <div class="shortcut-item">
+                    <dt><kbd>Esc</kbd></dt>
+                    <dd>Close help / Exit fullscreen</dd>
+                </div>
+            </dl>
+            <button class="btn btn-sm btn-outline-light" @onclick="() => _showShortcutsHelp = false">
+                Close
+            </button>
+        </div>
+    }
 </div>
+
+<style>
+    .map-control-panel {
+        background: rgba(5, 12, 26, 0.95);
+        border-radius: var(--radius-base, 8px);
+        padding: 0.75rem;
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+        min-width: 200px;
+    }
+
+    :global(:root[data-theme='light']) .map-control-panel {
+        background: rgba(255, 255, 255, 0.98);
+    }
+
+    .control-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));
+    }
+
+    .control-panel-header h6 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-text, #E6EDF3);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .keyboard-hint {
+        font-size: 0.6875rem;
+        color: var(--color-text-muted, rgba(255,255,255,0.6));
+        cursor: help;
+    }
+
+    .keyboard-hint kbd {
+        background: var(--color-surface-alt, rgba(255,255,255,0.1));
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.625rem;
+    }
+
+    .offline-warning {
+        background: rgba(255, 193, 7, 0.15);
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        border-radius: 6px;
+        padding: 0.5rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: #ffc107;
+    }
+
+    .control-group {
+        border: none;
+        padding: 0;
+        margin: 0 0 0.75rem 0;
+    }
+
+    .control-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: background 0.15s ease;
+        margin-bottom: 0.25rem;
+    }
+
+    .control-toggle:hover {
+        background: var(--color-surface-alt, rgba(255,255,255,0.05));
+    }
+
+    .control-toggle:focus-within {
+        outline: 2px solid var(--color-primary, #00E5CC);
+        outline-offset: 2px;
+    }
+
+    .control-toggle input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        accent-color: var(--color-primary, #00E5CC);
+        cursor: pointer;
+    }
+
+    .control-toggle input[type="checkbox"]:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* WCAG: Pattern indicators for non-color differentiation */
+    .toggle-indicator {
+        width: 18px;
+        height: 12px;
+        border-radius: 3px;
+        background: var(--color-surface-alt, rgba(255,255,255,0.1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .pattern-stripe {
+        width: 100%;
+        height: 100%;
+        border-radius: 3px;
+        background: repeating-linear-gradient(
+            45deg,
+            #dc3545,
+            #dc3545 2px,
+            transparent 2px,
+            transparent 4px
+        );
+    }
+
+    .pattern-notake {
+        background: repeating-linear-gradient(
+            45deg,
+            #dc3545,
+            #dc3545 2px,
+            rgba(220, 53, 69, 0.3) 2px,
+            rgba(220, 53, 69, 0.3) 4px
+        );
+    }
+
+    .pattern-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #0dcaf0;
+        border: 2px solid #fff;
+    }
+
+    .pattern-pulse {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ffc107;
+        animation: pulse 1.5s infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(0.9); }
+    }
+
+    .toggle-label {
+        flex: 1;
+        font-size: 0.8125rem;
+        color: var(--color-text, #E6EDF3);
+    }
+
+    .toggle-shortcut {
+        font-size: 0.625rem;
+        color: var(--color-text-muted, rgba(255,255,255,0.5));
+        background: var(--color-surface-alt, rgba(255,255,255,0.1));
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+
+    .control-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+
+    .btn-control {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: flex-start;
+        background: transparent;
+        border: 1px solid var(--color-border, rgba(255,255,255,0.2));
+        color: var(--color-text, #E6EDF3);
+        font-size: 0.8125rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+    }
+
+    .btn-control:hover:not(:disabled) {
+        background: var(--color-surface-alt, rgba(255,255,255,0.1));
+        border-color: var(--color-primary, #00E5CC);
+    }
+
+    .btn-control:focus-visible {
+        outline: 2px solid var(--color-primary, #00E5CC);
+        outline-offset: 2px;
+    }
+
+    .btn-control:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-control[aria-pressed="true"] {
+        background: var(--color-primary, #00E5CC);
+        color: var(--color-surface, #050C1A);
+        border-color: var(--color-primary, #00E5CC);
+    }
+
+    /* Shortcuts help dialog */
+    .shortcuts-help {
+        position: absolute;
+        top: 0;
+        left: calc(100% + 0.5rem);
+        background: rgba(5, 12, 26, 0.98);
+        border: 1px solid var(--color-border, rgba(255,255,255,0.2));
+        border-radius: var(--radius-base, 8px);
+        padding: 1rem;
+        min-width: 180px;
+        z-index: 1001;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .shortcuts-help h6 {
+        margin: 0 0 0.75rem 0;
+        font-size: 0.875rem;
+        color: var(--color-text, #E6EDF3);
+    }
+
+    .shortcuts-list {
+        margin: 0 0 0.75rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+    }
+
+    .shortcut-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .shortcut-item dt {
+        width: 2rem;
+    }
+
+    .shortcut-item dt kbd {
+        background: var(--color-surface-alt, rgba(255,255,255,0.1));
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-family: monospace;
+    }
+
+    .shortcut-item dd {
+        margin: 0;
+        font-size: 0.75rem;
+        color: var(--color-text-muted, rgba(255,255,255,0.7));
+    }
+
+    /* Screen reader only */
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+</style>
 
 @code {
     [Parameter] public bool MpasLayerVisible { get; set; }
@@ -48,16 +432,77 @@
     [Parameter] public EventCallback OnResetView { get; set; }
     [Parameter] public EventCallback OnFullscreen { get; set; }
 
+    /// <summary>
+    /// Indicates if the app is currently offline
+    /// </summary>
+    [Parameter] public bool IsOffline { get; set; }
+
+    private bool _isFullscreen = false;
+    private bool _showShortcutsHelp = false;
+
     private Task OnMpasLayerChanged(ChangeEventArgs args)
         => MpasLayerVisibleChanged.InvokeAsync(args.Value is bool b && b);
 
     private Task OnFishingLayerChanged(ChangeEventArgs args)
-        => FishingEventsVisibleChanged.InvokeAsync(args.Value is bool b && b);
+    {
+        if (IsOffline) return Task.CompletedTask;
+        return FishingEventsVisibleChanged.InvokeAsync(args.Value is bool b && b);
+    }
 
     private Task OnAlertsLayerChanged(ChangeEventArgs args)
-        => AlertsVisibleChanged.InvokeAsync(args.Value is bool b && b);
+    {
+        if (IsOffline) return Task.CompletedTask;
+        return AlertsVisibleChanged.InvokeAsync(args.Value is bool b && b);
+    }
 
-    private Task OnLocateRequested() => OnLocate.InvokeAsync(null);
+    private Task OnLocateRequested()
+    {
+        if (IsOffline) return Task.CompletedTask;
+        return OnLocate.InvokeAsync(null);
+    }
+
     private Task OnResetRequested() => OnResetView.InvokeAsync(null);
-    private Task OnFullscreenRequested() => OnFullscreen.InvokeAsync(null);
+
+    private async Task OnFullscreenRequested()
+    {
+        _isFullscreen = !_isFullscreen;
+        await OnFullscreen.InvokeAsync(null);
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key.ToLowerInvariant())
+        {
+            case "m":
+                if (!e.CtrlKey && !e.AltKey)
+                    _ = MpasLayerVisibleChanged.InvokeAsync(!MpasLayerVisible);
+                break;
+            case "f":
+                if (!e.CtrlKey && !e.AltKey && !IsOffline)
+                    _ = FishingEventsVisibleChanged.InvokeAsync(!FishingEventsVisible);
+                break;
+            case "a":
+                if (!e.CtrlKey && !e.AltKey && !IsOffline)
+                    _ = AlertsVisibleChanged.InvokeAsync(!AlertsVisible);
+                break;
+            case "l":
+                if (!e.CtrlKey && !e.AltKey && !IsOffline)
+                    _ = OnLocate.InvokeAsync(null);
+                break;
+            case "r":
+                if (!e.CtrlKey && !e.AltKey)
+                    _ = OnResetView.InvokeAsync(null);
+                break;
+            case "?":
+            case "/":
+                _showShortcutsHelp = !_showShortcutsHelp;
+                break;
+            case "escape":
+                if (_showShortcutsHelp)
+                    _showShortcutsHelp = false;
+                else if (_isFullscreen)
+                    _ = OnFullscreenRequested();
+                break;
+        }
+    }
 }

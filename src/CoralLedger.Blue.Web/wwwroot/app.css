@@ -148,6 +148,44 @@ a,
     flex-shrink: 0;
 }
 
+/* WCAG: Pattern overlays for non-color differentiation */
+.legend-pattern-diagonal {
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.3) 2px,
+        rgba(255, 255, 255, 0.3) 4px
+    ) !important;
+    background-color: #dc3545 !important;
+}
+
+.legend-pattern-dots {
+    background-image: radial-gradient(
+        circle at 3px 3px,
+        rgba(255, 255, 255, 0.4) 1px,
+        transparent 1px
+    ) !important;
+    background-size: 6px 6px !important;
+    background-color: #fd7e14 !important;
+}
+
+.legend-pattern-waves {
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(255, 255, 255, 0.25) 3px,
+        rgba(255, 255, 255, 0.25) 4px
+    ) !important;
+    background-color: #0dcaf0 !important;
+}
+
+.legend-icon {
+    font-size: 0.75rem;
+    margin-left: auto;
+}
+
 .legend-dot {
     width: 10px;
     height: 10px;
@@ -156,10 +194,68 @@ a,
     border: 2px solid #fff;
 }
 
+/* Fishing activity dot variants with size differentiation */
+.legend-dot-recent {
+    width: 12px;
+    height: 12px;
+}
+
+.legend-dot-medium {
+    width: 10px;
+    height: 10px;
+}
+
+.legend-dot-old {
+    width: 8px;
+    height: 8px;
+    opacity: 0.7;
+}
+
 .legend-dot.violation {
     background: #dc3545;
     border: 2px solid #ff0000;
     box-shadow: 0 0 4px rgba(255, 0, 0, 0.5);
+    animation: violation-pulse 1s infinite;
+}
+
+@keyframes violation-pulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(255, 0, 0, 0.5); }
+    50% { box-shadow: 0 0 8px rgba(255, 0, 0, 0.8); }
+}
+
+.legend-item-warning {
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 2px -4px;
+}
+
+/* Alert pulse indicators */
+.legend-pulse {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-pulse-critical {
+    background: #dc3545;
+    animation: critical-pulse 0.8s infinite;
+}
+
+.legend-pulse-warning {
+    background: #ffc107;
+    animation: warning-pulse 1.2s infinite;
+}
+
+@keyframes critical-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+@keyframes warning-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 .legend-label {

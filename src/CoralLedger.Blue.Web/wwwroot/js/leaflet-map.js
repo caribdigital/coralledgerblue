@@ -340,7 +340,7 @@ window.leafletMap = {
         return true;
     },
 
-    // US-2.2.6: Add interactive map legend
+    // US-2.2.6: Add interactive map legend with WCAG patterns
     addLegend: function(mapId, showMpa = true, showFishing = false, showAlerts = false) {
         const map = this.maps[mapId];
         if (!map) return false;
@@ -356,47 +356,67 @@ window.leafletMap = {
             const div = L.DomUtil.create('div', 'map-legend');
             div.setAttribute('role', 'region');
             div.setAttribute('aria-label', 'Map Legend');
+            div.setAttribute('tabindex', '0');
 
             let html = '<div class="legend-header"><strong>Legend</strong></div>';
 
             if (showMpa) {
                 html += `
-                    <div class="legend-section">
-                        <div class="legend-title">Protection Levels</div>
-                        <div class="legend-item">
-                            <span class="legend-color" style="background: #dc3545;"></span>
+                    <div class="legend-section" role="list" aria-label="Protection Levels">
+                        <div class="legend-title" id="protection-levels-title">Protection Levels</div>
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-color legend-pattern-diagonal" style="background: #dc3545;" aria-hidden="true"></span>
                             <span class="legend-label">No-Take Zone</span>
+                            <span class="legend-icon" aria-hidden="true">🚫</span>
                         </div>
-                        <div class="legend-item">
-                            <span class="legend-color" style="background: #fd7e14;"></span>
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-color legend-pattern-dots" style="background: #fd7e14;" aria-hidden="true"></span>
                             <span class="legend-label">Highly Protected</span>
+                            <span class="legend-icon" aria-hidden="true">🛡️</span>
                         </div>
-                        <div class="legend-item">
-                            <span class="legend-color" style="background: #0dcaf0;"></span>
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-color legend-pattern-waves" style="background: #0dcaf0;" aria-hidden="true"></span>
                             <span class="legend-label">Lightly Protected</span>
+                            <span class="legend-icon" aria-hidden="true">🌊</span>
                         </div>
                     </div>`;
             }
 
             if (showFishing) {
                 html += `
-                    <div class="legend-section">
-                        <div class="legend-title">Fishing Activity</div>
-                        <div class="legend-item">
-                            <span class="legend-dot" style="background: #dc3545;"></span>
+                    <div class="legend-section" role="list" aria-label="Fishing Activity">
+                        <div class="legend-title" id="fishing-activity-title">Fishing Activity</div>
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-dot legend-dot-recent" style="background: #dc3545;" aria-hidden="true"></span>
                             <span class="legend-label">Last 7 days</span>
                         </div>
-                        <div class="legend-item">
-                            <span class="legend-dot" style="background: #fd7e14;"></span>
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-dot legend-dot-medium" style="background: #fd7e14;" aria-hidden="true"></span>
                             <span class="legend-label">8-14 days</span>
                         </div>
-                        <div class="legend-item">
-                            <span class="legend-dot" style="background: #ffc107;"></span>
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-dot legend-dot-old" style="background: #ffc107;" aria-hidden="true"></span>
                             <span class="legend-label">15-30 days</span>
                         </div>
-                        <div class="legend-item">
-                            <span class="legend-dot violation"></span>
+                        <div class="legend-item legend-item-warning" role="listitem">
+                            <span class="legend-dot violation" aria-hidden="true"></span>
                             <span class="legend-label">MPA Violation</span>
+                            <span class="legend-icon" aria-hidden="true">⚠️</span>
+                        </div>
+                    </div>`;
+            }
+
+            if (showAlerts) {
+                html += `
+                    <div class="legend-section" role="list" aria-label="Alert Levels">
+                        <div class="legend-title">Alert Levels</div>
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-pulse legend-pulse-critical" aria-hidden="true"></span>
+                            <span class="legend-label">Critical</span>
+                        </div>
+                        <div class="legend-item" role="listitem">
+                            <span class="legend-pulse legend-pulse-warning" aria-hidden="true"></span>
+                            <span class="legend-label">Warning</span>
                         </div>
                     </div>`;
             }
