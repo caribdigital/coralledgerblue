@@ -105,5 +105,13 @@ lcov.info
 node_modules/
 package-lock.json
 
+# Publish output
+publish/
+**/publish/
+
+# Lighthouse reports
+lighthouse-*.json
+lighthouse-*.html
+
 # Potential improvements for future sprints
 # TODO: Redis caching (US-3.3.5) - currently using MemoryCache
