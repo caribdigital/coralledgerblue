@@ -1,0 +1,136 @@
+@page "/settings"
+@using CoralLedger.Blue.Web.Components.Shared
+
+<PageTitle>Settings - CoralLedger Blue</PageTitle>
+
+<div class="settings-page">
+    <header class="page-header">
+        <h1>Settings</h1>
+        <p class="text-muted">Manage your application preferences and cached data</p>
+    </header>
+
+    <div class="settings-grid">
+        <section class="settings-section">
+            <CacheManager />
+        </section>
+
+        <section class="settings-section about-section">
+            <div class="about-card">
+                <h3><i class="bi bi-info-circle"></i> About CoralLedger Blue</h3>
+                <p>Marine Intelligence Platform for the Bahamas Blue Economy</p>
+                <dl class="about-details">
+                    <dt>Version</dt>
+                    <dd>1.0.0</dd>
+                    <dt>Platform</dt>
+                    <dd>Progressive Web App (PWA)</dd>
+                    <dt>Offline Support</dt>
+                    <dd>Enabled - Data cached locally</dd>
+                </dl>
+                <div class="about-links">
+                    <a href="https://github.com/caribdigital/coralledgerblue" target="_blank" rel="noopener">
+                        <i class="bi bi-github"></i> View on GitHub
+                    </a>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+    .settings-page {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--color-text, #F5FBFF);
+        margin-bottom: 0.5rem;
+    }
+
+    .page-header .text-muted {
+        color: var(--color-text-muted, rgba(245, 251, 255, 0.7));
+    }
+
+    .settings-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: 1fr;
+    }
+
+    @@media (min-width: 768px) {
+        .settings-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    .settings-section {
+        display: flex;
+    }
+
+    .settings-section > * {
+        flex: 1;
+    }
+
+    .about-card {
+        background: var(--color-surface, #0C1B33);
+        border: 1px solid var(--color-border, rgba(0, 188, 212, 0.2));
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .about-card h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-text, #F5FBFF);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .about-card h3 i {
+        color: var(--color-accent, #00bcd4);
+    }
+
+    .about-card > p {
+        color: var(--color-text-muted, rgba(245, 251, 255, 0.7));
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .about-details {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.5rem 1rem;
+        font-size: 0.8125rem;
+        margin-bottom: 1rem;
+    }
+
+    .about-details dt {
+        color: var(--color-text-muted, rgba(245, 251, 255, 0.7));
+    }
+
+    .about-details dd {
+        color: var(--color-text, #F5FBFF);
+        margin: 0;
+    }
+
+    .about-links a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--color-accent, #00bcd4);
+        text-decoration: none;
+        font-size: 0.875rem;
+    }
+
+    .about-links a:hover {
+        text-decoration: underline;
+    }
+</style>

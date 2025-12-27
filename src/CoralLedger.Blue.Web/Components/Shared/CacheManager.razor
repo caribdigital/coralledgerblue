@@ -1,0 +1,554 @@
+@rendermode InteractiveServer
+@using Microsoft.JSInterop
+@inject IJSRuntime JsRuntime
+
+<div class="cache-manager">
+    <div class="cache-header">
+        <h3><i class="bi bi-database"></i> Offline Storage</h3>
+        <button class="btn btn-sm btn-outline-secondary" @onclick="RefreshStats" disabled="@IsLoading">
+            <i class="bi bi-arrow-clockwise @(IsLoading ? "spinning" : "")"></i>
+        </button>
+    </div>
+
+    @if (StorageEstimate != null)
+    {
+        <div class="storage-overview">
+            <div class="storage-bar">
+                <div class="storage-used" style="width: @StorageEstimate.PercentUsed%"></div>
+            </div>
+            <div class="storage-text">
+                <span>@StorageEstimate.UsageFormatted used</span>
+                <span class="text-muted">of @StorageEstimate.QuotaFormatted</span>
+            </div>
+        </div>
+    }
+
+    <div class="cache-sections">
+        <!-- Static Assets -->
+        <div class="cache-section">
+            <div class="cache-info">
+                <i class="bi bi-file-earmark-code"></i>
+                <div>
+                    <strong>App Resources</strong>
+                    <small>@Stats.StaticCount files (@FormatBytes(Stats.StaticSize))</small>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger"
+                    @onclick="ClearStaticCache"
+                    disabled="@(IsClearing || Stats.StaticCount == 0)">
+                Clear
+            </button>
+        </div>
+
+        <!-- API Cache -->
+        <div class="cache-section">
+            <div class="cache-info">
+                <i class="bi bi-cloud-download"></i>
+                <div>
+                    <strong>API Data</strong>
+                    <small>@Stats.ApiCount responses (@FormatBytes(Stats.ApiSize))</small>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger"
+                    @onclick="ClearApiCache"
+                    disabled="@(IsClearing || Stats.ApiCount == 0)">
+                Clear
+            </button>
+        </div>
+
+        <!-- Map Tiles -->
+        <div class="cache-section">
+            <div class="cache-info">
+                <i class="bi bi-map"></i>
+                <div>
+                    <strong>Map Tiles</strong>
+                    <small>@Stats.TileCount tiles (@FormatBytes(Stats.TileSize))</small>
+                </div>
+            </div>
+            <div class="cache-actions">
+                @if (IsPrecaching)
+                {
+                    <div class="precache-progress">
+                        <div class="progress-bar" style="width: @PrecacheProgress%"></div>
+                    </div>
+                    <small>@PrecacheCached / @PrecacheTotal</small>
+                }
+                else
+                {
+                    <button class="btn btn-sm btn-outline-primary"
+                            @onclick="PrecacheTiles"
+                            disabled="@IsClearing"
+                            title="Download Bahamas map tiles for offline use">
+                        <i class="bi bi-download"></i> Preload
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger"
+                            @onclick="ClearTilesCache"
+                            disabled="@(IsClearing || Stats.TileCount == 0)">
+                        Clear
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Drafts -->
+        <div class="cache-section">
+            <div class="cache-info">
+                <i class="bi bi-pencil-square"></i>
+                <div>
+                    <strong>Saved Drafts</strong>
+                    <small>@Stats.DraftCount items</small>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger"
+                    @onclick="ClearDrafts"
+                    disabled="@(IsClearing || Stats.DraftCount == 0)">
+                Clear
+            </button>
+        </div>
+    </div>
+
+    <!-- Clear All -->
+    <div class="cache-footer">
+        <button class="btn btn-outline-danger w-100"
+                @onclick="ClearAllCaches"
+                disabled="@IsClearing">
+            <i class="bi bi-trash"></i> Clear All Cached Data
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(StatusMessage))
+    {
+        <div class="cache-status @(IsError ? "error" : "success")">
+            <i class="bi @(IsError ? "bi-exclamation-circle" : "bi-check-circle")"></i>
+            @StatusMessage
+        </div>
+    }
+</div>
+
+<style>
+    .cache-manager {
+        background: var(--color-surface, #0C1B33);
+        border: 1px solid var(--color-border, rgba(0, 188, 212, 0.2));
+        border-radius: 12px;
+        padding: 1rem;
+        max-width: 400px;
+    }
+
+    .cache-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--color-border, rgba(0, 188, 212, 0.2));
+    }
+
+    .cache-header h3 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-text, #F5FBFF);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .cache-header h3 i {
+        color: var(--color-accent, #00bcd4);
+    }
+
+    .spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .storage-overview {
+        margin-bottom: 1rem;
+    }
+
+    .storage-bar {
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .storage-used {
+        height: 100%;
+        background: linear-gradient(90deg, var(--color-accent, #00bcd4), var(--color-secondary, #5DE285));
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .storage-text {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: var(--color-text-muted, rgba(245, 251, 255, 0.7));
+    }
+
+    .cache-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .cache-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: var(--color-surface-alt, rgba(0, 188, 212, 0.05));
+        border-radius: 8px;
+    }
+
+    .cache-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .cache-info i {
+        font-size: 1.25rem;
+        color: var(--color-accent, #00bcd4);
+        width: 24px;
+        text-align: center;
+    }
+
+    .cache-info strong {
+        display: block;
+        font-size: 0.875rem;
+        color: var(--color-text, #F5FBFF);
+    }
+
+    .cache-info small {
+        color: var(--color-text-muted, rgba(245, 251, 255, 0.7));
+        font-size: 0.75rem;
+    }
+
+    .cache-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .precache-progress {
+        width: 60px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .precache-progress .progress-bar {
+        height: 100%;
+        background: var(--color-accent, #00bcd4);
+        transition: width 0.2s ease;
+    }
+
+    .cache-footer {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--color-border, rgba(0, 188, 212, 0.2));
+    }
+
+    .cache-status {
+        margin-top: 0.75rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.8125rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .cache-status.success {
+        background: rgba(93, 226, 133, 0.15);
+        color: var(--color-success, #5DE285);
+    }
+
+    .cache-status.error {
+        background: rgba(251, 122, 106, 0.15);
+        color: var(--color-error, #FB7A6A);
+    }
+
+    .btn-outline-primary {
+        border-color: var(--color-accent, #00bcd4);
+        color: var(--color-accent, #00bcd4);
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--color-accent, #00bcd4);
+        color: var(--color-surface, #0C1B33);
+    }
+
+    .btn-outline-danger {
+        border-color: var(--color-error, #FB7A6A);
+        color: var(--color-error, #FB7A6A);
+    }
+
+    .btn-outline-danger:hover {
+        background: var(--color-error, #FB7A6A);
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        border-color: var(--color-text-muted, rgba(245, 251, 255, 0.5));
+        color: var(--color-text-muted, rgba(245, 251, 255, 0.7));
+    }
+
+    .btn-outline-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--color-text, #F5FBFF);
+    }
+</style>
+
+@code {
+    private CacheStats Stats { get; set; } = new();
+    private StorageInfo? StorageEstimate { get; set; }
+    private bool IsLoading { get; set; }
+    private bool IsClearing { get; set; }
+    private bool IsPrecaching { get; set; }
+    private int PrecacheCached { get; set; }
+    private int PrecacheTotal { get; set; }
+    private string? StatusMessage { get; set; }
+    private bool IsError { get; set; }
+
+    private int PrecacheProgress => PrecacheTotal > 0 ? (int)((double)PrecacheCached / PrecacheTotal * 100) : 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RefreshStats();
+        }
+    }
+
+    private async Task RefreshStats()
+    {
+        IsLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var stats = await JsRuntime.InvokeAsync<Dictionary<string, object>>("cacheManager.getCacheStats");
+
+            Stats = new CacheStats
+            {
+                StaticCount = GetIntValue(stats, "static", "count"),
+                StaticSize = GetLongValue(stats, "static", "size"),
+                ApiCount = GetIntValue(stats, "api", "count"),
+                ApiSize = GetLongValue(stats, "api", "size"),
+                TileCount = GetIntValue(stats, "tiles", "count"),
+                TileSize = GetLongValue(stats, "tiles", "size"),
+                DraftCount = GetIntValue(stats, "drafts", "count")
+            };
+
+            var estimate = await JsRuntime.InvokeAsync<Dictionary<string, object>?>("cacheManager.getStorageEstimate");
+            if (estimate != null)
+            {
+                StorageEstimate = new StorageInfo
+                {
+                    UsageFormatted = estimate.TryGetValue("usageFormatted", out var usage) ? usage?.ToString() ?? "0 B" : "0 B",
+                    QuotaFormatted = estimate.TryGetValue("quotaFormatted", out var quota) ? quota?.ToString() ?? "0 B" : "0 B",
+                    PercentUsed = estimate.TryGetValue("percentUsed", out var percent) ? Convert.ToInt32(percent) : 0
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error refreshing cache stats: {ex.Message}");
+        }
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private int GetIntValue(Dictionary<string, object> stats, string category, string property)
+    {
+        if (stats.TryGetValue(category, out var catObj) && catObj is System.Text.Json.JsonElement catElement)
+        {
+            if (catElement.TryGetProperty(property, out var propElement))
+            {
+                return propElement.GetInt32();
+            }
+        }
+        return 0;
+    }
+
+    private long GetLongValue(Dictionary<string, object> stats, string category, string property)
+    {
+        if (stats.TryGetValue(category, out var catObj) && catObj is System.Text.Json.JsonElement catElement)
+        {
+            if (catElement.TryGetProperty(property, out var propElement))
+            {
+                return propElement.GetInt64();
+            }
+        }
+        return 0;
+    }
+
+    private Task ClearStaticCache() => ClearCache("static");
+    private Task ClearApiCache() => ClearCache("api");
+    private Task ClearTilesCache() => ClearCache("tiles");
+
+    private async Task ClearCache(string cacheType)
+    {
+        IsClearing = true;
+        StatusMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var success = await JsRuntime.InvokeAsync<bool>("cacheManager.clearCache", cacheType);
+            if (success)
+            {
+                StatusMessage = $"{cacheType} cache cleared";
+                IsError = false;
+                await RefreshStats();
+            }
+            else
+            {
+                StatusMessage = "Failed to clear cache";
+                IsError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+            IsError = true;
+        }
+
+        IsClearing = false;
+        _ = ClearStatusMessage();
+        StateHasChanged();
+    }
+
+    private async Task ClearDrafts()
+    {
+        IsClearing = true;
+        StatusMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var success = await JsRuntime.InvokeAsync<bool>("cacheManager.clearDrafts");
+            if (success)
+            {
+                StatusMessage = "Drafts cleared";
+                IsError = false;
+                await RefreshStats();
+            }
+            else
+            {
+                StatusMessage = "Failed to clear drafts";
+                IsError = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+            IsError = true;
+        }
+
+        IsClearing = false;
+        _ = ClearStatusMessage();
+        StateHasChanged();
+    }
+
+    private async Task ClearAllCaches()
+    {
+        IsClearing = true;
+        StatusMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            await JsRuntime.InvokeAsync<bool>("cacheManager.clearCache", "all");
+            await JsRuntime.InvokeAsync<bool>("cacheManager.clearDrafts");
+            StatusMessage = "All cached data cleared";
+            IsError = false;
+            await RefreshStats();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+            IsError = true;
+        }
+
+        IsClearing = false;
+        _ = ClearStatusMessage();
+        StateHasChanged();
+    }
+
+    private async Task PrecacheTiles()
+    {
+        IsPrecaching = true;
+        PrecacheCached = 0;
+        PrecacheTotal = 0;
+        StatusMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            // Note: For full progress updates, we'd need a more complex callback pattern
+            // For now, we'll just show completion
+            var result = await JsRuntime.InvokeAsync<Dictionary<string, int>>("cacheManager.precacheBahamasTiles", null);
+
+            if (result.TryGetValue("cached", out var cached) && result.TryGetValue("total", out var total))
+            {
+                StatusMessage = $"Cached {cached} of {total} map tiles";
+                IsError = false;
+            }
+
+            await RefreshStats();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+            IsError = true;
+        }
+
+        IsPrecaching = false;
+        _ = ClearStatusMessage();
+        StateHasChanged();
+    }
+
+    private async Task ClearStatusMessage()
+    {
+        await Task.Delay(3000);
+        StatusMessage = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string FormatBytes(long bytes)
+    {
+        if (bytes == 0) return "0 B";
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        int i = (int)Math.Floor(Math.Log(bytes) / Math.Log(1024));
+        return $"{Math.Round(bytes / Math.Pow(1024, i), 1)} {sizes[i]}";
+    }
+
+    private class CacheStats
+    {
+        public int StaticCount { get; set; }
+        public long StaticSize { get; set; }
+        public int ApiCount { get; set; }
+        public long ApiSize { get; set; }
+        public int TileCount { get; set; }
+        public long TileSize { get; set; }
+        public int DraftCount { get; set; }
+    }
+
+    private class StorageInfo
+    {
+        public string UsageFormatted { get; set; } = "0 B";
+        public string QuotaFormatted { get; set; } = "0 B";
+        public int PercentUsed { get; set; }
+    }
+}
