@@ -26,14 +26,16 @@
     <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-dark-base.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
-        rel="stylesheet" />
-    <!-- Material Icons for Radzen components -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <!-- Leaflet CSS & JS (local copy for reliability) -->
+    <!-- Fonts with display=swap for non-blocking load -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'" />
+    <!-- Material Icons with non-blocking load -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" media="print" onload="this.media='all'" />
+    <!-- Leaflet CSS (preload for performance) -->
+    <link rel="preload" href="lib/leaflet/leaflet.css" as="style" />
     <link rel="stylesheet" href="lib/leaflet/leaflet.css" />
-    <script src="lib/leaflet/leaflet.js"></script>
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="CoralLedger.Blue.Web.styles.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
@@ -41,13 +43,37 @@
 </head>
 
 <body>
+    <!-- Loading skeleton shown until Blazor renders -->
+    <div id="app-loading" style="display:flex;justify-content:center;align-items:center;height:100vh;background:#1a1a2e;">
+        <div style="text-align:center;color:#00bcd4;">
+            <div style="width:50px;height:50px;border:4px solid #00bcd4;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;"></div>
+            <div style="font-family:system-ui;font-size:14px;">Loading CoralLedger Blue...</div>
+        </div>
+        <style>@@keyframes spin{to{transform:rotate(360deg)}}</style>
+    </div>
+    <script>
+        // Hide loading skeleton once Blazor is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new MutationObserver(() => {
+                if (document.querySelector('.sidebar, .main-content, [b-*]')) {
+                    document.getElementById('app-loading')?.remove();
+                    observer.disconnect();
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+            // Fallback: hide after 10 seconds regardless
+            setTimeout(() => document.getElementById('app-loading')?.remove(), 10000);
+        });
+    </script>
     <!-- Radzen Component Providers -->
     <RadzenComponents />
-    <Routes />
+    <Routes @rendermode="InteractiveAuto" />
     <!-- Theme Manager (must load before Blazor) -->
     <script src="js/theme.js"></script>
-    <!-- Leaflet Map Interop (Leaflet.js is loaded in head) -->
-    <script src="js/leaflet-map.js"></script>
+    <!-- Leaflet JS (deferred for performance) -->
+    <script src="lib/leaflet/leaflet.js" defer></script>
+    <!-- Leaflet Map Interop -->
+    <script src="js/leaflet-map.js" defer></script>
     <script src="_framework/blazor.web.js"></script>
     <!-- Radzen Blazor JS -->
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>

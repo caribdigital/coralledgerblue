@@ -7,6 +7,19 @@
     <WasmBuildNative>true</WasmBuildNative>
   </PropertyGroup>
 
+  <!-- Performance optimizations for Release builds -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- AOT compilation for faster runtime performance -->
+    <RunAOTCompilation>true</RunAOTCompilation>
+    <!-- Aggressive IL trimming to reduce bundle size -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+    <!-- Enable Brotli compression for smaller downloads -->
+    <BlazorEnableCompression>true</BlazorEnableCompression>
+    <!-- Optimize WASM for size -->
+    <WasmStripILAfterAOT>true</WasmStripILAfterAOT>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Mapsui.Blazor" />
