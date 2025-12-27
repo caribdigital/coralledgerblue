@@ -1,0 +1,196 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div @ref="_containerRef" class="lazy-map-container" style="@ContainerStyle">
+    @if (_isVisible)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <div class="lazy-map-placeholder" style="height: @Height;">
+            <div class="placeholder-content">
+                <div class="placeholder-icon">
+                    <i class="bi bi-map"></i>
+                </div>
+                <div class="placeholder-text">
+                    <span>@PlaceholderText</span>
+                    <small>Scroll to load map</small>
+                </div>
+                @if (ShowLoadButton)
+                {
+                    <button class="btn-load-map" @onclick="LoadNow">
+                        <i class="bi bi-play-fill"></i> Load Map Now
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .lazy-map-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .lazy-map-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #0C1B33 0%, #050C1A 100%);
+        border-radius: var(--radius-base, 14px);
+        border: 1px dashed var(--color-border, rgba(255,255,255,0.18));
+    }
+
+    .placeholder-content {
+        text-align: center;
+        color: var(--color-text-muted, rgba(245,251,255,0.7));
+    }
+
+    .placeholder-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--color-primary, #2EE3FF);
+        opacity: 0.5;
+    }
+
+    .placeholder-icon i {
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { opacity: 0.5; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
+    }
+
+    .placeholder-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .placeholder-text span {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .placeholder-text small {
+        font-size: 0.8125rem;
+        opacity: 0.7;
+    }
+
+    .btn-load-map {
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        background: var(--color-primary, #2EE3FF);
+        color: var(--color-surface, #050C1A);
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-load-map:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(46, 227, 255, 0.3);
+    }
+
+    /* Light theme */
+    :global(:root[data-theme='light']) .lazy-map-placeholder {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-color: #dee2e6;
+    }
+
+    :global(:root[data-theme='light']) .placeholder-content {
+        color: #6c757d;
+    }
+
+    :global(:root[data-theme='light']) .placeholder-icon {
+        color: #0d6efd;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string Height { get; set; } = "400px";
+
+    [Parameter]
+    public string? ContainerStyle { get; set; }
+
+    [Parameter]
+    public string PlaceholderText { get; set; } = "Interactive Map";
+
+    [Parameter]
+    public bool ShowLoadButton { get; set; } = true;
+
+    [Parameter]
+    public double RootMargin { get; set; } = 100; // pixels before entering viewport
+
+    [Parameter]
+    public EventCallback OnMapLoaded { get; set; }
+
+    private ElementReference _containerRef;
+    private bool _isVisible;
+    private DotNetObjectReference<LazyMapLoader>? _dotNetRef;
+    private bool _observerInitialized;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_observerInitialized)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            try
+            {
+                await JS.InvokeVoidAsync("lazyMapObserver.observe", _containerRef, _dotNetRef, RootMargin);
+                _observerInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"LazyMapLoader: Failed to initialize observer: {ex.Message}");
+                // Fallback: load immediately if observer fails
+                await SetVisible();
+            }
+        }
+    }
+
+    [JSInvokable]
+    public async Task SetVisible()
+    {
+        if (!_isVisible)
+        {
+            _isVisible = true;
+            await InvokeAsync(StateHasChanged);
+            await OnMapLoaded.InvokeAsync();
+        }
+    }
+
+    private async Task LoadNow()
+    {
+        await SetVisible();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_observerInitialized)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("lazyMapObserver.unobserve", _containerRef);
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
+        }
+        _dotNetRef?.Dispose();
+    }
+}

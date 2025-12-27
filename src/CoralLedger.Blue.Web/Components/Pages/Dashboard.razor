@@ -81,7 +81,7 @@
 
         @* Main Content Grid *@
         <div class="dashboard-grid">
-            @* US-2.1.1: Map Preview Card *@
+            @* US-2.1.1: Map Preview Card - Lazy loaded for performance *@
             <section class="card-map-preview" aria-label="Map preview">
                 <div class="card-header">
                     <h2><i class="bi bi-map" aria-hidden="true"></i> Map Preview</h2>
@@ -90,10 +90,12 @@
                     </a>
                 </div>
                 <div class="card-body map-preview-body">
-                    <LeafletMapComponent
-                        ShowLegend="false"
-                        ShowFishingEvents="false"
-                        UseDarkTheme="true" />
+                    <LazyMapLoader Height="350px" PlaceholderText="Bahamas Marine Map" RootMargin="200">
+                        <LeafletMapComponent
+                            ShowLegend="false"
+                            ShowFishingEvents="false"
+                            UseDarkTheme="true" />
+                    </LazyMapLoader>
                 </div>
             </section>
 

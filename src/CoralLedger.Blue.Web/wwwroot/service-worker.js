@@ -1,11 +1,23 @@
 // CoralLedger Blue Service Worker
-// Version: 4.0.0 - Sprint 4.1: PWA Offline Support & Geometry Pre-caching
-const CACHE_VERSION = 'v4';
+// Version: 5.0.0 - Complete Offline PWA with Map Tile Caching
+const CACHE_VERSION = 'v5';
 const STATIC_CACHE = `coralledger-static-${CACHE_VERSION}`;
 const API_CACHE = `coralledger-api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `coralledger-images-${CACHE_VERSION}`;
 const GEOMETRY_CACHE = `coralledger-geometry-${CACHE_VERSION}`;
+const TILE_CACHE = `coralledger-tiles-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
+
+// Map tile configuration
+const TILE_CACHE_CONFIG = {
+    maxTiles: 500,           // Maximum tiles to cache
+    maxAge: 7 * 24 * 3600000, // 7 days
+    patterns: [
+        /^https:\/\/[abc]\.tile\.openstreetmap\.org/,
+        /^https:\/\/[abc]\.basemaps\.cartocdn\.com/,
+        /^https:\/\/cartodb-basemaps-[abc]\.global\.ssl\.fastly\.net/
+    ]
+};
 
 // Static assets to cache immediately on install
 const STATIC_ASSETS = [
@@ -140,7 +152,8 @@ self.addEventListener('activate', (event) => {
                                    name !== STATIC_CACHE &&
                                    name !== API_CACHE &&
                                    name !== IMAGE_CACHE &&
-                                   name !== GEOMETRY_CACHE;
+                                   name !== GEOMETRY_CACHE &&
+                                   name !== TILE_CACHE;
                         })
                         .map((name) => {
                             console.log('[SW] Deleting old cache:', name);
@@ -172,7 +185,9 @@ self.addEventListener('fetch', (event) => {
     }
 
     // Handle different resource types
-    if (isGeometryRequest(url)) {
+    if (isMapTileRequest(request.url)) {
+        event.respondWith(handleTileRequest(request));
+    } else if (isGeometryRequest(url)) {
         event.respondWith(handleGeometryRequest(request, url));
     } else if (url.pathname.startsWith('/api/')) {
         event.respondWith(handleApiRequest(request, url));
@@ -182,6 +197,113 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(handleStaticRequest(request));
     }
 });
+
+// ==========================================================================
+// Map Tile Caching (v5.0.0)
+// ==========================================================================
+
+/**
+ * Check if request is for a map tile
+ */
+function isMapTileRequest(url) {
+    return TILE_CACHE_CONFIG.patterns.some(pattern => pattern.test(url));
+}
+
+/**
+ * Handle map tile requests with cache-first strategy
+ * Caches tiles for offline map viewing
+ */
+async function handleTileRequest(request) {
+    const cache = await caches.open(TILE_CACHE);
+
+    // Try cache first for fast response
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+        // Check if tile is still valid
+        const cachedAt = parseInt(cachedResponse.headers.get('sw-cached-at') || '0');
+        if (Date.now() - cachedAt < TILE_CACHE_CONFIG.maxAge) {
+            return cachedResponse;
+        }
+    }
+
+    // Try network
+    try {
+        const networkResponse = await fetch(request);
+
+        if (networkResponse.ok) {
+            // Clone response for caching
+            const responseToCache = networkResponse.clone();
+
+            // Add cache metadata
+            const headers = new Headers(responseToCache.headers);
+            headers.set('sw-cached-at', Date.now().toString());
+
+            // Cache the tile
+            const cachedTile = new Response(await responseToCache.blob(), {
+                status: responseToCache.status,
+                statusText: responseToCache.statusText,
+                headers: headers
+            });
+
+            // Store in cache (don't await - background operation)
+            cache.put(request, cachedTile).then(() => {
+                // Trim cache if too large
+                trimTileCache();
+            });
+        }
+
+        return networkResponse;
+    } catch (error) {
+        // Network failed - return cached tile even if stale
+        if (cachedResponse) {
+            console.log('[SW] Serving stale tile from cache:', request.url);
+            return cachedResponse;
+        }
+
+        // Return a placeholder tile (transparent PNG)
+        return new Response(
+            atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),
+            {
+                status: 200,
+                headers: { 'Content-Type': 'image/png' }
+            }
+        );
+    }
+}
+
+/**
+ * Trim tile cache to stay within limits
+ */
+async function trimTileCache() {
+    const cache = await caches.open(TILE_CACHE);
+    const keys = await cache.keys();
+
+    if (keys.length <= TILE_CACHE_CONFIG.maxTiles) {
+        return;
+    }
+
+    console.log(`[SW] Trimming tile cache: ${keys.length} tiles`);
+
+    // Get all tiles with their cache times
+    const tilesWithAge = await Promise.all(
+        keys.map(async (request) => {
+            const response = await cache.match(request);
+            const cachedAt = parseInt(response?.headers.get('sw-cached-at') || '0');
+            return { request, cachedAt };
+        })
+    );
+
+    // Sort by age (oldest first)
+    tilesWithAge.sort((a, b) => a.cachedAt - b.cachedAt);
+
+    // Delete oldest tiles to get back under limit
+    const tilesToDelete = tilesWithAge.slice(0, keys.length - TILE_CACHE_CONFIG.maxTiles);
+    for (const tile of tilesToDelete) {
+        await cache.delete(tile.request);
+    }
+
+    console.log(`[SW] Deleted ${tilesToDelete.length} old tiles`);
+}
 
 // Check if request is for geometry data (Sprint 4.1 US-4.1.3)
 function isGeometryRequest(url) {
@@ -570,4 +692,4 @@ async function storeOfflineObservation(observation) {
     }
 }
 
-console.log('[SW] CoralLedger Blue Service Worker v4 loaded - Sprint 4.1 PWA Offline Support');
+console.log('[SW] CoralLedger Blue Service Worker v5 loaded - Complete Offline PWA with Map Tiles');

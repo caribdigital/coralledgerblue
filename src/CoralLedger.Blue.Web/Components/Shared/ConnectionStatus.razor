@@ -1,39 +1,125 @@
 @rendermode InteractiveServer
 @using Microsoft.JSInterop
 @inject IJSRuntime JsRuntime
+@implements IAsyncDisposable
 
-<div class="connection-status" role="status" aria-live="polite">
+<div class="connection-status @(IsOnline ? "" : "offline-mode")" role="status" aria-live="polite">
     <span class="status-dot @(IsOnline ? "online" : "offline")" aria-hidden="true"></span>
     <div class="status-copy">
         <strong>@StatusText</strong>
-        <small>@(IsSyncing ? "Syncing..." : PendingCopy)</small>
+        <small>@StatusDetail</small>
     </div>
-    <button class="btn btn-sm btn-outline-light @(IsSyncing ? "syncing" : "")"
-            type="button"
-            @onclick="TriggerSync"
-            disabled="@(!IsOnline || IsSyncing)"
-            title="@(IsSyncing ? "Syncing in progress..." : "Sync pending changes")">
-        <i class="bi bi-arrow-repeat @(IsSyncing ? "spinning" : "")"></i>
-        @(IsSyncing ? "Syncing..." : "Sync now")
-    </button>
+    @if (IsOnline && PendingCount > 0)
+    {
+        <button class="btn btn-sm btn-outline-light @(IsSyncing ? "syncing" : "")"
+                type="button"
+                @onclick="TriggerSync"
+                disabled="@IsSyncing"
+                title="@(IsSyncing ? "Syncing in progress..." : "Sync pending changes")">
+            <i class="bi bi-arrow-repeat @(IsSyncing ? "spinning" : "")"></i>
+            @(IsSyncing ? "Syncing..." : "Sync")
+        </button>
+    }
 </div>
+
+<style>
+    .connection-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: var(--color-surface-alt, #0C1B33);
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        transition: all 0.3s ease;
+    }
+
+    .connection-status.offline-mode {
+        background: rgba(251, 122, 106, 0.15);
+        border: 1px solid var(--color-error, #FB7A6A);
+        animation: pulse-border 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-border {
+        0%, 100% { border-color: rgba(251, 122, 106, 0.5); }
+        50% { border-color: rgba(251, 122, 106, 1); }
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .status-dot.online {
+        background: var(--color-success, #5DE285);
+        box-shadow: 0 0 6px var(--color-success, #5DE285);
+    }
+
+    .status-dot.offline {
+        background: var(--color-error, #FB7A6A);
+        animation: blink 1s ease-in-out infinite;
+    }
+
+    @@keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    .status-copy {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .status-copy strong {
+        font-weight: 600;
+        color: var(--color-text, #F5FBFF);
+    }
+
+    .status-copy small {
+        color: var(--color-text-muted, rgba(245,251,255,0.7));
+        font-size: 0.6875rem;
+    }
+
+    .connection-status .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .connection-status .btn .spinning {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
 
 @code {
     [Parameter] public int PendingCount { get; set; }
     [Parameter] public bool IsSyncing { get; set; }
     [Parameter] public EventCallback OnManualSync { get; set; }
+    [Parameter] public EventCallback<bool> OnConnectionChanged { get; set; }
 
     private bool IsOnline { get; set; } = true;
     private bool _justSynced;
+    private bool _justReconnected;
     private int _previousPendingCount;
+    private DotNetObjectReference<ConnectionStatus>? _dotNetRef;
 
     private string StatusText => IsOnline ? "Online" : "Offline";
-    private string PendingCopy
+    private string StatusDetail
     {
         get
         {
+            if (!IsOnline) return "Working offline - data cached locally";
+            if (_justReconnected) return "Connection restored!";
             if (_justSynced) return "Synced!";
-            if (PendingCount > 0) return $"{PendingCount} pending actions";
+            if (IsSyncing) return "Syncing...";
+            if (PendingCount > 0) return $"{PendingCount} pending";
             return "All caught up";
         }
     }
@@ -42,17 +128,40 @@
     {
         if (firstRender)
         {
+            _dotNetRef = DotNetObjectReference.Create(this);
+
             try
             {
-                IsOnline = await JsRuntime.InvokeAsync<bool>("navigator.onLine");
+                // Get initial online status
+                IsOnline = await JsRuntime.InvokeAsync<bool>("eval", "navigator.onLine");
+
+                // Register for connection change events
+                await JsRuntime.InvokeVoidAsync("connectionMonitor.register", _dotNetRef);
             }
             catch
             {
                 IsOnline = true;
             }
+
             _previousPendingCount = PendingCount;
             StateHasChanged();
         }
+    }
+
+    [JSInvokable]
+    public async Task OnOnlineStatusChanged(bool online)
+    {
+        var wasOffline = !IsOnline;
+        IsOnline = online;
+
+        if (online && wasOffline)
+        {
+            _justReconnected = true;
+            _ = ClearReconnectedMessageAsync();
+        }
+
+        await OnConnectionChanged.InvokeAsync(online);
+        await InvokeAsync(StateHasChanged);
     }
 
     protected override void OnParametersSet()
@@ -68,8 +177,15 @@
 
     private async Task ClearSyncedMessageAsync()
     {
-        await Task.Delay(1500);
+        await Task.Delay(2000);
         _justSynced = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ClearReconnectedMessageAsync()
+    {
+        await Task.Delay(3000);
+        _justReconnected = false;
         await InvokeAsync(StateHasChanged);
     }
 
@@ -78,6 +194,19 @@
         if (OnManualSync.HasDelegate)
         {
             await OnManualSync.InvokeAsync(null);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_dotNetRef != null)
+        {
+            try
+            {
+                await JsRuntime.InvokeVoidAsync("connectionMonitor.unregister");
+            }
+            catch { }
+            _dotNetRef.Dispose();
         }
     }
 }

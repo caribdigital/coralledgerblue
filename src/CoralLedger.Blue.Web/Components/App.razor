@@ -70,6 +70,10 @@
     <Routes @rendermode="InteractiveAuto" />
     <!-- Theme Manager (must load before Blazor) -->
     <script src="js/theme.js"></script>
+    <!-- Connection monitoring for offline support -->
+    <script src="js/connection-monitor.js" defer></script>
+    <!-- Lazy loading utilities -->
+    <script src="js/lazy-map.js" defer></script>
     <!-- Leaflet JS (deferred for performance) -->
     <script src="lib/leaflet/leaflet.js" defer></script>
     <!-- Leaflet Map Interop -->
