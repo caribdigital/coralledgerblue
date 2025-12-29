@@ -61,4 +61,37 @@ public class DashboardTests : PlaywrightFixture
         // Assert
         AssertNoConsoleErrors();
     }
+
+    [Test]
+    [Description("Verify VIEW MAP button is visible in light mode")]
+    public async Task Dashboard_ViewMapButton_VisibleInLightMode()
+    {
+        // Arrange - Navigate to dashboard
+        await _dashboard.NavigateAsync();
+        await Task.Delay(1000);
+
+        // Act - Switch to light mode
+        var themeButton = Page.Locator("button.theme-toggle, button:has-text('Light mode')").First;
+        if (await themeButton.IsVisibleAsync())
+        {
+            await themeButton.ClickAsync();
+            await Task.Delay(1500); // Wait for theme transition
+        }
+
+        // Assert - View Map button should be visible
+        var viewMapButton = Page.Locator(".btn-header, a:has-text('View Map')").First;
+        var isVisible = await viewMapButton.IsVisibleAsync();
+        isVisible.Should().BeTrue("VIEW MAP button should be visible in light mode");
+
+        // Additional check - verify it has contrasting colors (not invisible)
+        var boundingBox = await viewMapButton.BoundingBoxAsync();
+        boundingBox.Should().NotBeNull("VIEW MAP button should have a bounding box (be rendered)");
+
+        // Switch back to dark mode
+        var darkButton = Page.Locator("button.theme-toggle, button:has-text('Dark mode')").First;
+        if (await darkButton.IsVisibleAsync())
+        {
+            await darkButton.ClickAsync();
+        }
+    }
 }

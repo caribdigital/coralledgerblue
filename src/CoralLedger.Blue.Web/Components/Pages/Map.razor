@@ -240,6 +240,34 @@
         font-weight: 600;
     }
 
+    /* Dark mode styles for sidebar */
+    :global([data-theme='dark']) .sidebar-content {
+        background: var(--color-surface-alt, #0C1B33);
+    }
+
+    :global([data-theme='dark']) .mpa-list-sidebar .list-group-item {
+        background: var(--color-surface, #050C1A);
+        border-color: var(--color-border, rgba(255,255,255,0.18));
+        color: var(--color-text, #F5FBFF);
+    }
+
+    :global([data-theme='dark']) .mpa-list-sidebar .list-group-item h6 {
+        color: var(--color-text, #F5FBFF) !important;
+    }
+
+    :global([data-theme='dark']) .mpa-list-sidebar .list-group-item small {
+        color: var(--color-text-muted, #A0AEC0) !important;
+    }
+
+    :global([data-theme='dark']) .mpa-list-sidebar .list-group-item:hover {
+        background: rgba(46, 227, 255, 0.1);
+        border-left-color: var(--color-primary, #2EE3FF);
+    }
+
+    :global([data-theme='dark']) .mpa-list-sidebar h5 {
+        color: var(--color-text, #F5FBFF);
+    }
+
     .view-toggle .btn {
         display: flex;
         align-items: center;

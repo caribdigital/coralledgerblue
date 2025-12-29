@@ -109,7 +109,7 @@ public class PlaywrightFixture : PageTest
     {
         await Page.GotoAsync($"{BaseUrl}{path}", new()
         {
-            WaitUntil = WaitUntilState.NetworkIdle
+            WaitUntil = WaitUntilState.DOMContentLoaded
         });
         await WaitForBlazorAsync();
     }

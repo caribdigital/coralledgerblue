@@ -13,8 +13,8 @@ public class BleachingPage : BasePage
 
     public async Task<bool> HasBleachingDataAsync()
     {
-        // Wait for data to load
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        // Wait for DOM to be ready (NetworkIdle times out with SignalR connections)
+        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
 
         // Look for specific bleaching-related content anywhere on the page.
         var content = Page.GetByText("Alert Level").Or(

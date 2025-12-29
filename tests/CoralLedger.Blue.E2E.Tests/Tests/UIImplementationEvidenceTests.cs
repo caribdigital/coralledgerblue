@@ -381,8 +381,8 @@ public class UIImplementationEvidenceTests : PlaywrightFixture
     {
         await NavigateToAsync("/");
 
-        // Wait for page to be interactive
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        // Wait for page to be interactive (NetworkIdle times out with SignalR)
+        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
         await Task.Delay(5000);
 
         // Capture initial state for debugging

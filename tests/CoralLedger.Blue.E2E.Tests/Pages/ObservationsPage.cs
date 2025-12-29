@@ -27,7 +27,7 @@ public class ObservationsPage : BasePage
             if (await listViewButton.IsVisibleAsync())
             {
                 await listViewButton.ClickAsync();
-                await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
             }
         }
         catch { /* ignore click errors */ }

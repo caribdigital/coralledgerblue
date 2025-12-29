@@ -26,8 +26,8 @@ public abstract class BasePage
     {
         // Wait for Blazor to initialize
         await Page.WaitForFunctionAsync("window.Blazor !== undefined");
-        // Wait for network to be idle
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        // Wait for DOM to be ready (NetworkIdle times out with SignalR connections)
+        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
     }
 
     public async Task<bool> HasTitleAsync(string expectedTitle)

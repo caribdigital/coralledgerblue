@@ -583,26 +583,33 @@
         color: var(--color-primary, #2EE3FF);
     }
 
-    /* Light theme adjustments */
-    :global(:root[data-theme='light']) .btn-header {
-        background: #ffffff;
-        color: #0C1B33;
-        border: 1px solid rgba(0, 0, 0, 0.15);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Light theme adjustments - using both class and attribute for compatibility */
+    :global(.theme-light) .dashboard-header,
+    :global(html[data-theme='light']) .dashboard-header {
+        background: linear-gradient(135deg, #0d6efd, #0056b3 60%, #003d82) !important;
     }
 
-    :global(:root[data-theme='light']) .btn-header:hover {
-        background: #f8f9fa;
-        color: #0056b3;
+    :global(.theme-light) .header-title h1,
+    :global(.theme-light) .header-subtitle,
+    :global(html[data-theme='light']) .header-title h1,
+    :global(html[data-theme='light']) .header-subtitle {
+        color: #ffffff !important;
     }
 
-    :global(:root[data-theme='light']) .dashboard-header {
-        background: linear-gradient(135deg, #1A6BFF, #0056b3 60%, #003d82);
+    :global(.theme-light) .btn-header,
+    :global(html[data-theme='light']) .btn-header {
+        background: #ffffff !important;
+        color: #0d6efd !important;
+        border: 2px solid #ffffff !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+        font-weight: 600 !important;
     }
 
-    :global(:root[data-theme='light']) .header-title h1,
-    :global(:root[data-theme='light']) .header-subtitle {
-        color: #ffffff;
+    :global(.theme-light) .btn-header:hover,
+    :global(html[data-theme='light']) .btn-header:hover {
+        background: #e9ecef !important;
+        color: #0056b3 !important;
+        border-color: #e9ecef !important;
     }
 </style>
 

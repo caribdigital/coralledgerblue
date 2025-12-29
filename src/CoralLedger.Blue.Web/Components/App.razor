@@ -55,7 +55,8 @@
         // Hide loading skeleton once Blazor is ready
         document.addEventListener('DOMContentLoaded', () => {
             const observer = new MutationObserver(() => {
-                if (document.querySelector('.sidebar, .main-content, [b-*]')) {
+                // Check for Blazor-rendered content (nav, main layout elements)
+                if (document.querySelector('nav, .sidebar, .main-content, .dashboard-page, .map-page')) {
                     document.getElementById('app-loading')?.remove();
                     observer.disconnect();
                 }

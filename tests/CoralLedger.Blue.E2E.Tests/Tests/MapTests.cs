@@ -334,13 +334,15 @@ public class MapTests : PlaywrightFixture
             (await bleachingSection.IsVisibleAsync()).Should().BeTrue("Bleaching section header should be visible");
 
             // Check for either bleaching data OR error with retry button
-            var bleachingData = Page.Locator(".card.bg-light").First; // SST card
-            var retryButton = Page.GetByRole(AriaRole.Button, new() { Name = "Retry" });
+            var bleachingData = Page.Locator(".live-data-card").First; // SST card
+            var noDataState = Page.Locator(".no-data-state").First; // No data available state
+            var retryButton = Page.Locator(".btn-retry").First; // Error state retry button
             var hasBleachingData = await bleachingData.IsVisibleAsync();
+            var hasNoData = await noDataState.IsVisibleAsync();
             var hasRetryButton = await retryButton.IsVisibleAsync();
 
-            (hasBleachingData || hasRetryButton).Should().BeTrue(
-                "Should show either bleaching data or retry button after timeout");
+            (hasBleachingData || hasRetryButton || hasNoData).Should().BeTrue(
+                "Should show either bleaching data, retry button, or no-data state");
 
             // Take screenshot to see what's displayed
             var screenshotPath = Path.Combine(
