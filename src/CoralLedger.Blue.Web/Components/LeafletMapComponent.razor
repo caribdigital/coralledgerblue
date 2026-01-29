@@ -1,5 +1,6 @@
 @using System.Text.Json
 @using CoralLedger.Blue.Web.Theme
+@using Microsoft.JSInterop
 @inject IJSRuntime JS
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
@@ -230,6 +231,7 @@
     private string? _errorMessage;
     private bool _mapInitialized = false;
     private bool _fishingEventsLoaded = false;
+    private bool _disposed = false;
     private DotNetObjectReference<LeafletMapComponent>? _dotNetRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -286,7 +288,7 @@
     /// </summary>
     private async void OnGlobalThemeChanged(ThemeMode newMode)
     {
-        if (!_mapInitialized) return;
+        if (!_mapInitialized || _disposed) return;
 
         var isDark = newMode == ThemeMode.Dark;
         if (UseDarkTheme != isDark)
@@ -297,6 +299,14 @@
                 await JS.InvokeVoidAsync("leafletMap.setTileTheme", _mapId, isDark ? "dark" : "light");
                 await InvokeAsync(StateHasChanged);
             }
+            catch (JSDisconnectedException)
+            {
+                // Circuit disconnected, component is being disposed - ignore
+            }
+            catch (ObjectDisposedException)
+            {
+                // Component disposed - ignore
+            }
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to update map theme: {ex.Message}");
@@ -306,41 +316,53 @@
 
     public void Dispose()
     {
+        _disposed = true;
         ThemeState.ThemeChanged -= OnGlobalThemeChanged;
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!_mapInitialized) return;
+        if (!_mapInitialized || _disposed) return;
 
-        // Handle MPA selection from parent
-        if (SelectedMpaId.HasValue)
+        try
         {
-            await JS.InvokeVoidAsync("leafletMap.zoomToMpa", _mapId, SelectedMpaId.Value.ToString());
-            await JS.InvokeVoidAsync("leafletMap.highlightMpa", _mapId, SelectedMpaId.Value.ToString());
-        }
-
-        // Handle fishing events toggle
-        if (ShowFishingEvents && !_fishingEventsLoaded)
-        {
-            await LoadFishingEventsAsync();
-            // US-2.2.6: Update legend to show fishing activity
-            if (ShowLegend)
+            // Handle MPA selection from parent
+            if (SelectedMpaId.HasValue)
             {
-                await JS.InvokeVoidAsync("leafletMap.updateLegend", _mapId, true, true);
+                await JS.InvokeVoidAsync("leafletMap.zoomToMpa", _mapId, SelectedMpaId.Value.ToString());
+                await JS.InvokeVoidAsync("leafletMap.highlightMpa", _mapId, SelectedMpaId.Value.ToString());
+            }
+
+            // Handle fishing events toggle
+            if (ShowFishingEvents && !_fishingEventsLoaded)
+            {
+                await LoadFishingEventsAsync();
+                // US-2.2.6: Update legend to show fishing activity
+                if (ShowLegend)
+                {
+                    await JS.InvokeVoidAsync("leafletMap.updateLegend", _mapId, true, true);
+                }
+            }
+            else if (!ShowFishingEvents && _fishingEventsLoaded)
+            {
+                await JS.InvokeVoidAsync("leafletMap.removeFishingEventsLayer", _mapId);
+                _fishingEventsLoaded = false;
+                _fishingEventsCount = 0;
+                _fishingEventsNoData = false;
+                // US-2.2.6: Update legend to hide fishing activity
+                if (ShowLegend)
+                {
+                    await JS.InvokeVoidAsync("leafletMap.updateLegend", _mapId, true, false);
+                }
             }
         }
-        else if (!ShowFishingEvents && _fishingEventsLoaded)
+        catch (JSDisconnectedException)
         {
-            await JS.InvokeVoidAsync("leafletMap.removeFishingEventsLayer", _mapId);
-            _fishingEventsLoaded = false;
-            _fishingEventsCount = 0;
-            _fishingEventsNoData = false;
-            // US-2.2.6: Update legend to hide fishing activity
-            if (ShowLegend)
-            {
-                await JS.InvokeVoidAsync("leafletMap.updateLegend", _mapId, true, false);
-            }
+            // Circuit disconnected - ignore
+        }
+        catch (ObjectDisposedException)
+        {
+            // Component disposed - ignore
         }
     }
 
@@ -470,6 +492,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
         if (_mapInitialized)
         {
             try
@@ -478,7 +501,7 @@
             }
             catch
             {
-                // Ignore disposal errors
+                // Ignore disposal errors (e.g., circuit already disconnected)
             }
         }
         _dotNetRef?.Dispose();
