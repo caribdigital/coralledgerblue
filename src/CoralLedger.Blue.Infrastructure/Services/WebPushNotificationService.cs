@@ -56,28 +56,14 @@ public class WebPushNotificationService : IPushNotificationService
         }
 
         var successCount = 0;
-        var failedEndpoints = new List<string>();
 
-        foreach (var subscription in _subscriptions.Values)
+        foreach (var subscription in _subscriptions.Values.ToList())
         {
-            try
+            var sent = await SendToSubscriptionAsync(subscription, title, message, url, cancellationToken);
+            if (sent)
             {
-                var sent = await SendToSubscriptionAsync(subscription, title, message, url, cancellationToken);
-                if (sent) successCount++;
+                successCount++;
             }
-            catch (WebPushException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Gone ||
-                                               ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
-                // Subscription is no longer valid
-                failedEndpoints.Add(subscription.Endpoint);
-            }
-        }
-
-        // Clean up invalid subscriptions
-        foreach (var endpoint in failedEndpoints)
-        {
-            _subscriptions.TryRemove(endpoint, out _);
-            _logger.LogInformation("Removed invalid push subscription: {Endpoint}", endpoint);
         }
 
         _logger.LogInformation("Sent push notification to {Count} subscribers: {Title}", successCount, title);
@@ -123,7 +109,16 @@ public class WebPushNotificationService : IPushNotificationService
         {
             _logger.LogError(ex, "Failed to send push notification to {Endpoint}: {StatusCode}",
                 subscription.Endpoint, ex.StatusCode);
-            throw;
+            
+            // Remove subscriptions that are gone or not found (no longer valid)
+            if (ex.StatusCode == System.Net.HttpStatusCode.Gone ||
+                ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _subscriptions.TryRemove(subscription.Endpoint, out _);
+                _logger.LogInformation("Removed invalid push subscription: {Endpoint}", subscription.Endpoint);
+            }
+            
+            return false;
         }
         catch (Exception ex)
         {
