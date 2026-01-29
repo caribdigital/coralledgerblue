@@ -69,8 +69,13 @@ public static class VesselEndpoints
             int limit = 500,
             CancellationToken ct = default) =>
         {
-            var start = startDate ?? DateTime.UtcNow.AddDays(-30);
-            var end = endDate ?? DateTime.UtcNow;
+            // Ensure DateTime values are UTC (PostgreSQL requires timestamptz to be UTC)
+            var start = startDate.HasValue
+                ? DateTime.SpecifyKind(startDate.Value, DateTimeKind.Utc)
+                : DateTime.UtcNow.AddDays(-30);
+            var end = endDate.HasValue
+                ? DateTime.SpecifyKind(endDate.Value, DateTimeKind.Utc)
+                : DateTime.UtcNow;
 
             var events = await dbContext.VesselEvents
                 .Include(e => e.Vessel)
