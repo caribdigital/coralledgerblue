@@ -148,7 +148,7 @@ public class PlaywrightFixture : PageTest
             primary,
             alternate,
             "https://localhost:7232",
-            "http://localhost:7232"
+            "http://localhost:5147"
         };
 
         // Retry with longer timeout to allow app to fully start
@@ -181,17 +181,21 @@ public class PlaywrightFixture : PageTest
         {
             using var handler = new HttpClientHandler
             {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+                AllowAutoRedirect = false // Don't follow redirects, just check if server responds
             };
 
             using var client = new HttpClient(handler)
             {
-                Timeout = TimeSpan.FromSeconds(3)
+                Timeout = TimeSpan.FromSeconds(5)
             };
 
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
             var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-            return response.IsSuccessStatusCode;
+
+            // Consider success (2xx) and redirects (3xx) as responsive
+            var statusCode = (int)response.StatusCode;
+            return statusCode >= 200 && statusCode < 400;
         }
         catch
         {
