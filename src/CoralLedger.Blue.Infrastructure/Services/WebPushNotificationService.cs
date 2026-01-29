@@ -123,7 +123,7 @@ public class WebPushNotificationService : IPushNotificationService
         {
             _logger.LogError(ex, "Failed to send push notification to {Endpoint}: {StatusCode}",
                 subscription.Endpoint, ex.StatusCode);
-            throw;
+            return false;
         }
         catch (Exception ex)
         {
