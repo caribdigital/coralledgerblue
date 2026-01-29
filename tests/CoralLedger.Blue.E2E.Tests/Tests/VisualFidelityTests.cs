@@ -323,4 +323,96 @@ public class VisualFidelityTests : PlaywrightFixture
         // Add as test attachment for review
         TestContext.AddTestAttachment(screenshotPath, "Dashboard Visual Baseline");
     }
+
+    [Test]
+    [Description("Verifies the View Map button in dashboard header is visible with proper contrast")]
+    public async Task Visual_DashboardViewMapButtonIsVisible()
+    {
+        // Arrange
+        await NavigateToAsync("/dashboard");
+        await Task.Delay(2000);
+
+        // Act - Find the View Map button in the header
+        var viewMapButton = Page.Locator(".btn-header, a:has-text('View Map')").First;
+
+        viewMapButton.Should().NotBeNull("View Map button should exist");
+        var isVisible = await viewMapButton.IsVisibleAsync();
+        isVisible.Should().BeTrue("View Map button should be visible");
+
+        // Check the button has proper contrast (white/light background on gradient header)
+        var backgroundColor = await viewMapButton.EvaluateAsync<string>("el => window.getComputedStyle(el).backgroundColor");
+        var color = await viewMapButton.EvaluateAsync<string>("el => window.getComputedStyle(el).color");
+
+        // Parse RGB values to check contrast
+        // Background should be white/light (high RGB values)
+        // Text should be dark (blue) for contrast
+        var bgMatch = System.Text.RegularExpressions.Regex.Match(backgroundColor, @"rgb\((\d+),\s*(\d+),\s*(\d+)\)");
+        if (bgMatch.Success)
+        {
+            var r = int.Parse(bgMatch.Groups[1].Value);
+            var g = int.Parse(bgMatch.Groups[2].Value);
+            var b = int.Parse(bgMatch.Groups[3].Value);
+
+            // White or near-white background (RGB values > 200)
+            var isLightBackground = r > 200 && g > 200 && b > 200;
+            isLightBackground.Should().BeTrue($"Button background should be light/white for visibility. Got: {backgroundColor}");
+        }
+
+        // Take a screenshot of the button for visual verification
+        var screenshotPath = Path.Combine(
+            TestContext.CurrentContext.TestDirectory,
+            "playwright-artifacts",
+            "dashboard-viewmap-button.png");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(screenshotPath)!);
+        await viewMapButton.ScreenshotAsync(new() { Path = screenshotPath });
+
+        File.Exists(screenshotPath).Should().BeTrue("Button screenshot should be saved");
+        TestContext.AddTestAttachment(screenshotPath, "Dashboard View Map Button");
+    }
+
+    [Test]
+    [Description("Verifies the Map View toggle button on Map page is visible")]
+    public async Task Visual_MapPageViewToggleButtonIsVisible()
+    {
+        // Arrange
+        await NavigateToAsync("/map");
+        await Task.Delay(3000); // Allow map to load
+
+        // Act - Find the Map View button in the toggle group
+        var mapViewButton = Page.Locator(".view-toggle .btn").First;
+
+        var isVisible = await mapViewButton.IsVisibleAsync();
+        isVisible.Should().BeTrue("Map View toggle button should be visible");
+
+        // Check the button has proper styling for visibility on gradient header
+        var backgroundColor = await mapViewButton.EvaluateAsync<string>("el => window.getComputedStyle(el).backgroundColor");
+
+        // Background should not be dark/black (which would blend with header)
+        var bgMatch = System.Text.RegularExpressions.Regex.Match(backgroundColor, @"rgb\((\d+),\s*(\d+),\s*(\d+)\)");
+        if (bgMatch.Success)
+        {
+            var r = int.Parse(bgMatch.Groups[1].Value);
+            var g = int.Parse(bgMatch.Groups[2].Value);
+            var b = int.Parse(bgMatch.Groups[3].Value);
+
+            // Should not be very dark (all values < 50 would be nearly black)
+            var isNotDark = r > 50 || g > 50 || b > 50;
+            isNotDark.Should().BeTrue($"Button should not have dark background that blends with header. Got: {backgroundColor}");
+        }
+
+        // Take a screenshot of the header area for visual verification
+        var screenshotPath = Path.Combine(
+            TestContext.CurrentContext.TestDirectory,
+            "playwright-artifacts",
+            "map-view-toggle-button.png");
+
+        Directory.CreateDirectory(Path.GetDirectoryName(screenshotPath)!);
+        var header = Page.Locator(".map-header").First;
+        if (await header.IsVisibleAsync())
+        {
+            await header.ScreenshotAsync(new() { Path = screenshotPath });
+            TestContext.AddTestAttachment(screenshotPath, "Map Page Header with Toggle Buttons");
+        }
+    }
 }

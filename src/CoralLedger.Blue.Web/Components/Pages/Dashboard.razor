@@ -259,18 +259,21 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.5rem 1rem;
-        background: rgba(5, 12, 26, 0.9);
-        color: var(--color-text, #F5FBFF);
+        background: #ffffff;
+        color: #0d6efd;
+        border: 2px solid #ffffff;
         border-radius: 8px;
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 0.875rem;
-        transition: background var(--transition-base);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        transition: all 0.2s ease;
     }
 
     .btn-header:hover {
-        background: var(--color-surface, #050C1A);
-        color: var(--color-primary, #2EE3FF);
+        background: #f8f9fa;
+        color: #0056b3;
+        border-color: #f8f9fa;
     }
 
     /* Main Content */
@@ -596,21 +599,7 @@
         color: #ffffff !important;
     }
 
-    :global(.theme-light) .btn-header,
-    :global(html[data-theme='light']) .btn-header {
-        background: #ffffff !important;
-        color: #0d6efd !important;
-        border: 2px solid #ffffff !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
-        font-weight: 600 !important;
-    }
-
-    :global(.theme-light) .btn-header:hover,
-    :global(html[data-theme='light']) .btn-header:hover {
-        background: #e9ecef !important;
-        color: #0056b3 !important;
-        border-color: #e9ecef !important;
-    }
+    /* Button styles are now consistent across themes - no overrides needed */
 </style>
 
 @code {
