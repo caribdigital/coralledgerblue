@@ -77,31 +77,34 @@ public class FishingActivityTests : PlaywrightFixture
     }
 
     [Test]
-    [Description("Verifies the fishing events API is called when toggle is enabled")]
-    public async Task FishingActivity_ApiIsCalledWhenEnabled()
+    [Description("Verifies fishing events data loads when toggle is enabled")]
+    public async Task FishingActivity_DataLoadsWhenEnabled()
     {
         // Arrange
         await NavigateToAsync("/map");
         await Task.Delay(2000);
-
-        // Set up request interception to monitor API calls
-        var apiCalled = false;
-        await Page.RouteAsync("**/api/vessels/fishing-events/bahamas**", async route =>
-        {
-            apiCalled = true;
-            await route.ContinueAsync();
-        });
 
         // Act - Enable fishing activity
         var fishingToggle = Page.Locator("#fishingToggle").First;
         if (!await fishingToggle.IsCheckedAsync())
         {
             await fishingToggle.ClickAsync();
-            await Task.Delay(3000); // Wait for API call
+            await Task.Delay(3000); // Wait for API call and data to load
         }
 
-        // Assert
-        apiCalled.Should().BeTrue("Fishing events API should be called when toggle is enabled");
+        // Assert - Either the fishing events badge or "no data" badge should appear
+        // This confirms the API was called and processed successfully
+        var fishingBadge = Page.Locator(".fishing-events-badge").First;
+        var badgeVisible = await fishingBadge.IsVisibleAsync();
+
+        badgeVisible.Should().BeTrue(
+            "Fishing events badge should appear when toggle is enabled (indicates API was called successfully)");
+
+        // Verify the badge shows either event count or 'no data' message
+        var badgeText = await fishingBadge.TextContentAsync();
+        var hasValidContent = badgeText!.Contains("fishing events") || badgeText.Contains("No fishing events");
+        hasValidContent.Should().BeTrue(
+            $"Badge should show event count or 'no data' message. Got: {badgeText}");
     }
 
     [Test]
