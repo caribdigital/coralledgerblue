@@ -220,18 +220,31 @@ public static class DependencyInjection
         this IHostApplicationBuilder builder,
         string connectionName)
     {
-        // Aspire's AddNpgsqlDbContext handles the connection, but we need to configure NTS
-        // Using the configureDbContextOptions callback to add NetTopologySuite support
-        builder.AddNpgsqlDbContext<MarineDbContext>(connectionName,
-            configureDbContextOptions: options =>
+        // Get the connection string from Aspire's configuration (injected by AppHost via WithReference)
+        // Aspire stores connection strings in the format: ConnectionStrings__<connectionName>
+        var connectionString = builder.Configuration.GetConnectionString(connectionName);
+
+        // Register the DbContext with Npgsql + NetTopologySuite support.
+        // We use AddDbContext (not AddNpgsqlDbContext) to have full control over UseNpgsql configuration.
+        // See: https://github.com/dotnet/aspire/issues/7746
+        builder.Services.AddDbContext<MarineDbContext>(options =>
+        {
+            options.UseNpgsql(connectionString, npgsqlOptions =>
             {
-                // Configure Npgsql to use NetTopologySuite for spatial types
-                // Note: This is a workaround as Aspire's API doesn't expose configureDataSourceBuilder
-                options.UseNpgsql(npgsqlOptions =>
-                {
-                    npgsqlOptions.UseNetTopologySuite();
-                });
+                // Enable NetTopologySuite for spatial types (PostGIS geometry/geography)
+                npgsqlOptions.UseNetTopologySuite();
+
+                // Configure retry policy for transient failures (matching Aspire defaults)
+                npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 6,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorCodesToAdd: null);
             });
+        });
+
+        // Enrich with Aspire's health checks, logging, and telemetry
+        // This provides the same observability features as AddNpgsqlDbContext
+        builder.EnrichNpgsqlDbContext<MarineDbContext>();
 
         builder.Services.AddScoped<IMarineDbContext>(sp =>
             sp.GetRequiredService<MarineDbContext>());
