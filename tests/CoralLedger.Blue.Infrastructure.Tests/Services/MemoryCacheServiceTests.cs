@@ -173,25 +173,30 @@ public class MemoryCacheServiceTests
         var testObject = new TestCacheObject { Id = 1, Name = "Test" };
         
         // Set with very short expiration to trigger eviction
-        await _service.SetAsync(key, testObject, TimeSpan.FromMilliseconds(1));
+        // Note: This test relies on timing and may be fragile in some environments
+        await _service.SetAsync(key, testObject, TimeSpan.FromMilliseconds(10));
         
-        // Wait for eviction
-        await Task.Delay(100);
+        // Wait for eviction to occur
+        await Task.Delay(500);
         
-        // Force cache cleanup by adding another item
-        await _service.SetAsync("dummy", new TestCacheObject { Id = 999, Name = "Dummy" });
+        // Force cache cleanup by triggering cache compaction
+        // Adding multiple items helps trigger the eviction callback
+        for (int i = 0; i < 5; i++)
+        {
+            await _service.SetAsync($"dummy_{i}", new TestCacheObject { Id = 999, Name = $"Dummy{i}" });
+        }
 
         // Act - Get should return null after eviction
         var result = await _service.GetAsync<TestCacheObject>(key);
 
         // Assert
-        result.Should().BeNull();
+        result.Should().BeNull("the cache entry should have been evicted");
         
-        // Verify that RemoveByPrefix doesn't try to remove the evicted key
-        // (if eviction callback worked properly, the key should already be removed from tracking)
+        // Verify that RemoveByPrefix doesn't crash when the evicted key is no longer tracked
+        // If the eviction callback worked properly, the key should already be removed from tracking
         await _service.RemoveByPrefixAsync("test:");
         
-        // No exception should be thrown
+        // No exception should be thrown even if key was already removed
     }
 
     [Fact]
