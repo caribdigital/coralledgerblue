@@ -141,6 +141,27 @@ public static class VesselEndpoints
         .WithDescription("Get fishing effort statistics for a region from Global Fishing Watch")
         .Produces<GfwFishingEffortStats>();
 
+        // GET /api/vessels/fishing-effort-tiles?startDate=&endDate=&gearType=&flag=
+        // Returns 4Wings tile URL for fishing effort heatmap visualization
+        group.MapGet("/fishing-effort-tiles", async (
+            IGlobalFishingWatchClient gfwClient,
+            DateTime? startDate,
+            DateTime? endDate,
+            string? gearType,
+            string? flag,
+            CancellationToken ct = default) =>
+        {
+            var start = startDate ?? DateTime.UtcNow.AddDays(-30);
+            var end = endDate ?? DateTime.UtcNow;
+
+            var tileInfo = await gfwClient.GetFishingEffortTileUrlAsync(start, end, gearType, flag, ct);
+            return tileInfo is null ? Results.NotFound() : Results.Ok(tileInfo);
+        })
+        .WithName("GetFishingEffortTileUrl")
+        .WithDescription("Get 4Wings heatmap tile URL for fishing effort visualization from Global Fishing Watch")
+        .Produces<Gfw4WingsTileInfo>()
+        .Produces(StatusCodes.Status404NotFound);
+
         return endpoints;
     }
 }

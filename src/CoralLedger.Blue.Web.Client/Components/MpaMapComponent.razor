@@ -3,6 +3,9 @@
 @using NetTopologySuite.IO
 @using Mapsui.Extensions
 @using Mapsui.Styles
+@using Mapsui.Tiling.Layers
+@using BruTile.Web
+@using BruTile.Predefined
 @using Microsoft.JSInterop
 @inject HttpClient Http
 @inject IJSRuntime JsRuntime
@@ -149,6 +152,9 @@
     [Parameter]
     public EventCallback<FishingEventDto> OnFishingEventSelected { get; set; }
 
+    [Parameter]
+    public bool ShowFishingHeatmap { get; set; } = false;
+
     private MapControl? _mapControl;
     private Map _map = new();
     private bool _loading = true;
@@ -166,8 +172,11 @@
     private bool _mpasLayerVisible = true;
     private bool _fishingLayerVisible = false;
     private bool _alertsLayerVisible = true;
+    private bool _heatmapLayerVisible = false;
     private MPoint? _bahamasCenter;
     private double _initialResolution;
+    private TileLayer? _fishingHeatmapLayer;
+    private Gfw4WingsTileInfo? _heatmapTileInfo;
 
     private static readonly MapLegendItem[] _protectionLegend =
     {
@@ -588,10 +597,81 @@
                 _map.Layers.Add(_fishingEventsLayer);
                 _fishingEventsLoaded = true;
             }
+
+            // Also load the heatmap layer if enabled
+            if (ShowFishingHeatmap && _fishingHeatmapLayer == null)
+            {
+                await LoadFishingHeatmapAsync();
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading fishing events: {ex.Message}");
+        }
+    }
+
+    private async Task LoadFishingHeatmapAsync()
+    {
+        try
+        {
+            var start = FishingEventsStartDate ?? DateTime.UtcNow.AddDays(-30);
+            var end = FishingEventsEndDate ?? DateTime.UtcNow;
+
+            // Fetch the 4Wings tile URL from the API
+            _heatmapTileInfo = await Http.GetFromJsonAsync<Gfw4WingsTileInfo>(
+                $"/api/vessels/fishing-effort-tiles?startDate={start:O}&endDate={end:O}");
+
+            if (_heatmapTileInfo?.TileUrl != null)
+            {
+                _fishingHeatmapLayer = CreateFishingHeatmapLayer(_heatmapTileInfo.TileUrl);
+                // Insert below fishing events layer but above base map
+                var insertIndex = _map.Layers.Count > 1 ? 1 : _map.Layers.Count;
+                _map.Layers.Insert(insertIndex, _fishingHeatmapLayer);
+                _heatmapLayerVisible = true;
+                Console.WriteLine($"Fishing heatmap layer loaded: {_heatmapTileInfo.TileUrl}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading fishing heatmap: {ex.Message}");
+        }
+    }
+
+    private TileLayer CreateFishingHeatmapLayer(string tileUrl)
+    {
+        // Create an HTTP tile source for the 4Wings heatmap tiles
+        // The URL pattern should be like: https://gateway.api.globalfishingwatch.org/v3/4wings/tile/heatmap/{z}/{x}/{y}?...
+        var tileSource = new HttpTileSource(
+            new GlobalSphericalMercator(),
+            tileUrl,
+            name: "GFW Fishing Effort Heatmap");
+
+        return new TileLayer(tileSource)
+        {
+            Name = "Fishing Effort Heatmap",
+            Opacity = 0.7 // Semi-transparent to show base map
+        };
+    }
+
+    public async Task ToggleHeatmapAsync(bool visible)
+    {
+        _heatmapLayerVisible = visible;
+
+        if (visible)
+        {
+            if (_fishingHeatmapLayer == null)
+            {
+                await LoadFishingHeatmapAsync();
+            }
+            else if (!_map.Layers.Contains(_fishingHeatmapLayer))
+            {
+                var insertIndex = _map.Layers.Count > 1 ? 1 : _map.Layers.Count;
+                _map.Layers.Insert(insertIndex, _fishingHeatmapLayer);
+            }
+        }
+        else if (_fishingHeatmapLayer != null)
+        {
+            _map.Layers.Remove(_fishingHeatmapLayer);
         }
     }
 
@@ -702,5 +782,19 @@
         public string? EventType { get; set; }
         public bool? IsInMpa { get; set; }
         public string? MpaName { get; set; }
+    }
+
+    // 4Wings Tile Info DTO for deserialization
+    public class Gfw4WingsTileInfo
+    {
+        public string TileUrl { get; set; } = "";
+        public string Dataset { get; set; } = "";
+        public List<Gfw4WingsColorStep> ColorRamp { get; set; } = new();
+    }
+
+    public class Gfw4WingsColorStep
+    {
+        public string Color { get; set; } = "";
+        public double Value { get; set; }
     }
 }

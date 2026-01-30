@@ -286,6 +286,24 @@ window.leafletMap = {
         const markers = L.layerGroup();
         const trajectories = L.layerGroup();
 
+        // Track used coordinates to offset overlapping markers
+        const usedCoords = {};
+        const getOffsetCoords = (lat, lon) => {
+            const key = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+            if (!usedCoords[key]) {
+                usedCoords[key] = 0;
+            }
+            const count = usedCoords[key]++;
+            if (count === 0) return { lat, lon };
+            // Spiral offset pattern for overlapping markers (~500m offsets)
+            const angle = count * 2.4; // Golden angle in radians
+            const radius = 0.005 * Math.sqrt(count); // ~500m per step
+            return {
+                lat: lat + radius * Math.sin(angle),
+                lon: lon + radius * Math.cos(angle)
+            };
+        };
+
         // Group events by vessel for trajectory lines
         const vesselEvents = {};
         fishingEvents.forEach(evt => {
@@ -350,6 +368,9 @@ window.leafletMap = {
             const borderColor = isViolation ? '#ff0000' : '#ffffff';
             const borderWeight = isViolation ? 3 : 2;
 
+            // Get offset coordinates for overlapping markers
+            const coords = getOffsetCoords(evt.latitude, evt.longitude);
+
             // Use div icon for violation markers to enable CSS animation
             let marker;
             if (isViolation) {
@@ -359,9 +380,9 @@ window.leafletMap = {
                     iconSize: [18, 18],
                     iconAnchor: [9, 9]
                 });
-                marker = L.marker([evt.latitude, evt.longitude], { icon: violationIcon });
+                marker = L.marker([coords.lat, coords.lon], { icon: violationIcon });
             } else {
-                marker = L.circleMarker([evt.latitude, evt.longitude], {
+                marker = L.circleMarker([coords.lat, coords.lon], {
                     radius: radius,
                     fillColor: color,
                     color: borderColor,
@@ -412,7 +433,24 @@ window.leafletMap = {
         markers.addTo(map);
         this.fishingLayers[mapId] = markers;
 
+        // Debug: analyze coordinate distribution
+        const uniqueCoords = new Set(fishingEvents.map(e => `${e.latitude?.toFixed(4)},${e.longitude?.toFixed(4)}`));
         console.log(`[leaflet-map.js] Added ${fishingEvents.length} fishing markers and ${Object.keys(vesselEvents).length} vessel trajectories`);
+        console.log(`[leaflet-map.js] Unique coordinates (4 decimal precision): ${uniqueCoords.size}`);
+
+        // Log coordinate bounds
+        const lats = fishingEvents.map(e => e.latitude).filter(l => l != null);
+        const lons = fishingEvents.map(e => e.longitude).filter(l => l != null);
+        if (lats.length > 0 && lons.length > 0) {
+            console.log(`[leaflet-map.js] Coordinate bounds: lat [${Math.min(...lats).toFixed(4)}, ${Math.max(...lats).toFixed(4)}], lon [${Math.min(...lons).toFixed(4)}, ${Math.max(...lons).toFixed(4)}]`);
+        }
+
+        // Check for invalid coordinates
+        const invalidEvents = fishingEvents.filter(e => e.latitude == null || e.longitude == null || isNaN(e.latitude) || isNaN(e.longitude));
+        if (invalidEvents.length > 0) {
+            console.warn(`[leaflet-map.js] ${invalidEvents.length} events have invalid coordinates`);
+        }
+
         return true;
     },
 

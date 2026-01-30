@@ -77,6 +77,47 @@ public interface IGlobalFishingWatchClient
         DateTime startDate,
         DateTime endDate,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get 4Wings heatmap tile URL for fishing effort visualization
+    /// This returns a tile URL template that can be used with Leaflet/MapLibre
+    /// </summary>
+    Task<Gfw4WingsTileInfo?> GetFishingEffortTileUrlAsync(
+        DateTime startDate,
+        DateTime endDate,
+        string? gearType = null,
+        string? flag = null,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// 4Wings tile layer information for map visualization
+/// </summary>
+public record Gfw4WingsTileInfo
+{
+    /// <summary>
+    /// Tile URL template with {z}/{x}/{y} placeholders for Leaflet
+    /// </summary>
+    public string TileUrl { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Color ramp for legend display
+    /// </summary>
+    public List<Gfw4WingsColorStep> ColorRamp { get; init; } = new();
+
+    /// <summary>
+    /// Dataset being visualized
+    /// </summary>
+    public string Dataset { get; init; } = string.Empty;
+}
+
+/// <summary>
+/// Color step for 4Wings legend
+/// </summary>
+public record Gfw4WingsColorStep
+{
+    public string Color { get; init; } = string.Empty;
+    public double Value { get; init; }
 }
 
 /// <summary>
