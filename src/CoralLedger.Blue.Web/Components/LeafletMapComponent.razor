@@ -333,10 +333,24 @@
                 await JS.InvokeVoidAsync("leafletMap.highlightMpa", _mapId, SelectedMpaId.Value.ToString());
             }
 
-            // Handle fishing events toggle
-            if (ShowFishingEvents && !_fishingEventsLoaded)
+            // Handle fishing events toggle and date changes
+            var datesChanged = _fishingEventsLoaded &&
+                (FishingEventsStartDate != _lastFishingEventsStartDate ||
+                 FishingEventsEndDate != _lastFishingEventsEndDate);
+
+            if (ShowFishingEvents && (!_fishingEventsLoaded || datesChanged))
             {
+                // Remove existing layer if reloading due to date change
+                if (datesChanged && _fishingEventsLoaded)
+                {
+                    await JS.InvokeVoidAsync("leafletMap.removeFishingEventsLayer", _mapId);
+                    _fishingEventsLoaded = false;
+                }
+
                 await LoadFishingEventsAsync();
+                _lastFishingEventsStartDate = FishingEventsStartDate;
+                _lastFishingEventsEndDate = FishingEventsEndDate;
+
                 // US-2.2.6: Update legend to show fishing activity
                 if (ShowLegend)
                 {
@@ -371,6 +385,8 @@
     private int _mpaCount = 0;
     private int _fishingEventsCount = 0;
     private bool _fishingEventsNoData = false;
+    private DateTime? _lastFishingEventsStartDate;
+    private DateTime? _lastFishingEventsEndDate;
 
     private async Task LoadMpaDataAsync()
     {

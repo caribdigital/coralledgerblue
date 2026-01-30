@@ -12,9 +12,11 @@ public class NavigationTests : PlaywrightFixture
         // Act
         await NavigateToAsync("/");
 
-        // Assert
+        // Assert - The URL should be the root path, accounting for HTTP/HTTPS redirects
         var url = Page.Url;
-        url.Should().Contain(BaseUrl);
+        // URL should end with / or /dashboard or similar root path
+        url.Should().MatchRegex(@"https?://localhost:\d+/?$",
+            "Should navigate to the dashboard at root URL (accounting for HTTP/HTTPS redirects)");
     }
 
     [Test]

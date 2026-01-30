@@ -328,7 +328,11 @@ public static class AdminEndpoints
                     var durationHours = random.Next(2, 12) + random.NextDouble();
                     var endTime = startTime.AddHours(durationHours);
 
-                    var point = geometryFactory.CreatePoint(new Coordinate(location.Lon, location.Lat));
+                    // Add jitter to coordinates so events don't stack exactly on top of each other
+                    // Jitter of ~0.05 degrees is about 5km which is realistic for fishing operations
+                    var lonJitter = (random.NextDouble() - 0.5) * 0.1; // +/- 0.05 degrees
+                    var latJitter = (random.NextDouble() - 0.5) * 0.1; // +/- 0.05 degrees
+                    var point = geometryFactory.CreatePoint(new Coordinate(location.Lon + lonJitter, location.Lat + latJitter));
 
                     var fishingEvent = VesselEvent.CreateFishingEvent(
                         vessel.Id,

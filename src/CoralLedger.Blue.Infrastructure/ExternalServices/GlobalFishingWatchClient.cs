@@ -90,7 +90,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
                 queryParams.Add($"vessel-types={MapVesselType(vesselType.Value)}");
 
             queryParams.Add($"limit={limit}");
-            queryParams.Add("datasets=public-global-vessel-identity:latest");
+            queryParams.Add("datasets[0]=public-global-vessel-identity:latest");
 
             var queryString = string.Join("&", queryParams);
             var response = await _httpClient.GetAsync($"v3/vessels/search?{queryString}", cancellationToken);
@@ -127,7 +127,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
         try
         {
             var response = await _httpClient.GetAsync(
-                $"v3/vessels/{vesselId}?datasets=public-global-vessel-identity:latest",
+                $"v3/vessels/{vesselId}?datasets[0]=public-global-vessel-identity:latest",
                 cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -202,12 +202,12 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
         {
             var queryParams = new List<string>
             {
-                "datasets=public-global-port-visits-events:latest",
+                "datasets[0]=public-global-port-visits-events:latest",
                 $"limit={limit}"
             };
 
             if (!string.IsNullOrEmpty(vesselId))
-                queryParams.Add($"vessels={vesselId}");
+                queryParams.Add($"vessels[0]={vesselId}");
             if (startDate.HasValue)
                 queryParams.Add($"start-date={startDate.Value:yyyy-MM-dd}");
             if (endDate.HasValue)
@@ -280,22 +280,76 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
 
         try
         {
-            var geometry = $"{{\"type\":\"Polygon\",\"coordinates\":[[[{minLon},{minLat}],[{maxLon},{minLat}],[{maxLon},{maxLat}],[{minLon},{maxLat}],[{minLon},{minLat}]]]}}";
-            var encodedGeometry = Uri.EscapeDataString(geometry);
+            // Build the geometry polygon for the bounding box
+            var geometry = new
+            {
+                type = "Polygon",
+                coordinates = new double[][][]
+                {
+                    new double[][]
+                    {
+                        new[] { minLon, minLat },
+                        new[] { maxLon, minLat },
+                        new[] { maxLon, maxLat },
+                        new[] { minLon, maxLat },
+                        new[] { minLon, minLat }
+                    }
+                }
+            };
 
-            var response = await _httpClient.GetAsync(
-                $"v3/4wings/stats?datasets=public-global-fishing-effort:latest&start-date={startDate:yyyy-MM-dd}&end-date={endDate:yyyy-MM-dd}&region={encodedGeometry}",
+            // Use 4Wings Report API with spatial aggregation and group by FLAG
+            var dateRange = $"{startDate:yyyy-MM-dd},{endDate:yyyy-MM-dd}";
+            var requestBody = new { geojson = geometry };
+
+            var response = await _httpClient.PostAsJsonAsync(
+                $"v3/4wings/report?datasets[0]=public-global-fishing-effort:latest&date-range={dateRange}&temporal-resolution=ENTIRE&spatial-aggregation=true&group-by=FLAG&format=JSON",
+                requestBody,
+                _jsonOptions,
                 cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<GfwStatsResponse>(_jsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<Gfw4WingsReportResponse>(_jsonOptions, cancellationToken);
+
+            // Parse the 4Wings report response
+            var fishingHoursByFlag = new Dictionary<string, double>();
+            double totalHours = 0;
+            int vesselCount = 0;
+
+            if (result?.Entries != null)
+            {
+                foreach (var entry in result.Entries)
+                {
+                    // The entry is a dictionary with dataset name as key
+                    foreach (var datasetEntry in entry)
+                    {
+                        if (datasetEntry.Value is JsonElement jsonArray && jsonArray.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var item in jsonArray.EnumerateArray())
+                            {
+                                var hours = item.TryGetProperty("hours", out var hoursEl) ? hoursEl.GetDouble() : 0;
+                                var flag = item.TryGetProperty("flag", out var flagEl) ? flagEl.GetString() ?? "Unknown" : "Unknown";
+                                var vessels = item.TryGetProperty("vesselIDs", out var vesselEl) ? vesselEl.GetInt32() : 0;
+
+                                totalHours += hours;
+                                vesselCount += vessels;
+
+                                if (fishingHoursByFlag.ContainsKey(flag))
+                                    fishingHoursByFlag[flag] += hours;
+                                else
+                                    fishingHoursByFlag[flag] = hours;
+                            }
+                        }
+                    }
+                }
+            }
+
             var stats = new GfwFishingEffortStats
             {
-                TotalFishingHours = result?.TotalFishingHours ?? 0,
-                VesselCount = result?.VesselCount ?? 0,
-                EventCount = result?.EventCount ?? 0,
-                FishingHoursByFlag = result?.ByFlag ?? new Dictionary<string, double>(),
-                FishingHoursByGearType = result?.ByGearType ?? new Dictionary<string, double>()
+                TotalFishingHours = totalHours,
+                VesselCount = vesselCount,
+                EventCount = result?.Total ?? 0,
+                FishingHoursByFlag = fishingHoursByFlag,
+                FishingHoursByGearType = new Dictionary<string, double>()
             };
 
             // Cache the result
@@ -331,11 +385,36 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
                 _ => throw new ArgumentException($"Unknown event type: {eventType}")
             };
 
-            var geometry = $"{{\"type\":\"Polygon\",\"coordinates\":[[[{minLon},{minLat}],[{maxLon},{minLat}],[{maxLon},{maxLat}],[{minLon},{maxLat}],[{minLon},{minLat}]]]}}";
-            var encodedGeometry = Uri.EscapeDataString(geometry);
+            // Build the geometry polygon for the bounding box
+            var geometry = new
+            {
+                type = "Polygon",
+                coordinates = new double[][][]
+                {
+                    new double[][]
+                    {
+                        new[] { minLon, minLat },
+                        new[] { maxLon, minLat },
+                        new[] { maxLon, maxLat },
+                        new[] { minLon, maxLat },
+                        new[] { minLon, minLat }
+                    }
+                }
+            };
 
-            var response = await _httpClient.GetAsync(
-                $"v3/events?datasets={dataset}&start-date={startDate:yyyy-MM-dd}&end-date={endDate:yyyy-MM-dd}&region={encodedGeometry}&limit={limit}",
+            // Build POST request body per GFW API v3 spec
+            var requestBody = new
+            {
+                datasets = new[] { dataset },
+                startDate = startDate.ToString("yyyy-MM-dd"),
+                endDate = endDate.ToString("yyyy-MM-dd"),
+                geometry
+            };
+
+            var response = await _httpClient.PostAsJsonAsync(
+                $"v3/events?offset=0&limit={limit}",
+                requestBody,
+                _jsonOptions,
                 cancellationToken);
             response.EnsureSuccessStatusCode();
 
@@ -472,6 +551,115 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
         public int EventCount { get; init; }
         public Dictionary<string, double>? ByFlag { get; init; }
         public Dictionary<string, double>? ByGearType { get; init; }
+    }
+
+    /// <summary>
+    /// Response from 4Wings Report API
+    /// </summary>
+    private record Gfw4WingsReportResponse
+    {
+        public int Total { get; init; }
+        public int? Limit { get; init; }
+        public int? Offset { get; init; }
+        public int? NextOffset { get; init; }
+        public List<Dictionary<string, JsonElement>>? Entries { get; init; }
+    }
+
+    /// <inheritdoc />
+    public async Task<Gfw4WingsTileInfo?> GetFishingEffortTileUrlAsync(
+        DateTime startDate,
+        DateTime endDate,
+        string? gearType = null,
+        string? flag = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Build query parameters for 4Wings generate-png endpoint
+            var queryParams = new List<string>
+            {
+                "interval=DAY",
+                "datasets[0]=public-global-fishing-effort:latest",
+                $"date-range={startDate:yyyy-MM-dd},{endDate:yyyy-MM-dd}",
+                "color=%23FF6B35"  // Orange color for fishing effort
+            };
+
+            // Add optional filters
+            var filters = new List<string>();
+            if (!string.IsNullOrEmpty(gearType))
+                filters.Add($"geartype in ('{gearType}')");
+            if (!string.IsNullOrEmpty(flag))
+                filters.Add($"flag in ('{flag}')");
+
+            if (filters.Count > 0)
+                queryParams.Add($"filters[0]={Uri.EscapeDataString(string.Join(" AND ", filters))}");
+
+            var queryString = string.Join("&", queryParams);
+
+            var response = await _httpClient.PostAsync(
+                $"v3/4wings/generate-png?{queryString}",
+                null,
+                cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<Gfw4WingsPngResponse>(_jsonOptions, cancellationToken);
+
+            if (result?.Url == null)
+            {
+                _logger.LogWarning("4Wings generate-png returned no URL");
+                return null;
+            }
+
+            // Parse color ramp from response
+            var colorSteps = new List<Gfw4WingsColorStep>();
+            if (result.ColorRamp?.StepsByZoom != null)
+            {
+                // Get the color steps for zoom level 0 (they're the same for all zooms)
+                if (result.ColorRamp.StepsByZoom.TryGetValue("0", out var steps))
+                {
+                    foreach (var step in steps)
+                    {
+                        colorSteps.Add(new Gfw4WingsColorStep
+                        {
+                            Color = step.Color ?? "rgba(255,107,53,0.5)",
+                            Value = step.Value
+                        });
+                    }
+                }
+            }
+
+            return new Gfw4WingsTileInfo
+            {
+                TileUrl = result.Url,
+                Dataset = "public-global-fishing-effort:latest",
+                ColorRamp = colorSteps
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting 4Wings tile URL");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Response from 4Wings generate-png endpoint
+    /// </summary>
+    private record Gfw4WingsPngResponse
+    {
+        public string? Url { get; init; }
+        public Gfw4WingsColorRampResponse? ColorRamp { get; init; }
+    }
+
+    private record Gfw4WingsColorRampResponse
+    {
+        public Dictionary<string, List<Gfw4WingsColorStepResponse>>? StepsByZoom { get; init; }
+    }
+
+    private record Gfw4WingsColorStepResponse
+    {
+        public string? Color { get; init; }
+        public double Value { get; init; }
     }
 }
 
