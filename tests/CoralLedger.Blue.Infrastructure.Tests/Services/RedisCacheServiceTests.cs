@@ -250,6 +250,260 @@ public class RedisCacheServiceTests
         // Assert
         await act.Should().NotThrowAsync();
     }
+
+    [Fact]
+    public async Task RemoveAsync_OnException_DoesNotThrow()
+    {
+        // Arrange
+        var key = "test:key";
+        _distributedCacheMock
+            .Setup(c => c.RemoveAsync(key, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Redis connection failed"));
+
+        // Act
+        Func<Task> act = async () => await _service.RemoveAsync(key);
+
+        // Assert
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task RemoveByPrefixAsync_WithNoRedisMultiplexer_LogsWarning()
+    {
+        // Arrange
+        var serviceWithoutRedis = new RedisCacheService(
+            _distributedCacheMock.Object,
+            _loggerMock.Object,
+            redis: null);
+        var prefix = "test:";
+
+        // Act
+        await serviceWithoutRedis.RemoveByPrefixAsync(prefix);
+
+        // Assert - Should log warning about missing IConnectionMultiplexer
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("IConnectionMultiplexer not available")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveByPrefixAsync_WithNoEndpoints_LogsWarning()
+    {
+        // Arrange
+        var prefix = "test:";
+        _redisMock.Setup(r => r.GetEndPoints(It.IsAny<bool>()))
+            .Returns(Array.Empty<System.Net.EndPoint>());
+
+        // Act
+        await _service.RemoveByPrefixAsync(prefix);
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No Redis endpoints available")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveByPrefixAsync_WhenAllServersDisconnected_LogsWarning()
+    {
+        // Arrange
+        var prefix = "test:";
+        var endpointMock = new Mock<System.Net.EndPoint>();
+        var serverMock = new Mock<IServer>();
+        
+        serverMock.Setup(s => s.IsConnected).Returns(false);
+        
+        _redisMock.Setup(r => r.GetEndPoints(It.IsAny<bool>()))
+            .Returns(new[] { endpointMock.Object });
+        _redisMock.Setup(r => r.GetServer(It.IsAny<System.Net.EndPoint>(), It.IsAny<object>()))
+            .Returns(serverMock.Object);
+
+        // Act
+        await _service.RemoveByPrefixAsync(prefix);
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No available Redis server found")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RemoveByPrefixAsync_OnException_LogsError()
+    {
+        // Arrange
+        var prefix = "test:";
+        _redisMock.Setup(r => r.GetEndPoints(It.IsAny<bool>()))
+            .Throws(new Exception("Redis connection failed"));
+
+        // Act
+        await _service.RemoveByPrefixAsync(prefix);
+
+        // Assert
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error removing cache entries with prefix")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_FactoryThrows_PropagatesException()
+    {
+        // Arrange
+        var key = "test:key";
+        var expectedException = new InvalidOperationException("Factory failed");
+
+        _distributedCacheMock
+            .Setup(c => c.GetAsync(key, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((byte[]?)null);
+
+        // Act
+        Func<Task> act = async () => await _service.GetOrSetAsync<TestCacheObject>(key, () => throw expectedException);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Factory failed");
+    }
+
+    [Fact]
+    public async Task GetAsync_WithCancellationToken_ProperlyCancels()
+    {
+        // Arrange
+        var key = "test:cancel";
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        Func<Task> act = async () => await _service.GetAsync<TestCacheObject>(key, cts.Token);
+
+        // Assert
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task SetAsync_WithCancellationToken_ProperlyCancels()
+    {
+        // Arrange
+        var key = "test:cancel";
+        var testObject = new TestCacheObject { Id = 1, Name = "Test" };
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        Func<Task> act = async () => await _service.SetAsync(key, testObject, null, cts.Token);
+
+        // Assert
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task GetOrSetAsync_ConcurrentCalls_AllReturnSameValue()
+    {
+        // Arrange
+        var key = "test:concurrent";
+        var factoryCallCount = 0;
+        var testObject = new TestCacheObject { Id = 1, Name = "Test" };
+        var json = System.Text.Json.JsonSerializer.Serialize(testObject, JsonOptions);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+        // First call - cache miss
+        _distributedCacheMock
+            .SetupSequence(c => c.GetAsync(key, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((byte[]?)null)  // First check - miss
+            .ReturnsAsync(bytes)           // Subsequent checks - hit
+            .ReturnsAsync(bytes)
+            .ReturnsAsync(bytes)
+            .ReturnsAsync(bytes);
+
+        _distributedCacheMock
+            .Setup(c => c.SetAsync(
+                key,
+                It.IsAny<byte[]>(),
+                It.IsAny<DistributedCacheEntryOptions>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act - Simulate concurrent requests
+        var tasks = Enumerable.Range(0, 5).Select(_ =>
+            _service.GetOrSetAsync(key, async () =>
+            {
+                Interlocked.Increment(ref factoryCallCount);
+                await Task.Delay(10);
+                return new TestCacheObject { Id = 1, Name = "Test" };
+            })
+        );
+
+        var results = await Task.WhenAll(tasks);
+
+        // Assert - All should get the same value
+        results.Should().AllSatisfy(r =>
+        {
+            r.Should().NotBeNull();
+            r.Id.Should().Be(1);
+        });
+    }
+
+    [Fact]
+    public async Task GetAsync_WithInvalidJson_ReturnsNull()
+    {
+        // Arrange
+        var key = "test:invalid";
+        var invalidJson = System.Text.Encoding.UTF8.GetBytes("{ invalid json }");
+
+        _distributedCacheMock
+            .Setup(c => c.GetAsync(key, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invalidJson);
+
+        // Act
+        var result = await _service.GetAsync<TestCacheObject>(key);
+
+        // Assert
+        result.Should().BeNull();
+        
+        // Verify error was logged
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error getting cache value")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task SetAsync_WithNullValue_DoesNotThrow()
+    {
+        // Arrange
+        var key = "test:null";
+        TestCacheObject? nullObject = null;
+
+        // Act
+        Func<Task> act = async () => await _service.SetAsync(key, nullObject!);
+
+        // Assert
+        // Should throw ArgumentNullException due to where T : class constraint
+        // But SetAsync catches all exceptions and logs them
+        await act.Should().NotThrowAsync();
+    }
 }
 
 /// <summary>
