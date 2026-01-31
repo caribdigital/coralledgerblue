@@ -109,8 +109,9 @@ public class AisClient : IAisClient
     {
         if (!IsConfigured)
         {
-            _logger.LogWarning("AIS client is not configured");
-            return ServiceResult<IReadOnlyList<AisVesselPosition>>.Fail("AIS client is not configured");
+            // Return empty track when not configured (demo mode doesn't support track history)
+            _logger.LogWarning("AIS client is not configured, track data unavailable");
+            return ServiceResult<IReadOnlyList<AisVesselPosition>>.OkEmpty();
         }
 
         try
