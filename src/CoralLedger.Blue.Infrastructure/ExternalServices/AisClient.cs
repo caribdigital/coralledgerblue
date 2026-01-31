@@ -59,10 +59,10 @@ public class AisClient : IAisClient
                 _ => throw new NotSupportedException($"AIS provider {_options.Provider} is not supported")
             };
 
-            var response = await _httpClient.GetAsync(url, cancellationToken);
+            var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             var positions = _options.Provider switch
             {
@@ -88,7 +88,7 @@ public class AisClient : IAisClient
         CancellationToken cancellationToken = default)
     {
         // Get all positions and filter by distance
-        var result = await GetVesselPositionsAsync(cancellationToken);
+        var result = await GetVesselPositionsAsync(cancellationToken).ConfigureAwait(false);
 
         if (!result.Success)
         {
@@ -120,10 +120,10 @@ public class AisClient : IAisClient
             if (_options.Provider == "MarineTraffic")
             {
                 var url = $"exportvesseltrack/v:2/{_options.ApiKey}/mmsi:{mmsi}/days:1/protocol:jsono";
-                var response = await _httpClient.GetAsync(url, cancellationToken);
+                var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                 var track = ParseMarineTrafficTrackResponse(content, mmsi);
                 return ServiceResult<IReadOnlyList<AisVesselPosition>>.Ok(track);
             }
