@@ -104,7 +104,7 @@ public class LocalizationTests : IClassFixture<CustomWebApplicationFactory>
             "English resource file should exist");
         Assert.True(File.Exists(Path.Combine(resourceDir, "SharedResources.es.resx")), 
             "Spanish resource file should exist");
-        Assert.True(File.Exists(Path.Combine(resourceDir, "SharedResources.ht.resx")), 
+        Assert.True(File.Exists(Path.Combine(resourceDir, "SharedResources-HaitianCreole.resx")), 
             "Haitian Creole resource file should exist");
     }
 
@@ -114,7 +114,7 @@ public class LocalizationTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var solutionDir = FindSolutionDirectory();
         var resourceDir = Path.Combine(solutionDir, "src", "CoralLedger.Blue.Web", "Resources");
-        var htResourceFile = Path.Combine(resourceDir, "SharedResources.ht.resx");
+        var htResourceFile = Path.Combine(resourceDir, "SharedResources-HaitianCreole.resx");
         var enResourceFile = Path.Combine(resourceDir, "SharedResources.resx");
         
         // Act
@@ -146,7 +146,7 @@ public class LocalizationTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var solutionDir = FindSolutionDirectory();
         var resourceDir = Path.Combine(solutionDir, "src", "CoralLedger.Blue.Web", "Resources");
-        var htResourceFile = Path.Combine(resourceDir, "SharedResources.ht.resx");
+        var htResourceFile = Path.Combine(resourceDir, "SharedResources-HaitianCreole.resx");
         
         // Act
         var doc = XDocument.Load(htResourceFile);
@@ -173,7 +173,7 @@ public class LocalizationTests : IClassFixture<CustomWebApplicationFactory>
         // Arrange
         var solutionDir = FindSolutionDirectory();
         var resourceDir = Path.Combine(solutionDir, "src", "CoralLedger.Blue.Web", "Resources");
-        var htResourceFile = Path.Combine(resourceDir, "SharedResources.ht.resx");
+        var htResourceFile = Path.Combine(resourceDir, "SharedResources-HaitianCreole.resx");
         
         // Act
         var doc = XDocument.Load(htResourceFile);
@@ -194,7 +194,7 @@ public class LocalizationTests : IClassFixture<CustomWebApplicationFactory>
         var resourceDir = Path.Combine(solutionDir, "src", "CoralLedger.Blue.Web", "Resources");
         var enResourceFile = Path.Combine(resourceDir, "SharedResources.resx");
         var esResourceFile = Path.Combine(resourceDir, "SharedResources.es.resx");
-        var htResourceFile = Path.Combine(resourceDir, "SharedResources.ht.resx");
+        var htResourceFile = Path.Combine(resourceDir, "SharedResources-HaitianCreole.resx");
         
         // Act
         var enDoc = XDocument.Load(enResourceFile);

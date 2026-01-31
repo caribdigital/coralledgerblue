@@ -39,9 +39,11 @@
       <DependentUpon>SharedResources.resx</DependentUpon>
     </EmbeddedResource>
     
-    <!-- Haitian Creole localized resources - must explicitly set culture -->
-    <EmbeddedResource Update="Resources\SharedResources.ht.resx">
-      <DependentUpon>SharedResources.resx</DependentUpon>
+    <!-- Haitian Creole localized resources -->
+    <!-- Renamed from SharedResources.ht.resx to avoid MSBuild culture detection issues.
+         LCID 4096 (supplemental culture) isn't auto-detected from filename. -->
+    <EmbeddedResource Update="Resources\SharedResources-HaitianCreole.resx">
+      <LogicalName>CoralLedger.Blue.Web.Resources.SharedResources.ht.resources</LogicalName>
       <Culture>ht</Culture>
     </EmbeddedResource>
   </ItemGroup>
