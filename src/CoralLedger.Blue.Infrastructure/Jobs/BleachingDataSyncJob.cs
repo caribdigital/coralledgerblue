@@ -52,29 +52,30 @@ public class BleachingDataSyncJob : IJob
                 mpas.Count, targetDate);
 
             // Process each MPA with rate limiting
-            var semaphore = new SemaphoreSlim(3); // Max 3 concurrent NOAA requests
-
-            var tasks = mpas.Select(async mpa =>
+            using (var semaphore = new SemaphoreSlim(3)) // Max 3 concurrent NOAA requests
             {
-                await semaphore.WaitAsync(context.CancellationToken);
-                try
+                var tasks = mpas.Select(async mpa =>
                 {
-                    await ProcessMpaAsync(dbContext, crwClient, mpa.Id, mpa.Name, mpa.Centroid, targetDate, context.CancellationToken);
-                    Interlocked.Increment(ref successCount);
-                }
-                catch (Exception ex)
-                {
-                    Interlocked.Increment(ref failCount);
-                    _logger.LogWarning(ex, "Failed to sync bleaching data for MPA {MpaName} ({MpaId})",
-                        mpa.Name, mpa.Id);
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            });
+                    await semaphore.WaitAsync(context.CancellationToken);
+                    try
+                    {
+                        await ProcessMpaAsync(dbContext, crwClient, mpa.Id, mpa.Name, mpa.Centroid, targetDate, context.CancellationToken);
+                        Interlocked.Increment(ref successCount);
+                    }
+                    catch (Exception ex)
+                    {
+                        Interlocked.Increment(ref failCount);
+                        _logger.LogWarning(ex, "Failed to sync bleaching data for MPA {MpaName} ({MpaId})",
+                            mpa.Name, mpa.Id);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                });
 
-            await Task.WhenAll(tasks);
+                await Task.WhenAll(tasks);
+            }
 
             // Save all changes
             await dbContext.SaveChangesAsync(context.CancellationToken);
