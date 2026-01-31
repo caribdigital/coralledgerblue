@@ -201,14 +201,15 @@ public class BleachingDataSyncJobTests
     {
         var services = new ServiceCollection();
 
-        // Use in-memory database
+        // Use in-memory database - capture dbName outside lambda so all scopes share the same database
+        var dbName = Guid.NewGuid().ToString();
         services.AddDbContext<MarineDbContext>(options =>
         {
-            options.UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString());
+            options.UseInMemoryDatabase(databaseName: dbName);
         }, ServiceLifetime.Scoped);
 
-        services.AddSingleton(crwClient);
-        services.AddSingleton(logger);
+        services.AddSingleton<ICoralReefWatchClient>(crwClient);
+        services.AddSingleton<ILogger<BleachingDataSyncJob>>(logger);
 
         return services.BuildServiceProvider();
     }
