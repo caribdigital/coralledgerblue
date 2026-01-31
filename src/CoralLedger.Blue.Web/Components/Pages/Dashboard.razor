@@ -3,9 +3,10 @@
 @inject IMediator Mediator
 @inject ICoralReefWatchClient CrwClient
 @inject NavigationManager NavigationManager
+@inject IStringLocalizer<SharedResources> Localizer
 @rendermode InteractiveServer
 
-<PageTitle>Dashboard - CoralLedger Blue</PageTitle>
+<PageTitle>@Localizer["Nav_Dashboard"] - CoralLedger Blue</PageTitle>
 
 <div class="dashboard-page">
     @* US-2.1.1: Enhanced Dashboard Header *@
@@ -14,14 +15,14 @@
             <div class="header-title">
                 <h1>
                     <i class="bi bi-speedometer2" aria-hidden="true"></i>
-                    Marine Intelligence Dashboard
+                    @Localizer["Dashboard_Title"]
                 </h1>
-                <p class="header-subtitle">Real-time monitoring for The Bahamas</p>
+                <p class="header-subtitle">@Localizer["Dashboard_Subtitle"]</p>
             </div>
             <div class="header-actions">
-                <a href="/map" class="btn-header" aria-label="View full map">
+                <a href="/map" class="btn-header" aria-label="@Localizer["Dashboard_ViewFullMap"]">
                     <i class="bi bi-map"></i>
-                    <span>View Map</span>
+                    <span>@Localizer["Dashboard_ViewFullMap"]</span>
                 </a>
             </div>
         </div>
@@ -32,9 +33,9 @@
         <section class="kpi-row" aria-label="Key performance indicators">
             <DataCard
                 Icon="bi-shield-check"
-                Label="Protected Areas"
+                Label="@Localizer["Dashboard_ProtectedAreas"]"
                 Value="@_mpaCount.ToString()"
-                Unit="MPAs"
+                Unit="@Localizer["Dashboard_MPAs"]"
                 TrendDirection="DataCard.Trend.Stable"
                 ShowTrend="false"
                 CardStatus="DataCard.Status.Success"
@@ -42,10 +43,10 @@
 
             <DataCard
                 Icon="bi-geo-alt-fill"
-                Label="Total Protected"
+                Label="@Localizer["Dashboard_TotalProtected"]"
                 Value="@_totalArea.ToString("N0")"
                 Unit="km²"
-                TrendLabel="of Bahamian waters"
+                TrendLabel="@Localizer["Dashboard_OfBahamianWaters"]"
                 TrendDirection="DataCard.Trend.Stable"
                 ShowTrend="true"
                 CardStatus="DataCard.Status.Success"
@@ -53,25 +54,25 @@
 
             <DataCard
                 Icon="bi-thermometer-half"
-                Label="Sea Temperature"
+                Label="@Localizer["Dashboard_SeaTemperature"]"
                 Value="@(_avgSst?.ToString("F1") ?? "--")"
                 Unit="°C"
                 TrendValue="@GetSstTrendText()"
-                TrendLabel="from normal"
+                TrendLabel="@Localizer["Dashboard_FromNormal"]"
                 TrendDirection="@GetSstTrend()"
                 CardStatus="@GetSstStatus()"
                 Loading="@(!_avgSst.HasValue && !_bleachingError)" />
 
             <DataCard
                 Icon="bi-exclamation-triangle"
-                Label="Bleaching Alert"
+                Label="@Localizer["Dashboard_BleachingAlert"]"
                 Value="@GetBleachingAlertText()"
                 TrendValue="@($"DHW: {(_maxDhw?.ToString("F1") ?? "--")}°C-wks")"
                 TrendDirection="@GetDhwTrend()"
                 CardStatus="@GetBleachingStatus()"
                 Loading="@(!_maxAlertLevel.HasValue && !_bleachingError)"
                 HasError="@_bleachingError"
-                ErrorMessage="Unable to load bleaching data">
+                ErrorMessage="@Localizer["Dashboard_UnableToLoadBleachingData"]">
                 @if (_maxAlertLevel.HasValue)
                 {
                     <AlertBadge Level="@_maxAlertLevel.Value" Size="AlertBadge.BadgeSize.Small" />

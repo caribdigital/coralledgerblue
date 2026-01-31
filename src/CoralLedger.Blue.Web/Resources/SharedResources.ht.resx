@@ -151,6 +151,30 @@
   <data name="Dashboard_ViewFullMap" xml:space="preserve">
     <value>Wè Kat Konplè</value>
   </data>
+  <data name="Dashboard_ProtectedAreas" xml:space="preserve">
+    <value>Zòn Pwoteje</value>
+  </data>
+  <data name="Dashboard_TotalProtected" xml:space="preserve">
+    <value>Total Pwoteje</value>
+  </data>
+  <data name="Dashboard_SeaTemperature" xml:space="preserve">
+    <value>Tanperati Lanmè</value>
+  </data>
+  <data name="Dashboard_BleachingAlert" xml:space="preserve">
+    <value>Alèt Blanchiman</value>
+  </data>
+  <data name="Dashboard_MPAs" xml:space="preserve">
+    <value>ZPM</value>
+  </data>
+  <data name="Dashboard_FromNormal" xml:space="preserve">
+    <value>de nòmal</value>
+  </data>
+  <data name="Dashboard_OfBahamianWaters" xml:space="preserve">
+    <value>nan dlo Bahamas</value>
+  </data>
+  <data name="Dashboard_UnableToLoadBleachingData" xml:space="preserve">
+    <value>Pa kapab chaje done blanchiman</value>
+  </data>
 
   <!-- Alerts -->
   <data name="Alert_RecentAlerts" xml:space="preserve">
