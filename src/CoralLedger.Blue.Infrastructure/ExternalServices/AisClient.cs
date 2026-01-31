@@ -189,7 +189,7 @@ public class AisClient : IAisClient
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to parse MarineTraffic track response for MMSI {Mmsi}", mmsi);
+            _logger.LogError(ex, "Failed to parse MarineTraffic track response for MMSI {Mmsi}", mmsi);
             return Array.Empty<AisVesselPosition>();
         }
     }
