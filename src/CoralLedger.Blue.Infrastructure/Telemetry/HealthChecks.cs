@@ -69,9 +69,14 @@ public class NoaaHealthCheck : IHealthCheck
         {
             // Try to fetch current data for a test location (Nassau)
             // Parameters: longitude, latitude, date
-            var data = await _client.GetBleachingDataAsync(-77.35, 25.05, DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken);
+            var result = await _client.GetBleachingDataAsync(-77.35, 25.05, DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken);
 
-            if (data is null)
+            if (!result.Success)
+            {
+                return HealthCheckResult.Degraded($"NOAA API returned error: {result.ErrorMessage}");
+            }
+
+            if (result.Value is null)
             {
                 return HealthCheckResult.Degraded("NOAA API returned no data");
             }

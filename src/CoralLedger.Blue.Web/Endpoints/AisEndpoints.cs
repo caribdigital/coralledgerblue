@@ -1,4 +1,5 @@
 using CoralLedger.Blue.Application.Common.Interfaces;
+using CoralLedger.Blue.Application.Common.Models;
 
 namespace CoralLedger.Blue.Web.Endpoints;
 
@@ -28,7 +29,17 @@ public static class AisEndpoints
             IAisClient aisClient,
             CancellationToken ct = default) =>
         {
-            var vessels = await aisClient.GetVesselPositionsAsync(ct);
+            var result = await aisClient.GetVesselPositionsAsync(ct);
+
+            if (!result.Success)
+            {
+                return Results.Problem(
+                    detail: result.ErrorMessage,
+                    statusCode: 500,
+                    title: "Failed to fetch vessel positions");
+            }
+
+            var vessels = result.Value ?? Array.Empty<AisVesselPosition>();
 
             return Results.Ok(new
             {
@@ -62,7 +73,17 @@ public static class AisEndpoints
             IAisClient aisClient,
             CancellationToken ct = default) =>
         {
-            var vessels = await aisClient.GetVesselPositionsNearAsync(lon, lat, radiusKm, ct);
+            var result = await aisClient.GetVesselPositionsNearAsync(lon, lat, radiusKm, ct);
+
+            if (!result.Success)
+            {
+                return Results.Problem(
+                    detail: result.ErrorMessage,
+                    statusCode: 500,
+                    title: "Failed to fetch nearby vessels");
+            }
+
+            var vessels = result.Value ?? Array.Empty<AisVesselPosition>();
 
             return Results.Ok(new
             {
@@ -92,7 +113,17 @@ public static class AisEndpoints
             IAisClient aisClient,
             CancellationToken ct = default) =>
         {
-            var track = await aisClient.GetVesselTrackAsync(mmsi, hours, ct);
+            var result = await aisClient.GetVesselTrackAsync(mmsi, hours, ct);
+
+            if (!result.Success)
+            {
+                return Results.Problem(
+                    detail: result.ErrorMessage,
+                    statusCode: 500,
+                    title: "Failed to fetch vessel track");
+            }
+
+            var track = result.Value ?? Array.Empty<AisVesselPosition>();
 
             return Results.Ok(new
             {

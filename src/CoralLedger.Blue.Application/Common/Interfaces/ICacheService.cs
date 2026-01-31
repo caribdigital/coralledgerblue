@@ -6,8 +6,17 @@ namespace CoralLedger.Blue.Application.Common.Interfaces;
 public interface ICacheService
 {
     /// <summary>
-    /// Get a cached value by key
+    /// Get a cached value by key.
+    /// Returns null on both cache miss and cache errors (transparent failure).
+    /// This design allows the cache to fail gracefully without affecting application logic.
+    /// Errors are logged for monitoring but don't propagate to callers.
     /// </summary>
+    /// <remarks>
+    /// Note: This method intentionally does NOT use ServiceResult pattern because:
+    /// 1. Cache is optional - applications should work without it
+    /// 2. Cache miss (no data) and cache error (system unavailable) have the same outcome: fetch from source
+    /// 3. Transparent failures prevent cache issues from breaking application features
+    /// </remarks>
     Task<T?> GetAsync<T>(string key, CancellationToken ct = default) where T : class;
 
     /// <summary>

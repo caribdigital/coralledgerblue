@@ -629,13 +629,19 @@
         try
         {
             var yesterday = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
-            var bleachingData = await CrwClient.GetBleachingDataAsync(-76.5, 24.2, yesterday);
+            var result = await CrwClient.GetBleachingDataAsync(-76.5, 24.2, yesterday);
 
-            if (bleachingData is not null)
+            if (result.Success && result.Value is not null)
             {
-                _maxDhw = bleachingData.DegreeHeatingWeek;
-                _avgSst = bleachingData.SeaSurfaceTemperature;
-                _maxAlertLevel = bleachingData.AlertLevel;
+                _maxDhw = result.Value.DegreeHeatingWeek;
+                _avgSst = result.Value.SeaSurfaceTemperature;
+                _maxAlertLevel = result.Value.AlertLevel;
+                StateHasChanged();
+            }
+            else if (!result.Success)
+            {
+                _bleachingError = true;
+                Console.WriteLine($"Error loading bleaching data: {result.ErrorMessage}");
                 StateHasChanged();
             }
         }

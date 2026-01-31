@@ -698,16 +698,27 @@
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             var yesterday = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
-            _bleachingData = await CrwClient.GetBleachingDataAsync(
+            var result = await CrwClient.GetBleachingDataAsync(
                 _detail.CentroidLongitude,
                 _detail.CentroidLatitude,
                 yesterday,
                 cts.Token);
 
-            if (_bleachingData is null)
+            if (result.Success && result.Value is not null)
+            {
+                _bleachingData = result.Value;
+            }
+            else if (result.Success && result.Value is null)
             {
                 _bleachingError = true;
                 _bleachingErrorMessage = "No bleaching data available for this location";
+                _bleachingData = null;
+            }
+            else
+            {
+                _bleachingError = true;
+                _bleachingErrorMessage = result.ErrorMessage ?? "Failed to load bleaching data";
+                _bleachingData = null;
             }
         }
         catch (OperationCanceledException)

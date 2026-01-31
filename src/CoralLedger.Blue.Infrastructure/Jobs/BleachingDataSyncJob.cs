@@ -100,16 +100,25 @@ public class BleachingDataSyncJob : IJob
         CancellationToken ct)
     {
         // Fetch data from NOAA
-        var bleachingData = await crwClient.GetBleachingDataAsync(
+        var result = await crwClient.GetBleachingDataAsync(
             centroid.X, // Longitude
             centroid.Y, // Latitude
             targetDate,
             ct);
 
+        if (!result.Success)
+        {
+            _logger.LogWarning("Failed to fetch bleaching data for {MpaName} at ({Lon}, {Lat}): {Error}",
+                mpaName, centroid.X, centroid.Y, result.ErrorMessage);
+            return;
+        }
+
+        var bleachingData = result.Value;
+
         if (bleachingData is null)
         {
-            _logger.LogWarning("No bleaching data available for {MpaName} at ({Lon}, {Lat})",
-                mpaName, centroid.X, centroid.Y);
+            _logger.LogWarning("No bleaching data available for {MpaName} at ({Lon}, {Lat}) on {Date}",
+                mpaName, centroid.X, centroid.Y, targetDate);
             return;
         }
 

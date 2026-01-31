@@ -1,3 +1,5 @@
+using CoralLedger.Blue.Application.Common.Models;
+
 namespace CoralLedger.Blue.Application.Common.Interfaces;
 
 /// <summary>
@@ -13,12 +15,12 @@ public interface IAisClient
     /// <summary>
     /// Get current vessel positions in the configured bounding box
     /// </summary>
-    Task<IReadOnlyList<AisVesselPosition>> GetVesselPositionsAsync(CancellationToken cancellationToken = default);
+    Task<ServiceResult<IReadOnlyList<AisVesselPosition>>> GetVesselPositionsAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get vessel positions near a specific location
     /// </summary>
-    Task<IReadOnlyList<AisVesselPosition>> GetVesselPositionsNearAsync(
+    Task<ServiceResult<IReadOnlyList<AisVesselPosition>>> GetVesselPositionsNearAsync(
         double longitude,
         double latitude,
         double radiusKm,
@@ -27,7 +29,7 @@ public interface IAisClient
     /// <summary>
     /// Get track history for a specific vessel
     /// </summary>
-    Task<IReadOnlyList<AisVesselPosition>> GetVesselTrackAsync(
+    Task<ServiceResult<IReadOnlyList<AisVesselPosition>>> GetVesselTrackAsync(
         string mmsi,
         int hours = 24,
         CancellationToken cancellationToken = default);
