@@ -27,7 +27,7 @@ public class DatabaseHealthCheck : IHealthCheck
         try
         {
             // Check database connectivity and basic query
-            var canConnect = await _context.Database.CanConnectAsync(cancellationToken);
+            var canConnect = await _context.Database.CanConnectAsync(cancellationToken).ConfigureAwait(false);
 
             if (!canConnect)
             {
@@ -35,7 +35,7 @@ public class DatabaseHealthCheck : IHealthCheck
             }
 
             // Check if we can query data
-            var mpaCount = await _context.MarineProtectedAreas.CountAsync(cancellationToken);
+            var mpaCount = await _context.MarineProtectedAreas.CountAsync(cancellationToken).ConfigureAwait(false);
 
             return HealthCheckResult.Healthy($"Database is healthy. {mpaCount} MPAs in database.");
         }
@@ -69,7 +69,7 @@ public class NoaaHealthCheck : IHealthCheck
         {
             // Try to fetch current data for a test location (Nassau)
             // Parameters: longitude, latitude, date
-            var result = await _client.GetBleachingDataAsync(-77.35, 25.05, DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken);
+            var result = await _client.GetBleachingDataAsync(-77.35, 25.05, DateOnly.FromDateTime(DateTime.UtcNow), cancellationToken).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -191,7 +191,7 @@ public class QuartzHealthCheck : IHealthCheck
     {
         try
         {
-            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
+            var scheduler = await _schedulerFactory.GetScheduler(cancellationToken).ConfigureAwait(false);
 
             if (!scheduler.IsStarted)
             {
@@ -203,7 +203,7 @@ public class QuartzHealthCheck : IHealthCheck
                 return HealthCheckResult.Degraded("Quartz scheduler is in standby mode");
             }
 
-            var runningJobs = await scheduler.GetCurrentlyExecutingJobs(cancellationToken);
+            var runningJobs = await scheduler.GetCurrentlyExecutingJobs(cancellationToken).ConfigureAwait(false);
 
             return HealthCheckResult.Healthy($"Quartz scheduler is running. {runningJobs.Count} jobs executing.");
         }
@@ -250,7 +250,7 @@ public class BlazorHealthCheck : IHealthCheck
 
             var response = await client.GetAsync(
                 $"{baseUrl}/_framework/blazor.web.js",
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
             {
@@ -305,7 +305,7 @@ public class SignalRHealthCheck : IHealthCheck
             var response = await client.PostAsync(
                 $"{baseUrl}/hubs/alerts/negotiate?negotiateVersion=1",
                 null,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             // SignalR negotiate returns 200 even without proper handshake setup
             // A 404 or other error would indicate the hub isn't configured
@@ -357,12 +357,12 @@ public class CacheHealthCheck : IHealthCheck
                 HealthCheckKey,
                 testValue,
                 TimeSpan.FromSeconds(30),
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             // Test read
             var retrieved = await _cacheService.GetAsync<CacheTestValue>(
                 HealthCheckKey,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (retrieved == null)
             {
@@ -375,7 +375,7 @@ public class CacheHealthCheck : IHealthCheck
             }
 
             // Clean up
-            await _cacheService.RemoveAsync(HealthCheckKey, cancellationToken);
+            await _cacheService.RemoveAsync(HealthCheckKey, cancellationToken).ConfigureAwait(false);
 
             return HealthCheckResult.Healthy("Cache is working correctly");
         }

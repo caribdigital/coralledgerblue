@@ -74,7 +74,7 @@ public class VesselEventSyncJob : IJob
                 BahamasMaxLon, BahamasMaxLat,
                 startDate, endDate,
                 limit: 1000,
-                context.CancellationToken);
+                context.CancellationToken).ConfigureAwait(false);
 
             var eventList = events.ToList();
             _logger.LogInformation("Retrieved {Count} fishing events from GFW API", eventList.Count);
@@ -84,7 +84,7 @@ public class VesselEventSyncJob : IJob
             {
                 try
                 {
-                    await ProcessEventAsync(dbContext, gfwEvent, syncStats, context.CancellationToken);
+                    await ProcessEventAsync(dbContext, gfwEvent, syncStats, context.CancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -94,7 +94,7 @@ public class VesselEventSyncJob : IJob
             }
 
             // Save all changes in single transaction
-            await dbContext.SaveChangesAsync(context.CancellationToken);
+            await dbContext.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation(
                 "VesselEventSyncJob completed. Events: {Synced} synced, {Skipped} skipped (duplicates), {Failed} failed. " +
@@ -116,7 +116,7 @@ public class VesselEventSyncJob : IJob
         CancellationToken ct)
     {
         // Check for duplicate event by GfwEventId
-        if (await EventExistsAsync(dbContext, gfwEvent.EventId, ct))
+        if (await EventExistsAsync(dbContext, gfwEvent.EventId, ct).ConfigureAwait(false))
         {
             stats.SkippedEvents++;
             return;
@@ -124,7 +124,7 @@ public class VesselEventSyncJob : IJob
 
         // Get or create vessel
         var (vessel, isNewVessel) = await GetOrCreateVesselAsync(
-            dbContext, gfwEvent.VesselId, gfwEvent.VesselName, ct);
+            dbContext, gfwEvent.VesselId, gfwEvent.VesselName, ct).ConfigureAwait(false);
 
         if (isNewVessel)
             stats.VesselsCreated++;
@@ -136,7 +136,7 @@ public class VesselEventSyncJob : IJob
             new Coordinate(gfwEvent.Longitude, gfwEvent.Latitude));
 
         // Check MPA intersection
-        var (isInMpa, mpaId) = await CheckMpaIntersectionAsync(dbContext, location, ct);
+        var (isInMpa, mpaId) = await CheckMpaIntersectionAsync(dbContext, location, ct).ConfigureAwait(false);
         if (isInMpa)
             stats.MpaViolations++;
 
@@ -170,7 +170,7 @@ public class VesselEventSyncJob : IJob
             return false;
 
         return await dbContext.VesselEvents
-            .AnyAsync(e => e.GfwEventId == gfwEventId, ct);
+            .AnyAsync(e => e.GfwEventId == gfwEventId, ct).ConfigureAwait(false);
     }
 
     private async Task<(Vessel Vessel, bool IsNew)> GetOrCreateVesselAsync(
@@ -181,7 +181,7 @@ public class VesselEventSyncJob : IJob
     {
         // Try to find by GFW Vessel ID
         var vessel = await dbContext.Vessels
-            .FirstOrDefaultAsync(v => v.GfwVesselId == gfwVesselId, ct);
+            .FirstOrDefaultAsync(v => v.GfwVesselId == gfwVesselId, ct).ConfigureAwait(false);
 
         if (vessel is not null)
             return (vessel, false);
@@ -208,7 +208,7 @@ public class VesselEventSyncJob : IJob
         var mpa = await dbContext.MarineProtectedAreas
             .Where(m => m.Boundary.Contains(location))
             .Select(m => new { m.Id, m.Name })
-            .FirstOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(ct).ConfigureAwait(false);
 
         if (mpa is not null)
         {
