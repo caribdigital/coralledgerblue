@@ -1,4 +1,5 @@
 using CoralLedger.Blue.Infrastructure.Services;
+using CoralLedger.Blue.Infrastructure.Tests.TestUtilities;
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,11 @@ using Xunit;
 namespace CoralLedger.Blue.Infrastructure.Tests.Services;
 
 /// <summary>
-/// Unit tests for RedisCacheService - verifies distributed caching functionality
+/// Unit tests for RedisCacheService - verifies distributed caching functionality.
+/// These tests use mocked IDistributedCache and IConnectionMultiplexer for isolation.
+///
+/// Note: For higher confidence in RemoveByPrefixAsync and server-side key scanning,
+/// consider adding integration tests with an actual Redis instance (e.g., via TestContainers).
 /// </summary>
 public class RedisCacheServiceTests
 {
@@ -502,13 +507,4 @@ public class RedisCacheServiceTests
         // SetAsync catches all exceptions and logs them, so it won't throw even if serialization fails
         await act.Should().NotThrowAsync();
     }
-}
-
-/// <summary>
-/// Test object for cache serialization tests
-/// </summary>
-public class TestCacheObject
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
 }
