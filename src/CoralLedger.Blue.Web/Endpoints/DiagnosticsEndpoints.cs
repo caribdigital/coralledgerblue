@@ -20,7 +20,7 @@ public static class DiagnosticsEndpoints
         {
             var stopwatch = Stopwatch.StartNew();
             var report = await healthCheckService.CheckHealthAsync(
-                r => r.Tags.Contains("ready"), ct);
+                r => r.Tags.Contains("ready"), ct).ConfigureAwait(false);
             stopwatch.Stop();
 
             var response = new ReadinessResponse

@@ -47,7 +47,7 @@ public static class AIEndpoints
             }
 
             var persona = request.Persona ?? UserPersona.General;
-            var interpretation = await aiService.InterpretQueryAsync(request.Query, persona, ct);
+            var interpretation = await aiService.InterpretQueryAsync(request.Query, persona, ct).ConfigureAwait(false);
 
             // Check for security warning
             if (interpretation.SecurityWarning != null)
@@ -97,7 +97,7 @@ public static class AIEndpoints
                 return Results.BadRequest(new { error = "Interpretation ID is required" });
             }
 
-            var result = await aiService.ExecuteInterpretedQueryAsync(interpretationId, ct);
+            var result = await aiService.ExecuteInterpretedQueryAsync(interpretationId, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -135,7 +135,7 @@ public static class AIEndpoints
             }
 
             var persona = request.Persona ?? UserPersona.General;
-            var result = await aiService.QueryAsync(request.Query, persona, ct);
+            var result = await aiService.QueryAsync(request.Query, persona, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -182,7 +182,7 @@ public static class AIEndpoints
             IMarineAIService aiService,
             CancellationToken ct = default) =>
         {
-            var suggestions = await aiService.GetSuggestedQueriesAsync(ct);
+            var suggestions = await aiService.GetSuggestedQueriesAsync(ct).ConfigureAwait(false);
             return Results.Ok(new { suggestions });
         })
         .WithName("GetAISuggestions")
@@ -243,7 +243,7 @@ public static class AIEndpoints
                 request.Query,
                 request.EntityType,
                 request.MaxResults ?? 10,
-                ct);
+                ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {
@@ -274,7 +274,7 @@ public static class AIEndpoints
             var suggestions = await searchService.GetContextualSuggestionsAsync(
                 partialQuery ?? "",
                 maxSuggestions: 5,
-                ct);
+                ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {
@@ -301,7 +301,7 @@ public static class AIEndpoints
                 request.Query,
                 request.MaxResults ?? 5,
                 request.MinSimilarity ?? 0.7f,
-                ct);
+                ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {
