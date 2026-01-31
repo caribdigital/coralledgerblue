@@ -202,11 +202,6 @@ public class BleachingDataSyncJobTests
         var services = new ServiceCollection();
 
         // Use in-memory database
-        var dbContextOptions = new DbContextOptionsBuilder<MarineDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-
-        services.AddSingleton(dbContextOptions);
         services.AddDbContext<MarineDbContext>(options =>
         {
             options.UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString());
