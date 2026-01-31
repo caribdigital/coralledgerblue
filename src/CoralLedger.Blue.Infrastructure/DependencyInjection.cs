@@ -89,6 +89,9 @@ public static class DependencyInjection
         // Register Data Export service
         services.AddScoped<IDataExportService, DataExportService>();
 
+        // Register PDF Report Generation service
+        services.AddScoped<IReportGenerationService, PdfReportGenerationService>();
+
         // Register Reef Health Calculator (spatial intelligence)
         services.AddScoped<IReefHealthCalculator, ReefHealthCalculator>();
 

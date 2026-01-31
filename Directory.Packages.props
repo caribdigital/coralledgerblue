@@ -61,6 +61,8 @@
     <PackageVersion Include="MetadataExtractor" Version="2.8.1" />
     <!-- Redis Caching -->
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.0" />
+    <!-- PDF Generation -->
+    <PackageVersion Include="QuestPDF" Version="2024.12.3" />
     <!-- AI / Semantic Kernel -->
     <PackageVersion Include="Microsoft.SemanticKernel" Version="1.31.0" />
     <PackageVersion Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.31.0" />
