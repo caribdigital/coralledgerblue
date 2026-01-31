@@ -43,7 +43,7 @@ public sealed class ThemeState : IThemeState
 
         try
         {
-            var stored = await _jsRuntime.InvokeAsync<string>("CoralLedgerThemeManager.getMode");
+            var stored = await _jsRuntime.InvokeAsync<string>("CoralLedgerThemeManager.getMode").ConfigureAwait(false);
             _currentMode = stored is not null && Enum.TryParse<ThemeMode>(stored, true, out var parsed)
                 ? parsed
                 : ThemeMode.Dark;
@@ -53,26 +53,26 @@ public sealed class ThemeState : IThemeState
             _currentMode = ThemeMode.Dark;
         }
 
-        await ApplyModeAsync(_currentMode);
+        await ApplyModeAsync(_currentMode).ConfigureAwait(false);
         ThemeChanged?.Invoke(_currentMode);
     }
 
     public async ValueTask ToggleModeAsync()
     {
         var next = _currentMode == ThemeMode.Dark ? ThemeMode.Light : ThemeMode.Dark;
-        await SetModeAsync(next);
+        await SetModeAsync(next).ConfigureAwait(false);
     }
 
     public async ValueTask SetModeAsync(ThemeMode mode)
     {
         if (_currentMode == mode && _initialized)
         {
-            await ApplyModeAsync(mode);
+            await ApplyModeAsync(mode).ConfigureAwait(false);
             return;
         }
 
         _currentMode = mode;
-        await ApplyModeAsync(mode);
+        await ApplyModeAsync(mode).ConfigureAwait(false);
         ThemeChanged?.Invoke(_currentMode);
     }
 

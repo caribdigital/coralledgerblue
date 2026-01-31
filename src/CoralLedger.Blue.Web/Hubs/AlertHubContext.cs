@@ -17,16 +17,16 @@ public class AlertHubContext : IAlertHubContext
 
     public async Task SendToAllAsync(object alertData, CancellationToken cancellationToken = default)
     {
-        await _hubContext.Clients.Group("all-alerts").SendAsync("ReceiveAlert", alertData, cancellationToken);
+        await _hubContext.Clients.Group("all-alerts").SendAsync("ReceiveAlert", alertData, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task SendToMpaAsync(Guid mpaId, object alertData, CancellationToken cancellationToken = default)
     {
-        await _hubContext.Clients.Group($"mpa-{mpaId}").SendAsync("ReceiveAlert", alertData, cancellationToken);
+        await _hubContext.Clients.Group($"mpa-{mpaId}").SendAsync("ReceiveAlert", alertData, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task SendVesselPositionAsync(object positionData, CancellationToken cancellationToken = default)
     {
-        await _hubContext.Clients.Group("vessel-tracking").SendAsync("ReceiveVesselPosition", positionData, cancellationToken);
+        await _hubContext.Clients.Group("vessel-tracking").SendAsync("ReceiveVesselPosition", positionData, cancellationToken).ConfigureAwait(false);
     }
 }

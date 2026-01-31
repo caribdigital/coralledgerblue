@@ -126,11 +126,11 @@ if (!app.Environment.IsEnvironment("Testing"))
 
     // Apply pending migrations (creates database if it doesn't exist)
     // Note: MigrateAsync() is idempotent - only applies migrations not yet applied
-    var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+    var pendingMigrations = await context.Database.GetPendingMigrationsAsync().ConfigureAwait(false);
     if (pendingMigrations.Any())
     {
         logger.LogInformation("Applying {Count} pending migration(s)...", pendingMigrations.Count());
-        await context.Database.MigrateAsync();
+        await context.Database.MigrateAsync().ConfigureAwait(false);
         logger.LogInformation("Database migrations applied successfully");
     }
     else
@@ -139,10 +139,10 @@ if (!app.Environment.IsEnvironment("Testing"))
     }
 
     // Seed the database with Bahamas MPA data (idempotent - checks if data exists)
-    await BahamasMpaSeeder.SeedAsync(context);
+    await BahamasMpaSeeder.SeedAsync(context).ConfigureAwait(false);
 
     // Seed the database with Bahamian species (idempotent - checks if data exists)
-    await BahamianSpeciesSeeder.SeedAsync(context);
+    await BahamianSpeciesSeeder.SeedAsync(context).ConfigureAwait(false);
 }
 
 if (!app.Environment.IsDevelopment())

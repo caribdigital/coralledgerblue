@@ -17,13 +17,13 @@ public class AlertHub : Hub
     public override async Task OnConnectedAsync()
     {
         _logger.LogInformation("Client connected: {ConnectionId}", Context.ConnectionId);
-        await base.OnConnectedAsync();
+        await base.OnConnectedAsync().ConfigureAwait(false);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         _logger.LogInformation("Client disconnected: {ConnectionId}", Context.ConnectionId);
-        await base.OnDisconnectedAsync(exception);
+        await base.OnDisconnectedAsync(exception).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -31,7 +31,7 @@ public class AlertHub : Hub
     /// </summary>
     public async Task SubscribeToMpa(string mpaId)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, $"mpa-{mpaId}");
+        await Groups.AddToGroupAsync(Context.ConnectionId, $"mpa-{mpaId}").ConfigureAwait(false);
         _logger.LogInformation("Client {ConnectionId} subscribed to MPA {MpaId}", Context.ConnectionId, mpaId);
     }
 
@@ -40,7 +40,7 @@ public class AlertHub : Hub
     /// </summary>
     public async Task UnsubscribeFromMpa(string mpaId)
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"mpa-{mpaId}");
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"mpa-{mpaId}").ConfigureAwait(false);
         _logger.LogInformation("Client {ConnectionId} unsubscribed from MPA {MpaId}", Context.ConnectionId, mpaId);
     }
 
@@ -49,7 +49,7 @@ public class AlertHub : Hub
     /// </summary>
     public async Task SubscribeToAllAlerts()
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, "all-alerts");
+        await Groups.AddToGroupAsync(Context.ConnectionId, "all-alerts").ConfigureAwait(false);
         _logger.LogInformation("Client {ConnectionId} subscribed to all alerts", Context.ConnectionId);
     }
 
@@ -58,7 +58,7 @@ public class AlertHub : Hub
     /// </summary>
     public async Task SubscribeToVesselTracking()
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, "vessel-tracking");
+        await Groups.AddToGroupAsync(Context.ConnectionId, "vessel-tracking").ConfigureAwait(false);
         _logger.LogInformation("Client {ConnectionId} subscribed to vessel tracking", Context.ConnectionId);
     }
 
@@ -67,7 +67,7 @@ public class AlertHub : Hub
     /// </summary>
     public async Task UnsubscribeFromVesselTracking()
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "vessel-tracking");
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "vessel-tracking").ConfigureAwait(false);
         _logger.LogInformation("Client {ConnectionId} unsubscribed from vessel tracking", Context.ConnectionId);
     }
 }
