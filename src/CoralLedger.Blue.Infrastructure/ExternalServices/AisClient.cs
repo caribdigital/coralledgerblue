@@ -187,8 +187,9 @@ public class AisClient : IAisClient
                 Timestamp = p.Timestamp ?? DateTime.UtcNow
             }).ToList() ?? new List<AisVesselPosition>();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Failed to parse MarineTraffic track response for MMSI {Mmsi}", mmsi);
             return Array.Empty<AisVesselPosition>();
         }
     }
