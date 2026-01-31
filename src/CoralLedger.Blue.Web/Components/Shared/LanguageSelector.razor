@@ -23,18 +23,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Get current culture from cookie or default to English
-        _currentCulture = await JS.InvokeAsync<string>("eval", 
-            "document.cookie.split('; ').find(row => row.startsWith('.AspNetCore.Culture='))?.split('=')[1]?.split('|')[0]?.split('=')[1] || 'en'");
+        // Get current culture from cookie using safe helper function
+        _currentCulture = await JS.InvokeAsync<string>("localization.getCurrentCulture");
     }
 
     private async Task OnCultureChanged(object value)
     {
         var culture = value?.ToString() ?? "en";
         
-        // Set culture cookie
-        await JS.InvokeVoidAsync("eval", 
-            $"document.cookie = '.AspNetCore.Culture=c={culture}|uic={culture}; path=/; max-age=31536000'");
+        // Set culture cookie using safe helper function
+        await JS.InvokeVoidAsync("localization.setCulture", culture);
         
         // Reload page to apply new culture
         Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
