@@ -33,7 +33,7 @@ public class AlertRuleEngine : IAlertRuleEngine
     {
         var activeRules = await _context.AlertRules
             .Where(r => r.IsActive)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var allAlerts = new List<Alert>();
 
@@ -48,7 +48,7 @@ public class AlertRuleEngine : IAlertRuleEngine
                     continue;
                 }
 
-                var alerts = await EvaluateRuleInternalAsync(rule, cancellationToken);
+                var alerts = await EvaluateRuleInternalAsync(rule, cancellationToken).ConfigureAwait(false);
                 allAlerts.AddRange(alerts);
             }
             catch (Exception ex)
@@ -63,7 +63,7 @@ public class AlertRuleEngine : IAlertRuleEngine
     public async Task<IReadOnlyList<Alert>> EvaluateRuleAsync(Guid ruleId, CancellationToken cancellationToken = default)
     {
         var rule = await _context.AlertRules
-            .FirstOrDefaultAsync(r => r.Id == ruleId, cancellationToken);
+            .FirstOrDefaultAsync(r => r.Id == ruleId, cancellationToken).ConfigureAwait(false);
 
         if (rule == null)
         {
@@ -71,14 +71,14 @@ public class AlertRuleEngine : IAlertRuleEngine
             return Array.Empty<Alert>();
         }
 
-        return await EvaluateRuleInternalAsync(rule, cancellationToken);
+        return await EvaluateRuleInternalAsync(rule, cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<IReadOnlyList<Alert>> EvaluateRulesByTypeAsync(AlertType type, CancellationToken cancellationToken = default)
     {
         var rules = await _context.AlertRules
             .Where(r => r.IsActive && r.Type == type)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var allAlerts = new List<Alert>();
 
@@ -92,7 +92,7 @@ public class AlertRuleEngine : IAlertRuleEngine
                     continue;
                 }
 
-                var alerts = await EvaluateRuleInternalAsync(rule, cancellationToken);
+                var alerts = await EvaluateRuleInternalAsync(rule, cancellationToken).ConfigureAwait(false);
                 allAlerts.AddRange(alerts);
             }
             catch (Exception ex)
@@ -115,14 +115,14 @@ public class AlertRuleEngine : IAlertRuleEngine
         var ruleIds = alertList.Select(a => a.AlertRuleId).Distinct().ToList();
         var rules = await _context.AlertRules
             .Where(r => ruleIds.Contains(r.Id))
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         foreach (var rule in rules)
         {
             rule.RecordTrigger();
         }
 
-        var count = await _context.SaveChangesAsync(cancellationToken);
+        var count = await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         // Send notifications
         foreach (var alert in alertList)
@@ -130,7 +130,7 @@ public class AlertRuleEngine : IAlertRuleEngine
             var rule = rules.FirstOrDefault(r => r.Id == alert.AlertRuleId);
             if (rule != null)
             {
-                await _notificationService.SendNotificationAsync(alert, rule, cancellationToken);
+                await _notificationService.SendNotificationAsync(alert, rule, cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -177,7 +177,7 @@ public class AlertRuleEngine : IAlertRuleEngine
             query = query.Where(b => b.SstAnomaly >= condition.MinSstAnomaly.Value);
         }
 
-        var bleachingAlerts = await query.ToListAsync(cancellationToken);
+        var bleachingAlerts = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return bleachingAlerts.Select(b => new Alert
         {
@@ -214,7 +214,7 @@ public class AlertRuleEngine : IAlertRuleEngine
             query = query.Where(e => e.MarineProtectedAreaId != null);
         }
 
-        var events = await query.ToListAsync(cancellationToken);
+        var events = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
         if (events.Count < condition.MinEventCount)
         {
@@ -265,7 +265,7 @@ public class AlertRuleEngine : IAlertRuleEngine
             query = query.Where(e => e.MarineProtectedArea!.ProtectionLevel == Domain.Enums.ProtectionLevel.NoTake);
         }
 
-        var events = await query.ToListAsync(cancellationToken);
+        var events = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return events.Select(e => new Alert
         {
@@ -298,7 +298,7 @@ public class AlertRuleEngine : IAlertRuleEngine
             query = query.Where(b => b.MarineProtectedAreaId == rule.MarineProtectedAreaId);
         }
 
-        var alerts = await query.ToListAsync(cancellationToken);
+        var alerts = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return alerts.Select(b => new Alert
         {
@@ -335,7 +335,7 @@ public class AlertRuleEngine : IAlertRuleEngine
             query = query.Where(o => keywords.Any(k => o.Description != null && o.Description.Contains(k)));
         }
 
-        var observations = await query.ToListAsync(cancellationToken);
+        var observations = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return observations.Select(o => new Alert
         {

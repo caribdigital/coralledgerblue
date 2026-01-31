@@ -136,7 +136,7 @@ If no marine species are identifiable, return an empty array: []
                 chatHistory,
                 settings,
                 _kernel,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             var jsonContent = response.Content?.Trim() ?? "[]";
 
@@ -168,7 +168,7 @@ If no marine species are identifiable, return an empty array: []
                 .ToDictionaryAsync(
                     bs => bs.ScientificName.ToLower(),
                     bs => new { bs.Id, bs.LocalName },
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
 
             var result = species.Select(s =>
             {

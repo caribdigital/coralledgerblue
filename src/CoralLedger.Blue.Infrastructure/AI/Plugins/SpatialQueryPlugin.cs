@@ -46,7 +46,7 @@ public class SpatialQueryPlugin
                 .SqlQueryRaw<NearestMpaResult>(sql,
                     new Npgsql.NpgsqlParameter("@lon", longitude),
                     new Npgsql.NpgsqlParameter("@lat", latitude))
-                .ToListAsync();
+                .ToListAsync().ConfigureAwait(false);
 
             if (results.Count == 0)
                 return "No MPAs found in the database";
@@ -97,7 +97,7 @@ public class SpatialQueryPlugin
                     new Npgsql.NpgsqlParameter("@lon", longitude),
                     new Npgsql.NpgsqlParameter("@lat", latitude),
                     new Npgsql.NpgsqlParameter("@radius_m", radiusKm * 1000))
-                .ToListAsync();
+                .ToListAsync().ConfigureAwait(false);
 
             if (results.Count == 0)
                 return $"No MPAs found within {radiusKm} km of ({latitude:F4}, {longitude:F4})";
@@ -138,7 +138,7 @@ public class SpatialQueryPlugin
                 .SqlQueryRaw<MpaContainsResult>(sql,
                     new Npgsql.NpgsqlParameter("@lon", longitude),
                     new Npgsql.NpgsqlParameter("@lat", latitude))
-                .ToListAsync();
+                .ToListAsync().ConfigureAwait(false);
 
             if (results.Count == 0)
                 return $"Location ({latitude:F4}, {longitude:F4}) is NOT inside any Marine Protected Area";
@@ -166,7 +166,7 @@ public class SpatialQueryPlugin
 
         var mpa = await _context.MarineProtectedAreas
             .Where(m => EF.Functions.ILike(m.Name, $"%{mpaName}%"))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync().ConfigureAwait(false);
 
         if (mpa == null)
             return $"No MPA found matching '{mpaName}'";
@@ -184,7 +184,7 @@ public class SpatialQueryPlugin
                 e.DurationHours,
                 e.EventType
             })
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         if (events.Count == 0)
             return $"No fishing events recorded in {mpa.Name} in the past {days} days";
@@ -222,7 +222,7 @@ public class SpatialQueryPlugin
             var results = await _context.Database
                 .SqlQueryRaw<BleachingHotspotResult>(sql,
                     new Npgsql.NpgsqlParameter("@since", since))
-                .ToListAsync();
+                .ToListAsync().ConfigureAwait(false);
 
             if (results.Count == 0)
                 return "No significant bleaching hotspots detected in the past 14 days (DHW > 4)";

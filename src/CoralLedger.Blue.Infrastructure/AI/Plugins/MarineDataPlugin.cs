@@ -22,7 +22,7 @@ public class MarineDataPlugin
     [Description("Get the total count of Marine Protected Areas in the Bahamas")]
     public async Task<int> GetMpaCountAsync()
     {
-        return await _context.MarineProtectedAreas.CountAsync();
+        return await _context.MarineProtectedAreas.CountAsync().ConfigureAwait(false);
     }
 
     [KernelFunction("get_mpas_by_protection_level")]
@@ -38,7 +38,7 @@ public class MarineDataPlugin
         var mpas = await _context.MarineProtectedAreas
             .Where(m => m.ProtectionLevel == level)
             .Select(m => new { m.Name, m.AreaSquareKm, m.IslandGroup })
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         if (mpas.Count == 0)
             return $"No MPAs found with protection level {protectionLevel}";
@@ -68,7 +68,7 @@ public class MarineDataPlugin
         var mpas = await _context.MarineProtectedAreas
             .Where(m => m.IslandGroup == group)
             .Select(m => new { m.Name, m.ProtectionLevel, m.AreaSquareKm })
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         if (mpas.Count == 0)
             return $"No MPAs found in {islandGroup}";
@@ -87,12 +87,12 @@ public class MarineDataPlugin
     public async Task<string> GetTotalProtectedAreaAsync()
     {
         var totalArea = await _context.MarineProtectedAreas
-            .SumAsync(m => m.AreaSquareKm);
+            .SumAsync(m => m.AreaSquareKm).ConfigureAwait(false);
 
         var byLevel = await _context.MarineProtectedAreas
             .GroupBy(m => m.ProtectionLevel)
             .Select(g => new { Level = g.Key, Area = g.Sum(m => m.AreaSquareKm) })
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         var result = $"Total protected marine area: {totalArea:N0} km²\n\nBy protection level:\n";
         foreach (var item in byLevel.OrderByDescending(x => x.Area))
@@ -131,7 +131,7 @@ public class MarineDataPlugin
                 b.SeaSurfaceTemperature,
                 MpaName = b.MarineProtectedArea != null ? b.MarineProtectedArea.Name : "Unknown"
             })
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         if (alerts.Count == 0)
             return "No bleaching alerts in the past 7 days";
@@ -167,7 +167,7 @@ public class MarineDataPlugin
                 e.IsInMpa,
                 MpaName = e.MarineProtectedArea != null ? e.MarineProtectedArea.Name : null
             })
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         if (events.Count == 0)
             return $"No fishing activity recorded in the past {days} days";
@@ -191,7 +191,7 @@ public class MarineDataPlugin
         var reefs = await _context.Reefs
             .GroupBy(r => r.HealthStatus)
             .Select(g => new { Status = g.Key, Count = g.Count() })
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         if (reefs.Count == 0)
             return "No reef health data available";
@@ -239,7 +239,7 @@ public class MarineDataPlugin
                 o.Status,
                 MpaName = o.MarineProtectedArea != null ? o.MarineProtectedArea.Name : null
             })
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         if (observations.Count == 0)
             return $"No citizen observations in the past {days} days";
