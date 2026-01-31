@@ -27,6 +27,7 @@ bld/
 
 # Claude
 .claude/
+CLAUDE.md
 
 # VS Code
 .vscode/
