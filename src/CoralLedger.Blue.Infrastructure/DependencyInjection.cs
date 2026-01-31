@@ -283,6 +283,30 @@ public static class DependencyInjection
                 .WithDescription("Runs every 6 hours to sync GFW fishing events for Bahamas")
                 .WithCronSchedule("0 0 */6 * * ?") // Every 6 hours
                 .StartNow()); // Also run immediately on startup
+
+            // ScheduledReportJob - Weekly Report
+            q.AddJob<ScheduledReportJob>(opts => opts
+                .WithIdentity(ScheduledReportJob.WeeklyReportKey)
+                .UsingJobData("Recipients", "") // Configure in appsettings.json or environment variables
+                .StoreDurably());
+
+            q.AddTrigger(opts => opts
+                .ForJob(ScheduledReportJob.WeeklyReportKey)
+                .WithIdentity("WeeklyReportJob-Trigger")
+                .WithDescription("Runs every Monday at 8 AM UTC to generate weekly MPA summary report")
+                .WithCronSchedule("0 0 8 ? * MON")); // Every Monday at 8:00 AM UTC
+
+            // ScheduledReportJob - Monthly Report
+            q.AddJob<ScheduledReportJob>(opts => opts
+                .WithIdentity(ScheduledReportJob.MonthlyReportKey)
+                .UsingJobData("Recipients", "") // Configure in appsettings.json or environment variables
+                .StoreDurably());
+
+            q.AddTrigger(opts => opts
+                .ForJob(ScheduledReportJob.MonthlyReportKey)
+                .WithIdentity("MonthlyReportJob-Trigger")
+                .WithDescription("Runs on the 1st of each month at 8 AM UTC to generate monthly MPA summary report")
+                .WithCronSchedule("0 0 8 1 * ?")); // 1st of every month at 8:00 AM UTC
         });
 
         // Add Quartz as a hosted service

@@ -166,6 +166,58 @@ CoralLedger Blue - Marine Intelligence Platform for The Bahamas
         return await SendEmailAsync(to, $"[{severity}] {alertTitle}", htmlContent, plainText, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<bool> SendEmailWithAttachmentAsync(
+        string to,
+        string subject,
+        string htmlContent,
+        byte[] attachmentContent,
+        string attachmentFileName,
+        string attachmentContentType = "application/octet-stream",
+        CancellationToken cancellationToken = default)
+    {
+        if (_client is null)
+        {
+            _logger.LogWarning("SendGrid API key not configured. Email with attachment not sent to {To}", to);
+            return false;
+        }
+
+        try
+        {
+            var from = new EmailAddress(_options.FromEmail, _options.FromName);
+            var toAddress = new EmailAddress(to.Trim());
+
+            var msg = MailHelper.CreateSingleEmail(
+                from,
+                toAddress,
+                subject,
+                StripHtml(htmlContent),
+                htmlContent);
+
+            // Add attachment
+            var base64Content = Convert.ToBase64String(attachmentContent);
+            msg.AddAttachment(attachmentFileName, base64Content, attachmentContentType);
+
+            var response = await _client.SendEmailAsync(msg, cancellationToken).ConfigureAwait(false);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Email with attachment sent successfully to {To}: {Subject}, Attachment: {FileName}",
+                    to, subject, attachmentFileName);
+                return true;
+            }
+
+            var body = await response.Body.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            _logger.LogError("Failed to send email with attachment. Status: {StatusCode}, Body: {Body}",
+                response.StatusCode, body);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending email with attachment to {To}", to);
+            return false;
+        }
+    }
+
     private static string StripHtml(string html)
     {
         return System.Text.RegularExpressions.Regex.Replace(html, "<[^>]*>", " ")
