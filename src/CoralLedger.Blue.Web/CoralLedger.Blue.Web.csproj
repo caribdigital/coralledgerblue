@@ -24,4 +24,24 @@
     <ProjectReference Include="..\CoralLedger.Blue.Web.Client\CoralLedger.Blue.Web.Client.csproj" />
   </ItemGroup>
 
+  <!-- Configure resource files for localization -->
+  <ItemGroup>
+    <!-- Base resource file with marker class -->
+    <EmbeddedResource Update="Resources\SharedResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SharedResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    
+    <!-- Spanish localized resources -->
+    <EmbeddedResource Update="Resources\SharedResources.es.resx">
+      <DependentUpon>SharedResources.resx</DependentUpon>
+    </EmbeddedResource>
+    
+    <!-- Haitian Creole localized resources - must explicitly set culture -->
+    <EmbeddedResource Update="Resources\SharedResources.ht.resx">
+      <DependentUpon>SharedResources.resx</DependentUpon>
+      <Culture>ht</Culture>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

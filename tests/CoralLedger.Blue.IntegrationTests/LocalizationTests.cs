@@ -1,5 +1,8 @@
 using System.Globalization;
 using System.Xml.Linq;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
+using CoralLedger.Blue.Web.Resources;
 
 namespace CoralLedger.Blue.IntegrationTests;
 
@@ -9,9 +12,16 @@ namespace CoralLedger.Blue.IntegrationTests;
 /// 1. Haitian Creole culture is supported by .NET
 /// 2. Resource files exist with proper translations
 /// 3. Cultural formatting (dates, numbers) works correctly
+/// 4. IStringLocalizer loads resources correctly at runtime
 /// </summary>
-public class LocalizationTests
+public class LocalizationTests : IClassFixture<CustomWebApplicationFactory>
 {
+    private readonly CustomWebApplicationFactory _factory;
+
+    public LocalizationTests(CustomWebApplicationFactory factory)
+    {
+        _factory = factory;
+    }
 
     [Fact]
     public void SupportedCultures_IncludesEnglish()
@@ -215,5 +225,107 @@ public class LocalizationTests
         }
         
         return directory;
+    }
+
+    // ============================================================================
+    // Runtime Localization Tests - Verify IStringLocalizer loads resources correctly
+    // ============================================================================
+
+    [Fact]
+    public void RuntimeLocalizer_LoadsEnglishStrings()
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var localizer = scope.ServiceProvider.GetRequiredService<IStringLocalizer<SharedResources>>();
+        CultureInfo.CurrentUICulture = new CultureInfo("en");
+        
+        // Act
+        var dashboardTitle = localizer["Dashboard_Title"];
+        var navMap = localizer["Nav_Map"];
+        
+        // Assert - Should return actual values, not keys
+        Assert.False(dashboardTitle.ResourceNotFound, "Dashboard_Title should be found");
+        Assert.Equal("Marine Intelligence Dashboard", dashboardTitle.Value);
+        Assert.False(navMap.ResourceNotFound, "Nav_Map should be found");
+        Assert.Equal("Map", navMap.Value);
+    }
+
+    [Fact]
+    public void RuntimeLocalizer_LoadsSpanishStrings()
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var localizer = scope.ServiceProvider.GetRequiredService<IStringLocalizer<SharedResources>>();
+        CultureInfo.CurrentUICulture = new CultureInfo("es");
+        
+        // Act
+        var dashboardTitle = localizer["Dashboard_Title"];
+        var navMap = localizer["Nav_Map"];
+        
+        // Assert - Should return actual Spanish values, not keys
+        Assert.False(dashboardTitle.ResourceNotFound, "Dashboard_Title should be found");
+        Assert.Equal("Panel de Inteligencia Marina", dashboardTitle.Value);
+        Assert.False(navMap.ResourceNotFound, "Nav_Map should be found");
+        Assert.Equal("Mapa", navMap.Value);
+    }
+
+    [Fact]
+    public void RuntimeLocalizer_LoadsHaitianCreoleStrings()
+    {
+        // Arrange
+        var previousCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = new CultureInfo("ht");
+            using var scope = _factory.Services.CreateScope();
+            var localizer = scope.ServiceProvider.GetRequiredService<IStringLocalizer<SharedResources>>();
+            
+            // Act
+            var dashboardTitle = localizer["Dashboard_Title"];
+            var navMap = localizer["Nav_Map"];
+            var commonLoading = localizer["Common_Loading"];
+            
+            // Assert - Should return actual Haitian Creole values, not keys
+            Assert.False(dashboardTitle.ResourceNotFound, 
+                $"Dashboard_Title should be found in Haitian Creole resources. Got: {dashboardTitle.Value}");
+            Assert.Equal("Tablo Entèlijans Marin", dashboardTitle.Value);
+            Assert.False(navMap.ResourceNotFound, 
+                $"Nav_Map should be found in Haitian Creole resources. Got: {navMap.Value}");
+            Assert.Equal("Kat", navMap.Value);
+            Assert.False(commonLoading.ResourceNotFound, 
+                $"Common_Loading should be found in Haitian Creole resources. Got: {commonLoading.Value}");
+            Assert.Equal("Chajman...", commonLoading.Value);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = previousCulture;
+        }
+    }
+
+    [Theory]
+    [InlineData("en", "Nav_Dashboard", "Dashboard")]
+    [InlineData("es", "Nav_Dashboard", "Panel de Control")]
+    [InlineData("ht", "Nav_Dashboard", "Tablo")]
+    [InlineData("en", "Map_Controls", "Map Controls")]
+    [InlineData("es", "Map_Controls", "Controles del Mapa")]
+    [InlineData("ht", "Map_Controls", "Kontwòl Kat")]
+    [InlineData("en", "Common_Save", "Save")]
+    [InlineData("es", "Common_Save", "Guardar")]
+    [InlineData("ht", "Common_Save", "Sove")]
+    public void RuntimeLocalizer_ReturnsCorrectTranslation(string culture, string key, string expectedValue)
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var localizer = scope.ServiceProvider.GetRequiredService<IStringLocalizer<SharedResources>>();
+        CultureInfo.CurrentUICulture = new CultureInfo(culture);
+        
+        // Act
+        var localizedString = localizer[key];
+        
+        // Assert - Should return the actual translated value, not the key
+        Assert.False(localizedString.ResourceNotFound, 
+            $"Key '{key}' should be found in culture '{culture}'");
+        Assert.NotEqual(key, localizedString.Value);
+        Assert.Equal(expectedValue, localizedString.Value);
     }
 }
