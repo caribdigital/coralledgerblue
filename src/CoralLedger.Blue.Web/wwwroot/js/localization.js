@@ -3,6 +3,9 @@
  * Provides safe methods for managing culture/language preferences
  */
 
+// Constants
+const ONE_YEAR_IN_SECONDS = 31536000;
+
 window.localization = {
     /**
      * Gets the current culture from the cookie
@@ -38,7 +41,6 @@ window.localization = {
 
         // Set cookie with proper format
         const cookieValue = `c=${culture}|uic=${culture}`;
-        const maxAge = 31536000; // 1 year in seconds
-        document.cookie = `.AspNetCore.Culture=${cookieValue}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `.AspNetCore.Culture=${cookieValue}; path=/; max-age=${ONE_YEAR_IN_SECONDS}; SameSite=Lax`;
     }
 };
