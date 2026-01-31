@@ -117,8 +117,8 @@ public class BleachingDataSyncJob : IJob
 
         if (bleachingData is null)
         {
-            _logger.LogDebug("No bleaching data available for {MpaName} at ({Lon}, {Lat})",
-                mpaName, centroid.X, centroid.Y);
+            _logger.LogWarning("No bleaching data available for {MpaName} at ({Lon}, {Lat}) on {Date}",
+                mpaName, centroid.X, centroid.Y, targetDate);
             return;
         }
 
