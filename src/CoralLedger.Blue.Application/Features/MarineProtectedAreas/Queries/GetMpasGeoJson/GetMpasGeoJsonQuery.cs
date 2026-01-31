@@ -98,9 +98,9 @@ public class GetMpasGeoJsonQueryHandler : IRequestHandler<GetMpasGeoJsonQuery, M
 
         return await _cache.GetOrSetAsync(
             cacheKey,
-            async () => await GenerateGeoJsonAsync(request, cancellationToken),
+            async () => await GenerateGeoJsonAsync(request, cancellationToken).ConfigureAwait(false),
             cacheTtl,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<MpaGeoJsonCollection> GenerateGeoJsonAsync(
@@ -109,7 +109,7 @@ public class GetMpasGeoJsonQueryHandler : IRequestHandler<GetMpasGeoJsonQuery, M
     {
         var mpas = await _context.MarineProtectedAreas
             .AsNoTracking()
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var geoJsonWriter = new GeoJsonWriter();
         var features = new List<MpaGeoJsonFeature>();

@@ -360,7 +360,7 @@ Adapt your responses for Policymaker Paula to:
         if (securityWarning != null)
         {
             auditLog.MarkSecurityBlocked(securityWarning);
-            await SaveAuditLog(auditLog, cancellationToken);
+            await SaveAuditLog(auditLog, cancellationToken).ConfigureAwait(false);
 
             return new QueryInterpretation(
                 interpretationId,
@@ -383,7 +383,7 @@ Adapt your responses for Policymaker Paula to:
         string interpretation;
         if (IsConfigured)
         {
-            interpretation = await GenerateInterpretationAsync(naturalLanguageQuery, cancellationToken);
+            interpretation = await GenerateInterpretationAsync(naturalLanguageQuery, cancellationToken).ConfigureAwait(false);
         }
         else
         {
@@ -391,7 +391,7 @@ Adapt your responses for Policymaker Paula to:
         }
 
         auditLog.MarkInterpreted(interpretation, dataSources, disambiguations.Count > 0);
-        await SaveAuditLog(auditLog, cancellationToken);
+        await SaveAuditLog(auditLog, cancellationToken).ConfigureAwait(false);
 
         // Cache the interpretation for later execution
         _interpretationCache[interpretationId] = new CachedInterpretation(
@@ -430,7 +430,7 @@ Adapt your responses for Policymaker Paula to:
         }
 
         // Execute the actual query
-        var result = await QueryAsync(cached.Query, cached.Persona, cancellationToken);
+        var result = await QueryAsync(cached.Query, cached.Persona, cancellationToken).ConfigureAwait(false);
 
         // Clean up cache
         _interpretationCache.TryRemove(interpretationId, out _);
@@ -458,14 +458,14 @@ Adapt your responses for Policymaker Paula to:
         if (securityWarning != null)
         {
             auditLog.MarkSecurityBlocked(securityWarning);
-            await SaveAuditLog(auditLog, cancellationToken);
+            await SaveAuditLog(auditLog, cancellationToken).ConfigureAwait(false);
             return new MarineQueryResult(false, Error: securityWarning);
         }
 
         if (!IsConfigured)
         {
             auditLog.MarkFailed("AI service not configured", (int)stopwatch.ElapsedMilliseconds);
-            await SaveAuditLog(auditLog, cancellationToken);
+            await SaveAuditLog(auditLog, cancellationToken).ConfigureAwait(false);
             return new MarineQueryResult(false, Error: "AI service is not configured. Please set MarineAI:ApiKey in configuration.");
         }
 
@@ -489,7 +489,7 @@ Adapt your responses for Policymaker Paula to:
                 chatHistory,
                 settings,
                 _kernel,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             stopwatch.Stop();
 
@@ -499,7 +499,7 @@ Adapt your responses for Policymaker Paula to:
 
             auditLog.MarkInterpreted(interpretation, dataSources);
             auditLog.MarkExecuted(null, (int)stopwatch.ElapsedMilliseconds);
-            await SaveAuditLog(auditLog, cancellationToken);
+            await SaveAuditLog(auditLog, cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation(
                 "AI query processed for persona {Persona} in {Ms}ms: {Query}",
@@ -517,7 +517,7 @@ Adapt your responses for Policymaker Paula to:
         {
             stopwatch.Stop();
             auditLog.MarkFailed(ex.Message, (int)stopwatch.ElapsedMilliseconds);
-            await SaveAuditLog(auditLog, cancellationToken);
+            await SaveAuditLog(auditLog, cancellationToken).ConfigureAwait(false);
 
             _logger.LogError(ex, "Error processing AI query for persona {Persona}: {Query}", persona, naturalLanguageQuery);
             return new MarineQueryResult(false, Error: ex.Message);
@@ -653,7 +653,7 @@ Adapt your responses for Policymaker Paula to:
             var response = await chatService.GetChatMessageContentAsync(
                 chatHistory,
                 settings,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken).ConfigureAwait(false);
 
             return response.Content ?? GenerateBasicInterpretation(query, DetermineDataSources(query));
         }
@@ -669,7 +669,7 @@ Adapt your responses for Policymaker Paula to:
         try
         {
             _context.NLQAuditLogs.Add(auditLog);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

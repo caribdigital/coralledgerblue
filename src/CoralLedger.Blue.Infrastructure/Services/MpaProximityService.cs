@@ -48,7 +48,7 @@ public class MpaProximityService : IMpaProximityService
                 m.ProtectionLevel,
                 m.Boundary
             })
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         if (!mpas.Any())
             return null;
@@ -99,7 +99,7 @@ public class MpaProximityService : IMpaProximityService
                 m.ProtectionLevel,
                 m.Boundary
             })
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
         if (containingMpa == null)
             return null;
@@ -119,7 +119,7 @@ public class MpaProximityService : IMpaProximityService
                 r.Name,
                 r.Location
             })
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var nearestReef = reefsInMpa
             .Select(r => new
@@ -158,7 +158,7 @@ public class MpaProximityService : IMpaProximityService
                 m.ProtectionLevel,
                 m.Boundary
             })
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         // Calculate accurate distances using ISpatialCalculator and filter by radius
         return mpas
@@ -190,15 +190,15 @@ public class MpaProximityService : IMpaProximityService
     {
         // Check cache first
         var cacheKey = $"{CachePrefix}{location.X:F6}_{location.Y:F6}";
-        var cached = await _cache.GetAsync<MpaContext>(cacheKey);
+        var cached = await _cache.GetAsync<MpaContext>(cacheKey).ConfigureAwait(false);
         if (cached != null)
             return cached;
 
         // Check if inside an MPA
-        var containment = await CheckMpaContainmentAsync(location, cancellationToken);
+        var containment = await CheckMpaContainmentAsync(location, cancellationToken).ConfigureAwait(false);
 
         // Find nearest MPA (even if inside one, to get boundary distance)
-        var nearestMpa = await FindNearestMpaAsync(location, cancellationToken);
+        var nearestMpa = await FindNearestMpaAsync(location, cancellationToken).ConfigureAwait(false);
 
         // Find nearest reef regardless of MPA using accurate calculations
         var reefs = await _context.Reefs
@@ -209,7 +209,7 @@ public class MpaProximityService : IMpaProximityService
                 r.Name,
                 r.Location
             })
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var nearestReef = reefs
             .Select(r => new
@@ -239,7 +239,7 @@ public class MpaProximityService : IMpaProximityService
         };
 
         // Cache the result
-        await _cache.SetAsync(cacheKey, context, CacheExpiry);
+        await _cache.SetAsync(cacheKey, context, CacheExpiry).ConfigureAwait(false);
 
         return context;
     }
@@ -264,7 +264,7 @@ public class MpaProximityService : IMpaProximityService
                 m.ProtectionLevel,
                 m.Boundary
             })
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         // Get all reefs once
         var allReefs = await _context.Reefs
@@ -276,7 +276,7 @@ public class MpaProximityService : IMpaProximityService
                 r.Location,
                 r.MarineProtectedAreaId
             })
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         foreach (var (id, location) in locationsList)
         {

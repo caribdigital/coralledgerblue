@@ -71,7 +71,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
     {
         // Check cache first
         var cacheKey = CacheKeys.ForGfwVesselSearch(query, flag, vesselType?.ToString());
-        var cached = await _cache.GetAsync<GfwVesselCollectionWrapper>(cacheKey, cancellationToken);
+        var cached = await _cache.GetAsync<GfwVesselCollectionWrapper>(cacheKey, cancellationToken).ConfigureAwait(false);
         if (cached?.Data != null)
         {
             _logger.LogDebug("GFW vessel search cache hit for query: {Query}", query);
@@ -93,14 +93,14 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
             queryParams.Add("datasets[0]=public-global-vessel-identity:latest");
 
             var queryString = string.Join("&", queryParams);
-            var response = await _httpClient.GetAsync($"v3/vessels/search?{queryString}", cancellationToken);
+            var response = await _httpClient.GetAsync($"v3/vessels/search?{queryString}", cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<GfwVesselSearchResponse>(_jsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<GfwVesselSearchResponse>(_jsonOptions, cancellationToken).ConfigureAwait(false);
             var vessels = result?.Entries?.Select(MapToVesselInfo).ToList() ?? new List<GfwVesselInfo>();
 
             // Cache the result
-            await _cache.SetAsync(cacheKey, new GfwVesselCollectionWrapper { Data = vessels }, CacheTtl, cancellationToken);
+            await _cache.SetAsync(cacheKey, new GfwVesselCollectionWrapper { Data = vessels }, CacheTtl, cancellationToken).ConfigureAwait(false);
 
             return vessels;
         }
@@ -117,7 +117,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
     {
         // Check cache first
         var cacheKey = CacheKeys.ForGfwVessel(vesselId);
-        var cached = await _cache.GetAsync<GfwVesselWrapper>(cacheKey, cancellationToken);
+        var cached = await _cache.GetAsync<GfwVesselWrapper>(cacheKey, cancellationToken).ConfigureAwait(false);
         if (cached != null)
         {
             _logger.LogDebug("GFW vessel detail cache hit for: {VesselId}", vesselId);
@@ -128,7 +128,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
         {
             var response = await _httpClient.GetAsync(
                 $"v3/vessels/{vesselId}?datasets[0]=public-global-vessel-identity:latest",
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -136,13 +136,13 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
                 return null;
             }
 
-            var result = await response.Content.ReadFromJsonAsync<GfwVesselEntry>(_jsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<GfwVesselEntry>(_jsonOptions, cancellationToken).ConfigureAwait(false);
             var vessel = result != null ? MapToVesselInfo(result) : null;
 
             // Cache the result (even if null)
             if (vessel != null)
             {
-                await _cache.SetAsync(cacheKey, new GfwVesselWrapper { Data = vessel }, CacheTtl, cancellationToken);
+                await _cache.SetAsync(cacheKey, new GfwVesselWrapper { Data = vessel }, CacheTtl, cancellationToken).ConfigureAwait(false);
             }
 
             return vessel;
@@ -166,18 +166,18 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
     {
         // Check cache first
         var cacheKey = CacheKeys.ForGfwFishingEvents(minLon, minLat, maxLon, maxLat, startDate, endDate);
-        var cached = await _cache.GetAsync<GfwEventCollectionWrapper>(cacheKey, cancellationToken);
+        var cached = await _cache.GetAsync<GfwEventCollectionWrapper>(cacheKey, cancellationToken).ConfigureAwait(false);
         if (cached?.Data != null)
         {
             _logger.LogDebug("GFW fishing events cache hit for region");
             return cached.Data;
         }
 
-        var events = await GetEventsAsync("fishing", minLon, minLat, maxLon, maxLat, startDate, endDate, limit, cancellationToken);
+        var events = await GetEventsAsync("fishing", minLon, minLat, maxLon, maxLat, startDate, endDate, limit, cancellationToken).ConfigureAwait(false);
         var eventList = events.ToList();
 
         // Cache the result
-        await _cache.SetAsync(cacheKey, new GfwEventCollectionWrapper { Data = eventList }, CacheTtl, cancellationToken);
+        await _cache.SetAsync(cacheKey, new GfwEventCollectionWrapper { Data = eventList }, CacheTtl, cancellationToken).ConfigureAwait(false);
 
         return eventList;
     }
@@ -191,7 +191,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
     {
         // Check cache first
         var cacheKey = CacheKeys.ForGfwPortVisits(vesselId, startDate, endDate);
-        var cached = await _cache.GetAsync<GfwEventCollectionWrapper>(cacheKey, cancellationToken);
+        var cached = await _cache.GetAsync<GfwEventCollectionWrapper>(cacheKey, cancellationToken).ConfigureAwait(false);
         if (cached?.Data != null)
         {
             _logger.LogDebug("GFW port visits cache hit for vessel: {VesselId}", vesselId);
@@ -214,14 +214,14 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
                 queryParams.Add($"end-date={endDate.Value:yyyy-MM-dd}");
 
             var queryString = string.Join("&", queryParams);
-            var response = await _httpClient.GetAsync($"v3/events?{queryString}", cancellationToken);
+            var response = await _httpClient.GetAsync($"v3/events?{queryString}", cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<GfwEventsResponse>(_jsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<GfwEventsResponse>(_jsonOptions, cancellationToken).ConfigureAwait(false);
             var events = result?.Entries?.Select(MapToEvent).ToList() ?? new List<GfwEvent>();
 
             // Cache the result
-            await _cache.SetAsync(cacheKey, new GfwEventCollectionWrapper { Data = events }, CacheTtl, cancellationToken);
+            await _cache.SetAsync(cacheKey, new GfwEventCollectionWrapper { Data = events }, CacheTtl, cancellationToken).ConfigureAwait(false);
 
             return events;
         }
@@ -244,18 +244,18 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
     {
         // Check cache first
         var cacheKey = CacheKeys.ForGfwEncounters(minLon, minLat, maxLon, maxLat, startDate, endDate);
-        var cached = await _cache.GetAsync<GfwEventCollectionWrapper>(cacheKey, cancellationToken);
+        var cached = await _cache.GetAsync<GfwEventCollectionWrapper>(cacheKey, cancellationToken).ConfigureAwait(false);
         if (cached?.Data != null)
         {
             _logger.LogDebug("GFW encounters cache hit for region");
             return cached.Data;
         }
 
-        var events = await GetEventsAsync("encounter", minLon, minLat, maxLon, maxLat, startDate, endDate, limit, cancellationToken);
+        var events = await GetEventsAsync("encounter", minLon, minLat, maxLon, maxLat, startDate, endDate, limit, cancellationToken).ConfigureAwait(false);
         var eventList = events.ToList();
 
         // Cache the result
-        await _cache.SetAsync(cacheKey, new GfwEventCollectionWrapper { Data = eventList }, CacheTtl, cancellationToken);
+        await _cache.SetAsync(cacheKey, new GfwEventCollectionWrapper { Data = eventList }, CacheTtl, cancellationToken).ConfigureAwait(false);
 
         return eventList;
     }
@@ -271,7 +271,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
     {
         // Check cache first
         var cacheKey = CacheKeys.ForGfwFishingStats(minLon, minLat, maxLon, maxLat, startDate, endDate);
-        var cached = await _cache.GetAsync<GfwFishingStatsWrapper>(cacheKey, cancellationToken);
+        var cached = await _cache.GetAsync<GfwFishingStatsWrapper>(cacheKey, cancellationToken).ConfigureAwait(false);
         if (cached?.Data != null)
         {
             _logger.LogDebug("GFW fishing stats cache hit for region");
@@ -305,10 +305,10 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
                 $"v3/4wings/report?datasets[0]=public-global-fishing-effort:latest&date-range={dateRange}&temporal-resolution=ENTIRE&spatial-aggregation=true&group-by=FLAG&format=JSON",
                 requestBody,
                 _jsonOptions,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<Gfw4WingsReportResponse>(_jsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<Gfw4WingsReportResponse>(_jsonOptions, cancellationToken).ConfigureAwait(false);
 
             // Parse the 4Wings report response
             var fishingHoursByFlag = new Dictionary<string, double>();
@@ -353,7 +353,7 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
             };
 
             // Cache the result
-            await _cache.SetAsync(cacheKey, new GfwFishingStatsWrapper { Data = stats }, CacheTtl, cancellationToken);
+            await _cache.SetAsync(cacheKey, new GfwFishingStatsWrapper { Data = stats }, CacheTtl, cancellationToken).ConfigureAwait(false);
 
             return stats;
         }
@@ -415,10 +415,10 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
                 $"v3/events?offset=0&limit={limit}",
                 requestBody,
                 _jsonOptions,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<GfwEventsResponse>(_jsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<GfwEventsResponse>(_jsonOptions, cancellationToken).ConfigureAwait(false);
             return result?.Entries?.Select(MapToEvent) ?? Enumerable.Empty<GfwEvent>();
         }
         catch (Exception ex)
@@ -599,10 +599,10 @@ public class GlobalFishingWatchClient : IGlobalFishingWatchClient
             var response = await _httpClient.PostAsync(
                 $"v3/4wings/generate-png?{queryString}",
                 null,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<Gfw4WingsPngResponse>(_jsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<Gfw4WingsPngResponse>(_jsonOptions, cancellationToken).ConfigureAwait(false);
 
             if (result?.Url == null)
             {

@@ -74,7 +74,7 @@ public class ProtectedPlanetClient : IProtectedPlanetClient
 
             _logger.LogDebug("Fetching protected area: {WdpaId}", wdpaId);
 
-            var response = await _httpClient.GetAsync(url, cancellationToken);
+            var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -84,7 +84,7 @@ public class ProtectedPlanetClient : IProtectedPlanetClient
                 return null;
             }
 
-            var result = await response.Content.ReadFromJsonAsync<ProtectedPlanetSingleResponse>(_jsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ProtectedPlanetSingleResponse>(_jsonOptions, cancellationToken).ConfigureAwait(false);
 
             if (result?.ProtectedArea == null)
             {
@@ -126,10 +126,10 @@ public class ProtectedPlanetClient : IProtectedPlanetClient
 
             _logger.LogDebug("Searching protected areas for country: {Country}", iso3Code);
 
-            var response = await _httpClient.GetAsync(url, cancellationToken);
+            var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<ProtectedPlanetSearchResponse>(_jsonOptions, cancellationToken);
+            var result = await response.Content.ReadFromJsonAsync<ProtectedPlanetSearchResponse>(_jsonOptions, cancellationToken).ConfigureAwait(false);
 
             if (result == null)
             {

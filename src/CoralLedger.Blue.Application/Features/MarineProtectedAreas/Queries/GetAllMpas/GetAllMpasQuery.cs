@@ -32,6 +32,6 @@ public class GetAllMpasQueryHandler : IRequestHandler<GetAllMpasQuery, IReadOnly
                 CentroidLongitude = mpa.Centroid.X,
                 CentroidLatitude = mpa.Centroid.Y
             })
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 }

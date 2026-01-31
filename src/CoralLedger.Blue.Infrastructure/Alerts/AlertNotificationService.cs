@@ -51,7 +51,7 @@ public class AlertNotificationService : IAlertNotificationService
         }
 
         // Wait for all notifications to be sent
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks).ConfigureAwait(false);
     }
 
     public async Task SendRealTimeNotificationAsync(Alert alert, CancellationToken cancellationToken = default)
@@ -70,12 +70,12 @@ public class AlertNotificationService : IAlertNotificationService
         };
 
         // Send to all alert subscribers
-        await _hubContext.SendToAllAsync(alertData, cancellationToken);
+        await _hubContext.SendToAllAsync(alertData, cancellationToken).ConfigureAwait(false);
 
         // Send to MPA-specific subscribers
         if (alert.MarineProtectedAreaId.HasValue)
         {
-            await _hubContext.SendToMpaAsync(alert.MarineProtectedAreaId.Value, alertData, cancellationToken);
+            await _hubContext.SendToMpaAsync(alert.MarineProtectedAreaId.Value, alertData, cancellationToken).ConfigureAwait(false);
         }
 
         _logger.LogInformation("Sent real-time alert: {Title}", alert.Title);
@@ -92,7 +92,7 @@ public class AlertNotificationService : IAlertNotificationService
                 alert.Message,
                 alert.Severity.ToString(),
                 mpaName,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             if (success)
             {
@@ -122,7 +122,7 @@ public class AlertNotificationService : IAlertNotificationService
                 alert.Title,
                 alert.Message,
                 url,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("Push notification sent to {Count} subscribers for alert {AlertId}",
                 count, alert.Id);

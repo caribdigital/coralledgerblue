@@ -108,26 +108,26 @@ public class MemoryCacheService : ICacheService
         ct.ThrowIfCancellationRequested();
 
         // Try to get from cache first
-        var cached = await GetAsync<T>(key, ct);
+        var cached = await GetAsync<T>(key, ct).ConfigureAwait(false);
         if (cached is not null)
         {
             return cached;
         }
 
         // Use semaphore to prevent cache stampede
-        await _semaphore.WaitAsync(ct);
+        await _semaphore.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             // Double-check after acquiring lock
-            cached = await GetAsync<T>(key, ct);
+            cached = await GetAsync<T>(key, ct).ConfigureAwait(false);
             if (cached is not null)
             {
                 return cached;
             }
 
             // Execute factory and cache result
-            var value = await factory();
-            await SetAsync(key, value, expiration, ct);
+            var value = await factory().ConfigureAwait(false);
+            await SetAsync(key, value, expiration, ct).ConfigureAwait(false);
             return value;
         }
         finally

@@ -29,7 +29,7 @@ public static class AisEndpoints
             IAisClient aisClient,
             CancellationToken ct = default) =>
         {
-            var result = await aisClient.GetVesselPositionsAsync(ct);
+            var result = await aisClient.GetVesselPositionsAsync(ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -73,7 +73,7 @@ public static class AisEndpoints
             IAisClient aisClient,
             CancellationToken ct = default) =>
         {
-            var result = await aisClient.GetVesselPositionsNearAsync(lon, lat, radiusKm, ct);
+            var result = await aisClient.GetVesselPositionsNearAsync(lon, lat, radiusKm, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -113,7 +113,7 @@ public static class AisEndpoints
             IAisClient aisClient,
             CancellationToken ct = default) =>
         {
-            var result = await aisClient.GetVesselTrackAsync(mmsi, hours, ct);
+            var result = await aisClient.GetVesselTrackAsync(mmsi, hours, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {

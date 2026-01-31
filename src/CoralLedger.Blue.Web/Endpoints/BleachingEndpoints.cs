@@ -21,7 +21,7 @@ public static class BleachingEndpoints
             CancellationToken ct = default) =>
         {
             var targetDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
-            var result = await crwClient.GetBleachingDataAsync(lon, lat, targetDate, ct);
+            var result = await crwClient.GetBleachingDataAsync(lon, lat, targetDate, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -50,7 +50,7 @@ public static class BleachingEndpoints
             CancellationToken ct = default) =>
         {
             var result = await crwClient.GetBleachingDataForRegionAsync(
-                minLon, minLat, maxLon, maxLat, startDate, endDate, ct);
+                minLon, minLat, maxLon, maxLat, startDate, endDate, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -72,7 +72,7 @@ public static class BleachingEndpoints
             DateOnly? date,
             CancellationToken ct = default) =>
         {
-            var result = await crwClient.GetBahamasBleachingAlertsAsync(date, ct);
+            var result = await crwClient.GetBahamasBleachingAlertsAsync(date, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -109,7 +109,7 @@ public static class BleachingEndpoints
             DateOnly endDate,
             CancellationToken ct = default) =>
         {
-            var result = await crwClient.GetBleachingTimeSeriesAsync(lon, lat, startDate, endDate, ct);
+            var result = await crwClient.GetBleachingTimeSeriesAsync(lon, lat, startDate, endDate, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -133,13 +133,13 @@ public static class BleachingEndpoints
             DateOnly? date,
             CancellationToken ct = default) =>
         {
-            var mpa = await dbContext.MarineProtectedAreas.FindAsync(new object[] { mpaId }, ct);
+            var mpa = await dbContext.MarineProtectedAreas.FindAsync(new object[] { mpaId }, ct).ConfigureAwait(false);
             if (mpa is null)
                 return Results.NotFound("MPA not found");
 
             var centroid = mpa.Centroid;
             var targetDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
-            var result = await crwClient.GetBleachingDataAsync(centroid.X, centroid.Y, targetDate, ct);
+            var result = await crwClient.GetBleachingDataAsync(centroid.X, centroid.Y, targetDate, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -172,7 +172,7 @@ public static class BleachingEndpoints
             int days = 30,
             CancellationToken ct = default) =>
         {
-            var history = await mediator.Send(new GetMpaBleachingHistoryQuery(mpaId, days), ct);
+            var history = await mediator.Send(new GetMpaBleachingHistoryQuery(mpaId, days), ct).ConfigureAwait(false);
             return Results.Ok(new MpaBleachingHistoryResponse
             {
                 MpaId = mpaId,

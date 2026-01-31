@@ -59,7 +59,7 @@ public class WebPushNotificationService : IPushNotificationService
 
         foreach (var subscription in _subscriptions.Values.ToList())
         {
-            var sent = await SendToSubscriptionAsync(subscription, title, message, url, cancellationToken);
+            var sent = await SendToSubscriptionAsync(subscription, title, message, url, cancellationToken).ConfigureAwait(false);
             if (sent)
             {
                 successCount++;
@@ -100,7 +100,7 @@ public class WebPushNotificationService : IPushNotificationService
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
             });
 
-            await _client.SendNotificationAsync(webPushSubscription, payload, _vapidDetails);
+            await _client.SendNotificationAsync(webPushSubscription, payload, _vapidDetails).ConfigureAwait(false);
 
             _logger.LogDebug("Push notification sent to {Endpoint}", subscription.Endpoint);
             return true;

@@ -25,7 +25,7 @@ public static class ExportEndpoints
                 Limit = limit
             };
 
-            var geoJson = await exportService.ExportMpasAsGeoJsonAsync(options, ct);
+            var geoJson = await exportService.ExportMpasAsGeoJsonAsync(options, ct).ConfigureAwait(false);
 
             return Results.Text(geoJson, "application/geo+json", Encoding.UTF8);
         })
@@ -39,7 +39,7 @@ public static class ExportEndpoints
             CancellationToken ct = default) =>
         {
             var options = new ExportOptions { IslandGroup = islandGroup };
-            var zipBytes = await exportService.ExportMpasAsShapefileAsync(options, ct);
+            var zipBytes = await exportService.ExportMpasAsShapefileAsync(options, ct).ConfigureAwait(false);
 
             return Results.File(zipBytes, "application/zip", "mpas.zip");
         })
@@ -54,7 +54,7 @@ public static class ExportEndpoints
             CancellationToken ct = default) =>
         {
             var options = new ExportOptions { IslandGroup = islandGroup, Limit = limit };
-            var csv = await exportService.ExportAsCsvAsync(ExportDataType.MarineProtectedAreas, options, ct);
+            var csv = await exportService.ExportAsCsvAsync(ExportDataType.MarineProtectedAreas, options, ct).ConfigureAwait(false);
 
             return Results.Text(csv, "text/csv", Encoding.UTF8);
         })
@@ -76,7 +76,7 @@ public static class ExportEndpoints
                 Limit = limit ?? 1000
             };
 
-            var geoJson = await exportService.ExportVesselEventsAsGeoJsonAsync(options, ct);
+            var geoJson = await exportService.ExportVesselEventsAsGeoJsonAsync(options, ct).ConfigureAwait(false);
             return Results.Text(geoJson, "application/geo+json", Encoding.UTF8);
         })
         .WithName("ExportVesselsGeoJson")
@@ -97,7 +97,7 @@ public static class ExportEndpoints
                 Limit = limit ?? 1000
             };
 
-            var csv = await exportService.ExportAsCsvAsync(ExportDataType.VesselEvents, options, ct);
+            var csv = await exportService.ExportAsCsvAsync(ExportDataType.VesselEvents, options, ct).ConfigureAwait(false);
             return Results.Text(csv, "text/csv", Encoding.UTF8);
         })
         .WithName("ExportVesselsCsv")
@@ -118,7 +118,7 @@ public static class ExportEndpoints
                 Limit = limit ?? 500
             };
 
-            var geoJson = await exportService.ExportBleachingAlertsAsGeoJsonAsync(options, ct);
+            var geoJson = await exportService.ExportBleachingAlertsAsGeoJsonAsync(options, ct).ConfigureAwait(false);
             return Results.Text(geoJson, "application/geo+json", Encoding.UTF8);
         })
         .WithName("ExportBleachingGeoJson")
@@ -139,7 +139,7 @@ public static class ExportEndpoints
                 Limit = limit ?? 500
             };
 
-            var csv = await exportService.ExportAsCsvAsync(ExportDataType.BleachingAlerts, options, ct);
+            var csv = await exportService.ExportAsCsvAsync(ExportDataType.BleachingAlerts, options, ct).ConfigureAwait(false);
             return Results.Text(csv, "text/csv", Encoding.UTF8);
         })
         .WithName("ExportBleachingCsv")
@@ -160,7 +160,7 @@ public static class ExportEndpoints
                 Limit = limit ?? 500
             };
 
-            var geoJson = await exportService.ExportObservationsAsGeoJsonAsync(options, ct);
+            var geoJson = await exportService.ExportObservationsAsGeoJsonAsync(options, ct).ConfigureAwait(false);
             return Results.Text(geoJson, "application/geo+json", Encoding.UTF8);
         })
         .WithName("ExportObservationsGeoJson")
@@ -181,7 +181,7 @@ public static class ExportEndpoints
                 Limit = limit ?? 500
             };
 
-            var csv = await exportService.ExportAsCsvAsync(ExportDataType.CitizenObservations, options, ct);
+            var csv = await exportService.ExportAsCsvAsync(ExportDataType.CitizenObservations, options, ct).ConfigureAwait(false);
             return Results.Text(csv, "text/csv", Encoding.UTF8);
         })
         .WithName("ExportObservationsCsv")

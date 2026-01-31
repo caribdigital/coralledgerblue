@@ -29,7 +29,7 @@ public static class ObservationEndpoints
             CancellationToken ct = default) =>
         {
             var query = new GetObservationsQuery(type, status, mpaId, fromDate, toDate, limit);
-            var result = await mediator.Send(query, ct);
+            var result = await mediator.Send(query, ct).ConfigureAwait(false);
             return Results.Ok(result);
         })
         .WithName("GetObservations")
@@ -42,7 +42,7 @@ public static class ObservationEndpoints
             IMediator mediator,
             CancellationToken ct = default) =>
         {
-            var result = await mediator.Send(new GetObservationByIdQuery(id), ct);
+            var result = await mediator.Send(new GetObservationByIdQuery(id), ct).ConfigureAwait(false);
             return result is null ? Results.NotFound() : Results.Ok(result);
         })
         .WithName("GetObservationById")
@@ -67,7 +67,7 @@ public static class ObservationEndpoints
                 request.CitizenEmail,
                 request.CitizenName);
 
-            var result = await mediator.Send(command, ct);
+            var result = await mediator.Send(command, ct).ConfigureAwait(false);
 
             if (!result.Success)
             {
@@ -93,7 +93,7 @@ public static class ObservationEndpoints
             // Verify observation exists
             var observation = await dbContext.CitizenObservations
                 .Include(o => o.Photos)
-                .FirstOrDefaultAsync(o => o.Id == id, ct);
+                .FirstOrDefaultAsync(o => o.Id == id, ct).ConfigureAwait(false);
 
             if (observation is null)
             {
@@ -120,7 +120,7 @@ public static class ObservationEndpoints
             // Upload to blob storage
             using var stream = file.OpenReadStream();
             var uploadResult = await blobStorage.UploadPhotoAsync(
-                stream, file.FileName, file.ContentType, ct);
+                stream, file.FileName, file.ContentType, ct).ConfigureAwait(false);
 
             if (!uploadResult.Success)
             {
@@ -139,7 +139,7 @@ public static class ObservationEndpoints
                 displayOrder);
 
             observation.AddPhoto(photo);
-            await dbContext.SaveChangesAsync(ct);
+            await dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.Created($"/api/observations/{id}/photos/{photo.Id}", new
             {
@@ -167,7 +167,7 @@ public static class ObservationEndpoints
             // Verify observation exists and has photos
             var observation = await dbContext.CitizenObservations
                 .Include(o => o.Photos)
-                .FirstOrDefaultAsync(o => o.Id == id, ct);
+                .FirstOrDefaultAsync(o => o.Id == id, ct).ConfigureAwait(false);
 
             if (observation is null)
             {
@@ -190,7 +190,7 @@ public static class ObservationEndpoints
 
             foreach (var photo in observation.Photos.OrderBy(p => p.DisplayOrder))
             {
-                var result = await classificationService.ClassifyPhotoAsync(photo.BlobUri, ct);
+                var result = await classificationService.ClassifyPhotoAsync(photo.BlobUri, ct).ConfigureAwait(false);
                 if (result.Success)
                 {
                     allSpecies.AddRange(result.Species);
@@ -270,7 +270,7 @@ public static class ObservationEndpoints
                     o.Severity,
                     o.ObservationTime
                 })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             var features = observations.Select(o => new
             {
@@ -319,7 +319,7 @@ public static class ObservationEndpoints
                 Photos = new List<PhotoValidationData>()
             };
 
-            var result = await validationService.ValidateObservationAsync(validationRequest, ct);
+            var result = await validationService.ValidateObservationAsync(validationRequest, ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {
@@ -363,7 +363,7 @@ public static class ObservationEndpoints
             // Get observation with photo
             var observation = await dbContext.CitizenObservations
                 .Include(o => o.Photos)
-                .FirstOrDefaultAsync(o => o.Id == id, ct);
+                .FirstOrDefaultAsync(o => o.Id == id, ct).ConfigureAwait(false);
 
             if (observation is null)
             {
@@ -377,7 +377,7 @@ public static class ObservationEndpoints
             }
 
             // Download photo from blob storage to extract EXIF
-            var photoStream = await blobStorage.DownloadPhotoAsync(photo.BlobName, ct);
+            var photoStream = await blobStorage.DownloadPhotoAsync(photo.BlobName, ct).ConfigureAwait(false);
             if (photoStream is null)
             {
                 return Results.Problem("Failed to download photo for EXIF analysis", statusCode: 500);
@@ -386,7 +386,7 @@ public static class ObservationEndpoints
             try
             {
                 // Extract EXIF GPS data
-                var exifGps = await validationService.ExtractExifGpsAsync(photoStream);
+                var exifGps = await validationService.ExtractExifGpsAsync(photoStream).ConfigureAwait(false);
 
                 if (exifGps is null)
                 {

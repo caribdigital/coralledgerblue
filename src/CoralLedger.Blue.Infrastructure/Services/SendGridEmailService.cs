@@ -61,7 +61,7 @@ public class SendGridEmailService : IEmailService
                 plainTextContent ?? StripHtml(htmlContent),
                 htmlContent);
 
-            var response = await _client.SendEmailAsync(msg, cancellationToken);
+            var response = await _client.SendEmailAsync(msg, cancellationToken).ConfigureAwait(false);
 
             if (response.IsSuccessStatusCode)
             {
@@ -69,7 +69,7 @@ public class SendGridEmailService : IEmailService
                 return true;
             }
 
-            var body = await response.Body.ReadAsStringAsync(cancellationToken);
+            var body = await response.Body.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             _logger.LogError("Failed to send email. Status: {StatusCode}, Body: {Body}",
                 response.StatusCode, body);
             return false;
@@ -163,7 +163,7 @@ View Dashboard: {_options.DashboardUrl}
 CoralLedger Blue - Marine Intelligence Platform for The Bahamas
 ";
 
-        return await SendEmailAsync(to, $"[{severity}] {alertTitle}", htmlContent, plainText, cancellationToken);
+        return await SendEmailAsync(to, $"[{severity}] {alertTitle}", htmlContent, plainText, cancellationToken).ConfigureAwait(false);
     }
 
     private static string StripHtml(string html)

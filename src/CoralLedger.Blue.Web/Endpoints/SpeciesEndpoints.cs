@@ -18,7 +18,7 @@ public static class SpeciesEndpoints
         // GET /api/species - Get all species
         group.MapGet("/", async (IMediator mediator, CancellationToken ct) =>
         {
-            var species = await mediator.Send(new GetAllSpeciesQuery(), ct);
+            var species = await mediator.Send(new GetAllSpeciesQuery(), ct).ConfigureAwait(false);
             return Results.Ok(species);
         })
         .WithName("GetAllSpecies")
@@ -41,7 +41,7 @@ public static class SpeciesEndpoints
             }
 
             var query = new SearchSpeciesQuery(q, categoryEnum, invasive, threatened);
-            var species = await mediator.Send(query, ct);
+            var species = await mediator.Send(query, ct).ConfigureAwait(false);
             return Results.Ok(species);
         })
         .WithName("SearchSpecies")
@@ -52,7 +52,7 @@ public static class SpeciesEndpoints
         group.MapGet("/invasive", async (IMediator mediator, CancellationToken ct) =>
         {
             var query = new SearchSpeciesQuery(IsInvasive: true);
-            var species = await mediator.Send(query, ct);
+            var species = await mediator.Send(query, ct).ConfigureAwait(false);
             return Results.Ok(species);
         })
         .WithName("GetInvasiveSpecies")
@@ -63,7 +63,7 @@ public static class SpeciesEndpoints
         group.MapGet("/threatened", async (IMediator mediator, CancellationToken ct) =>
         {
             var query = new SearchSpeciesQuery(IsThreatened: true);
-            var species = await mediator.Send(query, ct);
+            var species = await mediator.Send(query, ct).ConfigureAwait(false);
             return Results.Ok(species);
         })
         .WithName("GetThreatenedSpecies")
@@ -92,7 +92,7 @@ public static class SpeciesEndpoints
                     s.Habitat,
                     s.TypicalDepthMinM,
                     s.TypicalDepthMaxM))
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(ct).ConfigureAwait(false);
 
             return species is null ? Results.NotFound() : Results.Ok(species);
         })
@@ -130,7 +130,7 @@ public static class SpeciesEndpoints
         {
             // Validate the species observation exists
             var observation = await context.SpeciesObservations
-                .FirstOrDefaultAsync(o => o.Id == request.SpeciesObservationId, ct);
+                .FirstOrDefaultAsync(o => o.Id == request.SpeciesObservationId, ct).ConfigureAwait(false);
 
             if (observation is null)
             {
@@ -143,7 +143,7 @@ public static class SpeciesEndpoints
             {
                 var correctedSpecies = await context.BahamianSpecies
                     .FirstOrDefaultAsync(s =>
-                        s.ScientificName.ToLower() == request.CorrectedScientificName.ToLower(), ct);
+                        s.ScientificName.ToLower() == request.CorrectedScientificName.ToLower(), ct).ConfigureAwait(false);
                 correctedSpeciesId = correctedSpecies?.Id;
             }
 
@@ -165,7 +165,7 @@ public static class SpeciesEndpoints
                 expertise);
 
             context.MisidentificationReports.Add(report);
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.Created($"/api/species/misidentification/{report.Id}", new
             {
@@ -219,7 +219,7 @@ public static class SpeciesEndpoints
                     r.ReportedAt,
                     r.ReviewedAt,
                     r.ReviewNotes))
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(reports);
         })
@@ -235,7 +235,7 @@ public static class SpeciesEndpoints
             CancellationToken ct) =>
         {
             var report = await context.MisidentificationReports
-                .FirstOrDefaultAsync(r => r.Id == id, ct);
+                .FirstOrDefaultAsync(r => r.Id == id, ct).ConfigureAwait(false);
 
             if (report is null)
             {
@@ -248,7 +248,7 @@ public static class SpeciesEndpoints
             }
 
             report.MarkAsReviewed(newStatus, request.ReviewNotes);
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {

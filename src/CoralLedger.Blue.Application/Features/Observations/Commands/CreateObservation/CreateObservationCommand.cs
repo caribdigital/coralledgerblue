@@ -72,7 +72,7 @@ public class CreateObservationCommandHandler : IRequestHandler<CreateObservation
             // Check if observation is within any MPA
             var containingMpa = await _context.MarineProtectedAreas
                 .Where(mpa => mpa.Boundary != null && mpa.Boundary.Contains(location))
-                .FirstOrDefaultAsync(cancellationToken);
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
             if (containingMpa != null)
             {
@@ -84,7 +84,7 @@ public class CreateObservationCommandHandler : IRequestHandler<CreateObservation
             }
 
             _context.CitizenObservations.Add(observation);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("Created citizen observation {Id} of type {Type} at ({Lon}, {Lat})",
                 observation.Id, request.Type, request.Longitude, request.Latitude);

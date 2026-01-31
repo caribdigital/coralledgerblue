@@ -95,19 +95,19 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.NoaaBleachingCacheTtlHours);
 
         // Try to get from cache first
-        var cached = await _cache.GetAsync<CrwBleachingDataWrapper>(cacheKey, cancellationToken);
+        var cached = await _cache.GetAsync<CrwBleachingDataWrapper>(cacheKey, cancellationToken).ConfigureAwait(false);
         if (cached is not null)
         {
             return ServiceResult<CrwBleachingData?>.Ok(cached.Data);
         }
 
         // Fetch fresh data
-        var fetchResult = await FetchBleachingDataAsync(longitude, latitude, date, cancellationToken);
+        var fetchResult = await FetchBleachingDataAsync(longitude, latitude, date, cancellationToken).ConfigureAwait(false);
         
         if (fetchResult.Success && fetchResult.Value is not null)
         {
             // Cache the result
-            await _cache.SetAsync(cacheKey, new CrwBleachingDataWrapper { Data = fetchResult.Value }, cacheTtl, cancellationToken);
+            await _cache.SetAsync(cacheKey, new CrwBleachingDataWrapper { Data = fetchResult.Value }, cacheTtl, cancellationToken).ConfigureAwait(false);
         }
 
         return fetchResult;
@@ -134,7 +134,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
                         $"CRW_DHW[({dateStr}T12:00:00Z)][({snapLat}):1:({snapLat})][({snapLon}):1:({snapLon})]," +
                         $"CRW_BAA[({dateStr}T12:00:00Z)][({snapLat}):1:({snapLat})][({snapLon}):1:({snapLon})]";
 
-            var response = await _httpClient.GetAsync(query, cancellationToken);
+            var response = await _httpClient.GetAsync(query, cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -144,7 +144,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
                     $"ERDDAP API returned status code {response.StatusCode}");
             }
 
-            var result = await ParseErddapResponseAsync(response, cancellationToken);
+            var result = await ParseErddapResponseAsync(response, cancellationToken).ConfigureAwait(false);
             var data = result.FirstOrDefault();
             return ServiceResult<CrwBleachingData?>.Ok(data);
         }
@@ -185,19 +185,19 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.NoaaBleachingCacheTtlHours);
 
         // Try to get from cache first
-        var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken);
+        var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken).ConfigureAwait(false);
         if (cached?.Data is not null)
         {
             return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(cached.Data);
         }
 
         // Fetch fresh data
-        var fetchResult = await FetchBleachingDataForRegionAsync(minLon, minLat, maxLon, maxLat, startDate, endDate, cancellationToken);
+        var fetchResult = await FetchBleachingDataForRegionAsync(minLon, minLat, maxLon, maxLat, startDate, endDate, cancellationToken).ConfigureAwait(false);
         
         // Cache the result if successful
         if (fetchResult.Success && fetchResult.Value is not null)
         {
-            await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = fetchResult.Value }, cacheTtl, cancellationToken);
+            await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = fetchResult.Value }, cacheTtl, cancellationToken).ConfigureAwait(false);
         }
 
         return fetchResult;
@@ -229,10 +229,10 @@ public class CoralReefWatchClient : ICoralReefWatchClient
                         $"CRW_DHW[({startStr}T12:00:00Z):1:({endStr}T12:00:00Z)][({minLat}):{latStride}:({maxLat})][({minLon}):{lonStride}:({maxLon})]," +
                         $"CRW_BAA[({startStr}T12:00:00Z):1:({endStr}T12:00:00Z)][({minLat}):{latStride}:({maxLat})][({minLon}):{lonStride}:({maxLon})]";
 
-            var response = await _httpClient.GetAsync(query, cancellationToken);
+            var response = await _httpClient.GetAsync(query, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var data = await ParseErddapResponseAsync(response, cancellationToken);
+            var data = await ParseErddapResponseAsync(response, cancellationToken).ConfigureAwait(false);
             return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(data);
         }
         catch (Exception ex)
@@ -256,7 +256,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
             BahamasMaxLat,
             targetDate,
             targetDate,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
     }
 
     public async Task<ServiceResult<IEnumerable<CrwBleachingData>>> GetBleachingTimeSeriesAsync(
@@ -283,19 +283,19 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         var cacheTtl = TimeSpan.FromHours(_cacheOptions.Value.NoaaBleachingCacheTtlHours);
 
         // Try to get from cache first
-        var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken);
+        var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken).ConfigureAwait(false);
         if (cached?.Data is not null)
         {
             return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(cached.Data);
         }
 
         // Fetch fresh data
-        var fetchResult = await FetchBleachingTimeSeriesAsync(longitude, latitude, startDate, endDate, cancellationToken);
+        var fetchResult = await FetchBleachingTimeSeriesAsync(longitude, latitude, startDate, endDate, cancellationToken).ConfigureAwait(false);
         
         // Cache the result if successful
         if (fetchResult.Success && fetchResult.Value is not null)
         {
-            await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = fetchResult.Value }, cacheTtl, cancellationToken);
+            await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = fetchResult.Value }, cacheTtl, cancellationToken).ConfigureAwait(false);
         }
 
         return fetchResult;
@@ -322,10 +322,10 @@ public class CoralReefWatchClient : ICoralReefWatchClient
                         $"CRW_DHW[({startStr}T12:00:00Z):1:({endStr}T12:00:00Z)][({snapLat}):1:({snapLat})][({snapLon}):1:({snapLon})]," +
                         $"CRW_BAA[({startStr}T12:00:00Z):1:({endStr}T12:00:00Z)][({snapLat}):1:({snapLat})][({snapLon}):1:({snapLon})]";
 
-            var response = await _httpClient.GetAsync(query, cancellationToken);
+            var response = await _httpClient.GetAsync(query, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var data = await ParseErddapResponseAsync(response, cancellationToken);
+            var data = await ParseErddapResponseAsync(response, cancellationToken).ConfigureAwait(false);
             return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(data);
         }
         catch (Exception ex)
@@ -345,7 +345,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
 
         try
         {
-            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            var json = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             using var doc = JsonDocument.Parse(json);
 
             var table = doc.RootElement.GetProperty("table");

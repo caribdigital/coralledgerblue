@@ -13,13 +13,13 @@ public static class BahamasMpaSeeder
 
     public static async Task SeedAsync(MarineDbContext context)
     {
-        if (await context.MarineProtectedAreas.AnyAsync())
+        if (await context.MarineProtectedAreas.AnyAsync().ConfigureAwait(false))
             return; // Already seeded
 
         var mpas = GetBahamasMpas().ToList();
 
-        await context.MarineProtectedAreas.AddRangeAsync(mpas);
-        await context.SaveChangesAsync();
+        await context.MarineProtectedAreas.AddRangeAsync(mpas).ConfigureAwait(false);
+        await context.SaveChangesAsync().ConfigureAwait(false);
     }
 
     private static IEnumerable<MarineProtectedArea> GetBahamasMpas()

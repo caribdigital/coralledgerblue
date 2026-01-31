@@ -51,7 +51,7 @@ public class BlobStorageService : IBlobStorageService
             // Ensure container exists
             await _containerClient!.CreateIfNotExistsAsync(
                 PublicAccessType.Blob,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken).ConfigureAwait(false);
 
             // Generate unique blob name with timestamp
             var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
@@ -68,9 +68,9 @@ public class BlobStorageService : IBlobStorageService
             await blobClient.UploadAsync(
                 stream,
                 new BlobUploadOptions { HttpHeaders = headers },
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
-            var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken);
+            var properties = await blobClient.GetPropertiesAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("Uploaded photo {BlobName} ({Size} bytes)",
                 blobName, properties.Value.ContentLength);
@@ -101,7 +101,7 @@ public class BlobStorageService : IBlobStorageService
         try
         {
             var blobClient = _containerClient!.GetBlobClient(blobName);
-            var response = await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken);
+            var response = await blobClient.DownloadStreamingAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             return response.Value.Content;
         }
         catch (Exception ex)
@@ -123,7 +123,7 @@ public class BlobStorageService : IBlobStorageService
         try
         {
             var blobClient = _containerClient!.GetBlobClient(blobName);
-            var response = await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
+            var response = await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if (response.Value)
             {

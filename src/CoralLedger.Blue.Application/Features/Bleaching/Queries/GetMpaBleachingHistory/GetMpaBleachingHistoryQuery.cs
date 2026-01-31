@@ -47,7 +47,7 @@ public class GetMpaBleachingHistoryQueryHandler
                 SstAnomaly = a.SstAnomaly,
                 AlertLevel = (int)a.AlertLevel
             })
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return history;
     }

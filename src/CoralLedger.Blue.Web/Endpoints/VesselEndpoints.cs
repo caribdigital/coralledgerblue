@@ -19,7 +19,7 @@ public static class VesselEndpoints
             int limit = 50,
             CancellationToken ct = default) =>
         {
-            var vessels = await gfwClient.SearchVesselsAsync(query, flag, null, limit, ct);
+            var vessels = await gfwClient.SearchVesselsAsync(query, flag, null, limit, ct).ConfigureAwait(false);
             return Results.Ok(vessels);
         })
         .WithName("SearchVessels")
@@ -32,7 +32,7 @@ public static class VesselEndpoints
             IGlobalFishingWatchClient gfwClient,
             CancellationToken ct = default) =>
         {
-            var vessel = await gfwClient.GetVesselByIdAsync(vesselId, ct);
+            var vessel = await gfwClient.GetVesselByIdAsync(vesselId, ct).ConfigureAwait(false);
             return vessel is null ? Results.NotFound() : Results.Ok(vessel);
         })
         .WithName("GetVesselById")
@@ -53,7 +53,7 @@ public static class VesselEndpoints
             CancellationToken ct = default) =>
         {
             var events = await gfwClient.GetFishingEventsAsync(
-                minLon, minLat, maxLon, maxLat, startDate, endDate, limit, ct);
+                minLon, minLat, maxLon, maxLat, startDate, endDate, limit, ct).ConfigureAwait(false);
             return Results.Ok(events);
         })
         .WithName("GetFishingEvents")
@@ -94,7 +94,7 @@ public static class VesselEndpoints
                     e.IsInMpa,
                     MpaName = e.MarineProtectedArea != null ? e.MarineProtectedArea.Name : null
                 })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(events);
         })
@@ -115,7 +115,7 @@ public static class VesselEndpoints
             CancellationToken ct = default) =>
         {
             var events = await gfwClient.GetEncountersAsync(
-                minLon, minLat, maxLon, maxLat, startDate, endDate, limit, ct);
+                minLon, minLat, maxLon, maxLat, startDate, endDate, limit, ct).ConfigureAwait(false);
             return Results.Ok(events);
         })
         .WithName("GetVesselEncounters")
@@ -134,7 +134,7 @@ public static class VesselEndpoints
             CancellationToken ct = default) =>
         {
             var stats = await gfwClient.GetFishingEffortStatsAsync(
-                minLon, minLat, maxLon, maxLat, startDate, endDate, ct);
+                minLon, minLat, maxLon, maxLat, startDate, endDate, ct).ConfigureAwait(false);
             return Results.Ok(stats);
         })
         .WithName("GetFishingEffortStats")
@@ -154,7 +154,7 @@ public static class VesselEndpoints
             var start = startDate ?? DateTime.UtcNow.AddDays(-30);
             var end = endDate ?? DateTime.UtcNow;
 
-            var tileInfo = await gfwClient.GetFishingEffortTileUrlAsync(start, end, gearType, flag, ct);
+            var tileInfo = await gfwClient.GetFishingEffortTileUrlAsync(start, end, gearType, flag, ct).ConfigureAwait(false);
             return tileInfo is null ? Results.NotFound() : Results.Ok(tileInfo);
         })
         .WithName("GetFishingEffortTileUrl")

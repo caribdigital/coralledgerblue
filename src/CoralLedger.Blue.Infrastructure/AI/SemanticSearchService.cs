@@ -139,7 +139,7 @@ public class SemanticSearchService : ISemanticSearchService
 #pragma warning disable SKEXP0001
             var embeddings = await _embeddingService!.GenerateEmbeddingsAsync(
                 new[] { text },
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken).ConfigureAwait(false);
 #pragma warning restore SKEXP0001
 
             var embedding = embeddings.First().ToArray();
@@ -167,7 +167,7 @@ public class SemanticSearchService : ISemanticSearchService
             return Array.Empty<SemanticSearchResult>();
         }
 
-        var queryEmbedding = await GenerateEmbeddingAsync(query, cancellationToken);
+        var queryEmbedding = await GenerateEmbeddingAsync(query, cancellationToken).ConfigureAwait(false);
         if (queryEmbedding.Length == 0)
         {
             return Array.Empty<SemanticSearchResult>();
@@ -178,13 +178,13 @@ public class SemanticSearchService : ISemanticSearchService
             .Where(q => q.Status == NLQQueryStatus.Completed)
             .OrderByDescending(q => q.QueryTime)
             .Take(100)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var results = new List<SemanticSearchResult>();
 
         foreach (var auditLog in recentQueries)
         {
-            var logEmbedding = await GenerateEmbeddingAsync(auditLog.OriginalQuery, cancellationToken);
+            var logEmbedding = await GenerateEmbeddingAsync(auditLog.OriginalQuery, cancellationToken).ConfigureAwait(false);
             if (logEmbedding.Length == 0) continue;
 
             var similarity = CosineSimilarity(queryEmbedding, logEmbedding);
@@ -221,23 +221,23 @@ public class SemanticSearchService : ISemanticSearchService
         // If embeddings are not configured, fall back to keyword matching
         if (!IsConfigured)
         {
-            return await KeywordSearchAsync(query, entityType, maxResults, cancellationToken);
+            return await KeywordSearchAsync(query, entityType, maxResults, cancellationToken).ConfigureAwait(false);
         }
 
-        var queryEmbedding = await GenerateEmbeddingAsync(query, cancellationToken);
+        var queryEmbedding = await GenerateEmbeddingAsync(query, cancellationToken).ConfigureAwait(false);
         if (queryEmbedding.Length == 0)
         {
-            return await KeywordSearchAsync(query, entityType, maxResults, cancellationToken);
+            return await KeywordSearchAsync(query, entityType, maxResults, cancellationToken).ConfigureAwait(false);
         }
 
         // Search MPAs
         if (entityType == null || entityType.Equals("MPA", StringComparison.OrdinalIgnoreCase))
         {
-            var mpas = await _context.MarineProtectedAreas.ToListAsync(cancellationToken);
+            var mpas = await _context.MarineProtectedAreas.ToListAsync(cancellationToken).ConfigureAwait(false);
             foreach (var mpa in mpas)
             {
                 var mpaText = $"{mpa.Name} {mpa.IslandGroup} {mpa.ProtectionLevel}";
-                var mpaEmbedding = await GenerateEmbeddingAsync(mpaText, cancellationToken);
+                var mpaEmbedding = await GenerateEmbeddingAsync(mpaText, cancellationToken).ConfigureAwait(false);
                 if (mpaEmbedding.Length == 0) continue;
 
                 var similarity = CosineSimilarity(queryEmbedding, mpaEmbedding);
@@ -261,11 +261,11 @@ public class SemanticSearchService : ISemanticSearchService
         // Search Reefs
         if (entityType == null || entityType.Equals("Reef", StringComparison.OrdinalIgnoreCase))
         {
-            var reefs = await _context.Reefs.ToListAsync(cancellationToken);
+            var reefs = await _context.Reefs.ToListAsync(cancellationToken).ConfigureAwait(false);
             foreach (var reef in reefs)
             {
                 var reefText = $"{reef.Name} {reef.HealthStatus}";
-                var reefEmbedding = await GenerateEmbeddingAsync(reefText, cancellationToken);
+                var reefEmbedding = await GenerateEmbeddingAsync(reefText, cancellationToken).ConfigureAwait(false);
                 if (reefEmbedding.Length == 0) continue;
 
                 var similarity = CosineSimilarity(queryEmbedding, reefEmbedding);
@@ -318,7 +318,7 @@ public class SemanticSearchService : ISemanticSearchService
                 partialQuery,
                 maxSuggestions,
                 0.6f,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
 
             foreach (var result in similarQueries)
             {
@@ -365,7 +365,7 @@ public class SemanticSearchService : ISemanticSearchService
             var mpas = await _context.MarineProtectedAreas
                 .Where(m => m.Name.ToLower().Contains(queryLower))
                 .Take(maxResults)
-                .ToListAsync(cancellationToken);
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
 
             foreach (var mpa in mpas)
             {

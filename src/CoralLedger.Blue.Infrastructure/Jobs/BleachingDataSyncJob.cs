@@ -46,7 +46,7 @@ public class BleachingDataSyncJob : IJob
             // Get all MPAs with their centroids
             var mpas = await dbContext.MarineProtectedAreas
                 .Select(m => new { m.Id, m.Name, m.Centroid })
-                .ToListAsync(context.CancellationToken);
+                .ToListAsync(context.CancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("Syncing bleaching data for {Count} MPAs for date {Date}",
                 mpas.Count, targetDate);
@@ -56,10 +56,10 @@ public class BleachingDataSyncJob : IJob
             {
                 var tasks = mpas.Select(async mpa =>
                 {
-                    await semaphore.WaitAsync(context.CancellationToken);
+                    await semaphore.WaitAsync(context.CancellationToken).ConfigureAwait(false);
                     try
                     {
-                        await ProcessMpaAsync(dbContext, crwClient, mpa.Id, mpa.Name, mpa.Centroid, targetDate, context.CancellationToken);
+                        await ProcessMpaAsync(dbContext, crwClient, mpa.Id, mpa.Name, mpa.Centroid, targetDate, context.CancellationToken).ConfigureAwait(false);
                         Interlocked.Increment(ref successCount);
                     }
                     catch (Exception ex)
@@ -74,11 +74,11 @@ public class BleachingDataSyncJob : IJob
                     }
                 });
 
-                await Task.WhenAll(tasks);
+                await Task.WhenAll(tasks).ConfigureAwait(false);
             }
 
             // Save all changes
-            await dbContext.SaveChangesAsync(context.CancellationToken);
+            await dbContext.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation(
                 "BleachingDataSyncJob completed. Success: {Success}, Failed: {Failed}",
@@ -105,7 +105,7 @@ public class BleachingDataSyncJob : IJob
             centroid.X, // Longitude
             centroid.Y, // Latitude
             targetDate,
-            ct);
+            ct).ConfigureAwait(false);
 
         if (!result.Success)
         {
@@ -127,7 +127,7 @@ public class BleachingDataSyncJob : IJob
         var existing = await dbContext.BleachingAlerts
             .FirstOrDefaultAsync(a =>
                 a.MarineProtectedAreaId == mpaId &&
-                a.Date == targetDate, ct);
+                a.Date == targetDate, ct).ConfigureAwait(false);
 
         if (existing is not null)
         {

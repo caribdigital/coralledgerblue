@@ -19,7 +19,7 @@ public static class MpaEndpoints
         // GET /api/mpas - Get all MPAs (summary)
         group.MapGet("/", async (IMediator mediator, CancellationToken ct) =>
         {
-            var mpas = await mediator.Send(new GetAllMpasQuery(), ct);
+            var mpas = await mediator.Send(new GetAllMpasQuery(), ct).ConfigureAwait(false);
             return Results.Ok(mpas);
         })
         .WithName("GetAllMpas")
@@ -34,7 +34,7 @@ public static class MpaEndpoints
             CancellationToken ct) =>
         {
             var res = ParseResolution(resolution);
-            var geoJson = await mediator.Send(new GetMpasGeoJsonQuery(res), ct);
+            var geoJson = await mediator.Send(new GetMpasGeoJsonQuery(res), ct).ConfigureAwait(false);
             return Results.Ok(geoJson);
         })
         .WithName("GetMpasGeoJson")
@@ -46,7 +46,7 @@ public static class MpaEndpoints
         // GET /api/mpas/{id} - Get specific MPA by ID
         group.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
-            var mpa = await mediator.Send(new GetMpaByIdQuery(id), ct);
+            var mpa = await mediator.Send(new GetMpaByIdQuery(id), ct).ConfigureAwait(false);
             return mpa is null ? Results.NotFound() : Results.Ok(mpa);
         })
         .WithName("GetMpaById")
@@ -57,7 +57,7 @@ public static class MpaEndpoints
         // POST /api/mpas/{id}/sync-wdpa - Sync MPA boundary from WDPA
         group.MapPost("/{id:guid}/sync-wdpa", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
-            var result = await mediator.Send(new SyncMpaFromWdpaCommand(id), ct);
+            var result = await mediator.Send(new SyncMpaFromWdpaCommand(id), ct).ConfigureAwait(false);
             return result.Success
                 ? Results.Ok(result)
                 : Results.BadRequest(result);
@@ -78,7 +78,7 @@ public static class MpaEndpoints
                 new NetTopologySuite.Geometries.PrecisionModel(), 4326);
             var point = factory.CreatePoint(new NetTopologySuite.Geometries.Coordinate(lon, lat));
 
-            var result = await proximityService.FindNearestMpaAsync(point, ct);
+            var result = await proximityService.FindNearestMpaAsync(point, ct).ConfigureAwait(false);
             if (result == null)
                 return Results.NotFound("No MPAs found");
 
@@ -110,7 +110,7 @@ public static class MpaEndpoints
                 new NetTopologySuite.Geometries.PrecisionModel(), 4326);
             var point = factory.CreatePoint(new NetTopologySuite.Geometries.Coordinate(lon, lat));
 
-            var result = await proximityService.CheckMpaContainmentAsync(point, ct);
+            var result = await proximityService.CheckMpaContainmentAsync(point, ct).ConfigureAwait(false);
             if (result == null)
                 return Results.Ok(new { IsWithinMpa = false });
 
@@ -142,7 +142,7 @@ public static class MpaEndpoints
                 new NetTopologySuite.Geometries.PrecisionModel(), 4326);
             var point = factory.CreatePoint(new NetTopologySuite.Geometries.Coordinate(lon, lat));
 
-            var results = await proximityService.FindMpasWithinRadiusAsync(point, radiusKm, ct);
+            var results = await proximityService.FindMpasWithinRadiusAsync(point, radiusKm, ct).ConfigureAwait(false);
 
             return Results.Ok(results.Select(r => new
             {
@@ -160,18 +160,18 @@ public static class MpaEndpoints
         // GET /api/mpas/stats - Get MPA statistics
         group.MapGet("/stats", async (IMarineDbContext context, CancellationToken ct) =>
         {
-            var totalCount = await context.MarineProtectedAreas.CountAsync(ct);
-            var totalArea = await context.MarineProtectedAreas.SumAsync(m => m.AreaSquareKm, ct);
+            var totalCount = await context.MarineProtectedAreas.CountAsync(ct).ConfigureAwait(false);
+            var totalArea = await context.MarineProtectedAreas.SumAsync(m => m.AreaSquareKm, ct).ConfigureAwait(false);
 
             var byIslandGroup = await context.MarineProtectedAreas
                 .GroupBy(m => m.IslandGroup)
                 .Select(g => new { islandGroup = g.Key.ToString(), count = g.Count(), areaKm2 = g.Sum(m => m.AreaSquareKm) })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             var byProtectionLevel = await context.MarineProtectedAreas
                 .GroupBy(m => m.ProtectionLevel)
                 .Select(g => new { level = g.Key.ToString(), count = g.Count() })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {

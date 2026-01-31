@@ -18,23 +18,23 @@ public static class AdminEndpoints
             IMarineDbContext context,
             CancellationToken ct = default) =>
         {
-            var mpaCount = await context.MarineProtectedAreas.CountAsync(ct);
-            var reefCount = await context.Reefs.CountAsync(ct);
-            var vesselCount = await context.Vessels.CountAsync(ct);
-            var observationCount = await context.CitizenObservations.CountAsync(ct);
-            var alertRuleCount = await context.AlertRules.CountAsync(ct);
-            var activeAlertCount = await context.Alerts.CountAsync(a => !a.IsAcknowledged, ct);
+            var mpaCount = await context.MarineProtectedAreas.CountAsync(ct).ConfigureAwait(false);
+            var reefCount = await context.Reefs.CountAsync(ct).ConfigureAwait(false);
+            var vesselCount = await context.Vessels.CountAsync(ct).ConfigureAwait(false);
+            var observationCount = await context.CitizenObservations.CountAsync(ct).ConfigureAwait(false);
+            var alertRuleCount = await context.AlertRules.CountAsync(ct).ConfigureAwait(false);
+            var activeAlertCount = await context.Alerts.CountAsync(a => !a.IsAcknowledged, ct).ConfigureAwait(false);
 
             var recentBleaching = await context.BleachingAlerts
                 .Where(b => b.Date >= DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-7)))
-                .CountAsync(ct);
+                .CountAsync(ct).ConfigureAwait(false);
 
             var recentEvents = await context.VesselEvents
                 .Where(e => e.StartTime >= DateTime.UtcNow.AddDays(-7))
-                .CountAsync(ct);
+                .CountAsync(ct).ConfigureAwait(false);
 
             var pendingObservations = await context.CitizenObservations
-                .CountAsync(o => o.Status == ObservationStatus.Pending, ct);
+                .CountAsync(o => o.Status == ObservationStatus.Pending, ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {
@@ -71,7 +71,7 @@ public static class AdminEndpoints
                 .Where(o => o.Status == ObservationStatus.Pending)
                 .OrderByDescending(o => o.CreatedAt);
 
-            var total = await query.CountAsync(ct);
+            var total = await query.CountAsync(ct).ConfigureAwait(false);
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -89,7 +89,7 @@ public static class AdminEndpoints
                     PhotoCount = o.Photos.Count,
                     Location = o.Location != null ? new { Lon = o.Location.X, Lat = o.Location.Y } : null
                 })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {
@@ -110,12 +110,12 @@ public static class AdminEndpoints
             IMarineDbContext context,
             CancellationToken ct = default) =>
         {
-            var observation = await context.CitizenObservations.FindAsync(new object[] { id }, ct);
+            var observation = await context.CitizenObservations.FindAsync(new object[] { id }, ct).ConfigureAwait(false);
             if (observation == null)
                 return Results.NotFound();
 
             observation.Approve(request?.Notes);
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new { observation.Id, Status = "Approved" });
         })
@@ -130,7 +130,7 @@ public static class AdminEndpoints
             IMarineDbContext context,
             CancellationToken ct = default) =>
         {
-            var observation = await context.CitizenObservations.FindAsync(new object[] { id }, ct);
+            var observation = await context.CitizenObservations.FindAsync(new object[] { id }, ct).ConfigureAwait(false);
             if (observation == null)
                 return Results.NotFound();
 
@@ -138,7 +138,7 @@ public static class AdminEndpoints
                 return Results.BadRequest("Rejection reason is required");
 
             observation.Reject(request.Reason);
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new { observation.Id, Status = "Rejected" });
         })
@@ -155,7 +155,7 @@ public static class AdminEndpoints
             var dbHealthy = false;
             try
             {
-                await context.Database.ExecuteSqlRawAsync("SELECT 1", ct);
+                await context.Database.ExecuteSqlRawAsync("SELECT 1", ct).ConfigureAwait(false);
                 dbHealthy = true;
             }
             catch { }
@@ -197,12 +197,12 @@ public static class AdminEndpoints
             var latestBleaching = await context.BleachingAlerts
                 .OrderByDescending(b => b.Date)
                 .Select(b => b.Date)
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(ct).ConfigureAwait(false);
 
             var latestVesselEvent = await context.VesselEvents
                 .OrderByDescending(e => e.CreatedAt)
                 .Select(e => e.CreatedAt)
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {
@@ -224,22 +224,22 @@ public static class AdminEndpoints
             var mpasByIsland = await context.MarineProtectedAreas
                 .GroupBy(m => m.IslandGroup)
                 .Select(g => new { IslandGroup = g.Key.ToString(), Count = g.Count(), TotalAreaKm2 = g.Sum(m => m.AreaSquareKm) })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             var mpasByProtection = await context.MarineProtectedAreas
                 .GroupBy(m => m.ProtectionLevel)
                 .Select(g => new { Level = g.Key.ToString(), Count = g.Count() })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             var observationsByType = await context.CitizenObservations
                 .GroupBy(o => o.Type)
                 .Select(g => new { Type = g.Key.ToString(), Count = g.Count() })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             var observationsByStatus = await context.CitizenObservations
                 .GroupBy(o => o.Status)
                 .Select(g => new { Status = g.Key.ToString(), Count = g.Count() })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {
@@ -260,7 +260,7 @@ public static class AdminEndpoints
 
             // Check if sample vessels already exist
             var existingVessel = await context.Vessels
-                .FirstOrDefaultAsync(v => v.Name == "F/V Sample Trawler", ct);
+                .FirstOrDefaultAsync(v => v.Name == "F/V Sample Trawler", ct).ConfigureAwait(false);
 
             if (existingVessel != null)
             {
@@ -290,7 +290,7 @@ public static class AdminEndpoints
             // Get MPAs for violation detection
             var mpas = await context.MarineProtectedAreas
                 .Select(m => new { m.Id, m.Name, m.Boundary })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             // Sample fishing event locations (mix of inside and outside MPAs)
             var fishingLocations = new[]
@@ -385,7 +385,7 @@ public static class AdminEndpoints
                             v.Name.StartsWith("F/V Caribbean Star") ||
                             v.Name.StartsWith("F/V Freeport Fisher") ||
                             v.Name.StartsWith("F/V Island Catch"))
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             if (!sampleVessels.Any())
             {
@@ -397,12 +397,12 @@ public static class AdminEndpoints
             // Delete related events first
             var events = await context.VesselEvents
                 .Where(e => vesselIds.Contains(e.VesselId))
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             context.VesselEvents.RemoveRange(events);
             context.Vessels.RemoveRange(sampleVessels);
 
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {

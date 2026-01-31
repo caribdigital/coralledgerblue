@@ -12,12 +12,12 @@ public static class BahamianSpeciesSeeder
 {
     public static async Task SeedAsync(MarineDbContext context)
     {
-        if (await context.BahamianSpecies.AnyAsync())
+        if (await context.BahamianSpecies.AnyAsync().ConfigureAwait(false))
             return;
 
         var species = GetBahamianSpecies().ToList();
-        await context.BahamianSpecies.AddRangeAsync(species);
-        await context.SaveChangesAsync();
+        await context.BahamianSpecies.AddRangeAsync(species).ConfigureAwait(false);
+        await context.SaveChangesAsync().ConfigureAwait(false);
     }
 
     private static IEnumerable<BahamianSpecies> GetBahamianSpecies()

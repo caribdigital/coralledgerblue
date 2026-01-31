@@ -55,7 +55,7 @@ public class BatchContainmentService : IBatchContainmentService
             return results;
 
         // Ensure cache is warm
-        await EnsureCacheWarmAsync(cancellationToken);
+        await EnsureCacheWarmAsync(cancellationToken).ConfigureAwait(false);
 
         var mpas = _preparedMpaCache.Values.ToList();
         if (mpas.Count == 0)
@@ -70,7 +70,7 @@ public class BatchContainmentService : IBatchContainmentService
         if (points.Count >= ParallelThreshold)
         {
             // Parallel processing for large batches
-            await ProcessPointsParallelAsync(points, mpas, results, cancellationToken);
+            await ProcessPointsParallelAsync(points, mpas, results, cancellationToken).ConfigureAwait(false);
         }
         else
         {
@@ -100,7 +100,7 @@ public class BatchContainmentService : IBatchContainmentService
         Guid mpaId,
         CancellationToken cancellationToken = default)
     {
-        await EnsureCacheWarmAsync(cancellationToken);
+        await EnsureCacheWarmAsync(cancellationToken).ConfigureAwait(false);
 
         if (!_preparedMpaCache.TryGetValue(mpaId, out var mpaData))
         {
@@ -156,7 +156,7 @@ public class BatchContainmentService : IBatchContainmentService
             .AsNoTracking()
             .Where(m => m.Boundary.Intersects(bbox))
             .Select(m => m.Id)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return mpaIds;
     }
@@ -164,7 +164,7 @@ public class BatchContainmentService : IBatchContainmentService
     /// <inheritdoc />
     public async Task WarmCacheAsync(CancellationToken cancellationToken = default)
     {
-        await _cacheLock.WaitAsync(cancellationToken);
+        await _cacheLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             if (_cacheInitialized)
@@ -183,7 +183,7 @@ public class BatchContainmentService : IBatchContainmentService
                     m.ProtectionLevel,
                     m.Boundary
                 })
-                .ToListAsync(cancellationToken);
+                .ToListAsync(cancellationToken).ConfigureAwait(false);
 
             // Create prepared geometries for each MPA
             foreach (var mpa in mpas)
@@ -234,7 +234,7 @@ public class BatchContainmentService : IBatchContainmentService
     {
         if (!_cacheInitialized)
         {
-            await WarmCacheAsync(cancellationToken);
+            await WarmCacheAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 

@@ -80,7 +80,7 @@ public class GetObservationsQueryHandler : IRequestHandler<GetObservationsQuery,
                 o.CitizenName,
                 o.Photos.Count,
                 o.CreatedAt))
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         return observations;
     }

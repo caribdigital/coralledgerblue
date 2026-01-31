@@ -62,7 +62,7 @@ public class ObservationValidationService : IObservationValidationService
                 request.Longitude,
                 request.Latitude,
                 request.TrustLevel,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
             exifResults.Add(exifResult);
         }
 
@@ -362,7 +362,7 @@ public class ObservationValidationService : IObservationValidationService
                 photo.PhotoStream.Position = 0;
             }
 
-            var exifGps = await ExtractExifGpsAsync(photo.PhotoStream);
+            var exifGps = await ExtractExifGpsAsync(photo.PhotoStream).ConfigureAwait(false);
 
             if (exifGps == null)
             {
