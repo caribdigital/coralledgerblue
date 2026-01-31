@@ -1,0 +1,88 @@
+@rendermode InteractiveServer
+
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResources> Localizer
+@implements IDisposable
+
+<nav class="mobile-nav">
+    <div class="mobile-nav-items">
+        <a href="/" class="mobile-nav-item @GetActiveClass("/")">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>@Localizer["Nav_Home"]</span>
+        </a>
+
+        <a href="/map" class="mobile-nav-item @GetActiveClass("/map")">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+                <line x1="9" x2="9" y1="3" y2="18"/>
+                <line x1="15" x2="15" y1="6" y2="21"/>
+            </svg>
+            <span>@Localizer["Nav_Map"]</span>
+        </a>
+
+        <a href="/alerts" class="mobile-nav-item @GetActiveClass("/alerts")">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+            </svg>
+            <span>@Localizer["Nav_Alerts"]</span>
+            @if (_alertCount > 0)
+            {
+                <span class="badge bg-danger position-absolute" style="top: 0; right: 50%; transform: translateX(50%);">@_alertCount</span>
+            }
+        </a>
+
+        <a href="/observations" class="mobile-nav-item @GetActiveClass("/observations")">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+            </svg>
+            <span>@Localizer["Nav_Report"]</span>
+        </a>
+
+        <a href="/settings" class="mobile-nav-item @GetActiveClass("/settings")">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+            </svg>
+            <span>@Localizer["Nav_More"]</span>
+        </a>
+    </div>
+</nav>
+
+@code {
+    private int _alertCount = 0;
+
+    private string GetActiveClass(string path)
+    {
+        var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri);
+        if (string.IsNullOrEmpty(currentPath)) currentPath = "/";
+        else currentPath = "/" + currentPath;
+
+        return currentPath.Equals(path, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    }
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+
+    public void UpdateAlertCount(int count)
+    {
+        _alertCount = count;
+        StateHasChanged();
+    }
+}

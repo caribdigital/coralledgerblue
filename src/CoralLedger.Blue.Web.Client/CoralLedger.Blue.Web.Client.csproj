@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Microsoft.Extensions.Localization" />
     <PackageReference Include="Mapsui.Blazor" />
     <PackageReference Include="Mapsui.Nts" />
     <PackageReference Include="NetTopologySuite" />

@@ -1,12 +1,13 @@
 @page "/map"
 @inject IMediator Mediator
+@inject IStringLocalizer<SharedResources> Localizer
 @rendermode InteractiveServer
 
-<PageTitle>Bahamas Marine Protected Areas Map - CoralLedger Blue</PageTitle>
+<PageTitle>@Localizer["Nav_Map"] - CoralLedger Blue</PageTitle>
 
 <div class="map-page">
     <div class="map-header">
-        <h2><i class="bi bi-geo-alt-fill"></i> Bahamas Marine Protected Areas</h2>
+        <h2><i class="bi bi-geo-alt-fill"></i> @Localizer["Map_MarineProtectedAreas"]</h2>
         <div class="header-controls d-flex gap-3 align-items-center">
             @if (_viewMode == ViewMode.Map)
             {

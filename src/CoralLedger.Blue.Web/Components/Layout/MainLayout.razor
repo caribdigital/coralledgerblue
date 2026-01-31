@@ -3,6 +3,8 @@
 @using CoralLedger.Blue.Web.Components.Shared
 @using CoralLedger.Blue.Web.Client.Components
 
+@inject IStringLocalizer<SharedResources> Localizer
+
 <CoralLedger.Blue.Web.Client.Components.OfflineIndicator />
 
 <a class="skip-link" href="#main-content">Skip to main content</a>
@@ -11,10 +13,10 @@
     <RadzenSidebar @bind-Expanded="@_sidebarExpanded" class="rz-sidebar-dark">
         <RadzenSidebarToggle Click="@(() => _sidebarExpanded = !_sidebarExpanded)" />
         <RadzenPanelMenu>
-            <RadzenPanelMenuItem Text="Dashboard" Icon="dashboard" Path="dashboard" />
-            <RadzenPanelMenuItem Text="MPA Map" Icon="map" Path="map" />
-            <RadzenPanelMenuItem Text="Bleaching Status" Icon="thermostat" Path="bleaching" />
-            <RadzenPanelMenuItem Text="Settings" Icon="settings" Path="settings" />
+            <RadzenPanelMenuItem Text="@Localizer["Nav_Dashboard"]" Icon="dashboard" Path="dashboard" />
+            <RadzenPanelMenuItem Text="@Localizer["Nav_Map"]" Icon="map" Path="map" />
+            <RadzenPanelMenuItem Text="@Localizer["Nav_Bleaching"]" Icon="thermostat" Path="bleaching" />
+            <RadzenPanelMenuItem Text="@Localizer["Nav_Settings"]" Icon="settings" Path="settings" />
         </RadzenPanelMenu>
     </RadzenSidebar>
 
@@ -29,7 +31,7 @@
     </RadzenBody>
 </RadzenLayout>
 
-<CoralLedger.Blue.Web.Client.Components.MobileNavigation />
+<MobileNavigationServer />
 
 <div id="blazor-error-ui" role="alert" aria-live="assertive">
     <span>An unhandled error has occurred.</span>

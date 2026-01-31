@@ -1,3 +1,5 @@
+@inject IStringLocalizer<SharedResources> Localizer
+
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">CoralLedger Blue</a>
@@ -10,19 +12,19 @@
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="dashboard" Match="NavLinkMatch.All">
-                <span class="bi bi-speedometer2" aria-hidden="true"></span> Dashboard
+                <span class="bi bi-speedometer2" aria-hidden="true"></span> @Localizer["Nav_Dashboard"]
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="map">
-                <span class="bi bi-map-fill" aria-hidden="true"></span> MPA Map
+                <span class="bi bi-map-fill" aria-hidden="true"></span> @Localizer["Nav_Map"]
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="bleaching">
-                <span class="bi bi-thermometer-half" aria-hidden="true"></span> Bleaching Status
+                <span class="bi bi-thermometer-half" aria-hidden="true"></span> @Localizer["Nav_Bleaching"]
             </NavLink>
         </div>
     </nav>

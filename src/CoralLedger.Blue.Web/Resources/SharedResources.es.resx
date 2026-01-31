@@ -46,6 +46,21 @@
   <data name="Nav_About" xml:space="preserve">
     <value>Acerca de</value>
   </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Configuración</value>
+  </data>
+  <data name="Nav_Home" xml:space="preserve">
+    <value>Inicio</value>
+  </data>
+  <data name="Nav_Alerts" xml:space="preserve">
+    <value>Alertas</value>
+  </data>
+  <data name="Nav_Report" xml:space="preserve">
+    <value>Reportar</value>
+  </data>
+  <data name="Nav_More" xml:space="preserve">
+    <value>Más</value>
+  </data>
 
   <!-- Map Controls -->
   <data name="Map_Controls" xml:space="preserve">
@@ -136,6 +151,30 @@
   <data name="Dashboard_ViewFullMap" xml:space="preserve">
     <value>Ver Mapa Completo</value>
   </data>
+  <data name="Dashboard_ProtectedAreas" xml:space="preserve">
+    <value>Áreas Protegidas</value>
+  </data>
+  <data name="Dashboard_TotalProtected" xml:space="preserve">
+    <value>Total Protegido</value>
+  </data>
+  <data name="Dashboard_SeaTemperature" xml:space="preserve">
+    <value>Temperatura del Mar</value>
+  </data>
+  <data name="Dashboard_BleachingAlert" xml:space="preserve">
+    <value>Alerta de Blanqueamiento</value>
+  </data>
+  <data name="Dashboard_MPAs" xml:space="preserve">
+    <value>AMP</value>
+  </data>
+  <data name="Dashboard_FromNormal" xml:space="preserve">
+    <value>de lo normal</value>
+  </data>
+  <data name="Dashboard_OfBahamianWaters" xml:space="preserve">
+    <value>de aguas bahameñas</value>
+  </data>
+  <data name="Dashboard_UnableToLoadBleachingData" xml:space="preserve">
+    <value>No se pueden cargar datos de blanqueamiento</value>
+  </data>
 
   <!-- Alerts -->
   <data name="Alert_RecentAlerts" xml:space="preserve">
@@ -200,5 +239,13 @@
   <!-- Footer -->
   <data name="Footer_Copyright" xml:space="preserve">
     <value>CoralLedger Blue - Plataforma de Inteligencia Marina para Las Bahamas</value>
+  </data>
+
+  <!-- Admin -->
+  <data name="Nav_Admin" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="Nav_Admin_Title" xml:space="preserve">
+    <value>Ir al panel de administración</value>
   </data>
 </root>

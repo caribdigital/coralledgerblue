@@ -46,6 +46,21 @@
   <data name="Nav_About" xml:space="preserve">
     <value>About</value>
   </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Nav_Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Nav_Alerts" xml:space="preserve">
+    <value>Alerts</value>
+  </data>
+  <data name="Nav_Report" xml:space="preserve">
+    <value>Report</value>
+  </data>
+  <data name="Nav_More" xml:space="preserve">
+    <value>More</value>
+  </data>
 
   <!-- Map Controls -->
   <data name="Map_Controls" xml:space="preserve">
@@ -136,6 +151,30 @@
   <data name="Dashboard_ViewFullMap" xml:space="preserve">
     <value>View Full Map</value>
   </data>
+  <data name="Dashboard_ProtectedAreas" xml:space="preserve">
+    <value>Protected Areas</value>
+  </data>
+  <data name="Dashboard_TotalProtected" xml:space="preserve">
+    <value>Total Protected</value>
+  </data>
+  <data name="Dashboard_SeaTemperature" xml:space="preserve">
+    <value>Sea Temperature</value>
+  </data>
+  <data name="Dashboard_BleachingAlert" xml:space="preserve">
+    <value>Bleaching Alert</value>
+  </data>
+  <data name="Dashboard_MPAs" xml:space="preserve">
+    <value>MPAs</value>
+  </data>
+  <data name="Dashboard_FromNormal" xml:space="preserve">
+    <value>from normal</value>
+  </data>
+  <data name="Dashboard_OfBahamianWaters" xml:space="preserve">
+    <value>of Bahamian waters</value>
+  </data>
+  <data name="Dashboard_UnableToLoadBleachingData" xml:space="preserve">
+    <value>Unable to load bleaching data</value>
+  </data>
 
   <!-- Alerts -->
   <data name="Alert_RecentAlerts" xml:space="preserve">
@@ -200,5 +239,13 @@
   <!-- Footer -->
   <data name="Footer_Copyright" xml:space="preserve">
     <value>CoralLedger Blue - Marine Intelligence Platform for The Bahamas</value>
+  </data>
+
+  <!-- Admin -->
+  <data name="Nav_Admin" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="Nav_Admin_Title" xml:space="preserve">
+    <value>Go to admin panel</value>
   </data>
 </root>
