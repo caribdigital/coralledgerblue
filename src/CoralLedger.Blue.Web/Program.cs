@@ -27,7 +27,8 @@ builder.Services.AddScoped<IThemeState, ThemeState>();
 builder.Services.AddRadzenComponents();
 
 // Add Localization support (English, Spanish, Haitian Creole)
-builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+// Uses embedded satellite assemblies (configured via SatelliteResourceLanguages in .csproj)
+builder.Services.AddLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     var supportedCultures = new[]

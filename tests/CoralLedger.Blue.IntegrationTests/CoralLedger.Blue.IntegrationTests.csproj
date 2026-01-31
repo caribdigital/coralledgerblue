@@ -28,4 +28,22 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- Copy Haitian Creole satellite assembly from CoralLedger.Blue.Web to test output -->
+  <Target Name="CopyHaitianCreoleSatelliteAssembly" AfterTargets="Build">
+    <PropertyGroup>
+      <WebProjectOutputPath>..\..\src\CoralLedger.Blue.Web\bin\$(Configuration)\$(TargetFramework)\</WebProjectOutputPath>
+      <HtSatelliteSource>$(MSBuildProjectDirectory)\$(WebProjectOutputPath)ht\CoralLedger.Blue.Web.resources.dll</HtSatelliteSource>
+      <HtSatelliteDestination>$(OutputPath)ht\</HtSatelliteDestination>
+    </PropertyGroup>
+    
+    <Message Text="Copying Haitian Creole satellite assembly from $(HtSatelliteSource) to $(HtSatelliteDestination)" Importance="high" />
+    
+    <MakeDir Directories="$(HtSatelliteDestination)" Condition="!Exists('$(HtSatelliteDestination)')" />
+    
+    <Copy SourceFiles="$(HtSatelliteSource)" 
+          DestinationFolder="$(HtSatelliteDestination)" 
+          SkipUnchangedFiles="true" 
+          Condition="Exists('$(HtSatelliteSource)')" />
+  </Target>
+
 </Project>
