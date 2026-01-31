@@ -28,7 +28,7 @@ public class OfflineStorageService : IAsyncDisposable
 
         try
         {
-            await _jsRuntime.InvokeVoidAsync("offlineStorage.initializeDatabase").ConfigureAwait(false);
+            await _jsRuntime.InvokeVoidAsync("offlineStorage.initializeDatabase");
             _initialized = true;
             _logger.LogInformation("Offline storage initialized");
         }
@@ -44,9 +44,9 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task<string> SaveDraftAsync(ObservationDraft draft)
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
-        var draftId = await _jsRuntime.InvokeAsync<string>("offlineStorage.saveDraft", draft).ConfigureAwait(false);
+        var draftId = await _jsRuntime.InvokeAsync<string>("offlineStorage.saveDraft", draft);
         _logger.LogDebug("Draft saved: {DraftId}", draftId);
         return draftId;
     }
@@ -56,9 +56,9 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task<ObservationDraft?> GetDraftAsync(string draftId)
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
-        var draft = await _jsRuntime.InvokeAsync<ObservationDraft?>("offlineStorage.getDraft", draftId).ConfigureAwait(false);
+        var draft = await _jsRuntime.InvokeAsync<ObservationDraft?>("offlineStorage.getDraft", draftId);
         return draft;
     }
 
@@ -67,9 +67,9 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task<List<ObservationDraft>> GetAllDraftsAsync()
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
-        var drafts = await _jsRuntime.InvokeAsync<List<ObservationDraft>>("offlineStorage.getAllDrafts").ConfigureAwait(false);
+        var drafts = await _jsRuntime.InvokeAsync<List<ObservationDraft>>("offlineStorage.getAllDrafts");
         return drafts ?? new List<ObservationDraft>();
     }
 
@@ -78,9 +78,9 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task DeleteDraftAsync(string draftId)
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
-        await _jsRuntime.InvokeVoidAsync("offlineStorage.deleteDraft", draftId).ConfigureAwait(false);
+        await _jsRuntime.InvokeVoidAsync("offlineStorage.deleteDraft", draftId);
         _logger.LogDebug("Draft deleted: {DraftId}", draftId);
     }
 
@@ -89,11 +89,11 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task<string> SavePhotoAsync(string draftId, Stream photoStream, string fileName, PhotoMetadata? metadata = null)
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
         // Read stream to byte array for JS interop
         using var ms = new MemoryStream();
-        await photoStream.CopyToAsync(ms).ConfigureAwait(false);
+        await photoStream.CopyToAsync(ms);
         var bytes = ms.ToArray();
 
         var photoId = await _jsRuntime.InvokeAsync<string>(
@@ -101,7 +101,7 @@ public class OfflineStorageService : IAsyncDisposable
             draftId,
             new ByteArrayContent(bytes),
             fileName,
-            metadata ?? new PhotoMetadata()).ConfigureAwait(false);
+            metadata ?? new PhotoMetadata());
 
         _logger.LogDebug("Photo saved: {PhotoId} for draft: {DraftId}", photoId, draftId);
         return photoId;
@@ -112,9 +112,9 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task<List<DraftPhoto>> GetPhotosForDraftAsync(string draftId)
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
-        var photos = await _jsRuntime.InvokeAsync<List<DraftPhoto>>("offlineStorage.getPhotosForDraft", draftId).ConfigureAwait(false);
+        var photos = await _jsRuntime.InvokeAsync<List<DraftPhoto>>("offlineStorage.getPhotosForDraft", draftId);
         return photos ?? new List<DraftPhoto>();
     }
 
@@ -123,9 +123,9 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task QueueForSyncAsync(string draftId)
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
-        await _jsRuntime.InvokeVoidAsync("offlineStorage.queueForSync", draftId).ConfigureAwait(false);
+        await _jsRuntime.InvokeVoidAsync("offlineStorage.queueForSync", draftId);
         _logger.LogDebug("Draft queued for sync: {DraftId}", draftId);
     }
 
@@ -134,9 +134,9 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task<List<SyncQueueItem>> GetPendingSyncItemsAsync()
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
-        var items = await _jsRuntime.InvokeAsync<List<SyncQueueItem>>("offlineStorage.getPendingSyncItems").ConfigureAwait(false);
+        var items = await _jsRuntime.InvokeAsync<List<SyncQueueItem>>("offlineStorage.getPendingSyncItems");
         return items ?? new List<SyncQueueItem>();
     }
 
@@ -145,8 +145,8 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task MarkSyncCompletedAsync(int queueId)
     {
-        await InitializeAsync().ConfigureAwait(false);
-        await _jsRuntime.InvokeVoidAsync("offlineStorage.markSyncCompleted", queueId).ConfigureAwait(false);
+        await InitializeAsync();
+        await _jsRuntime.InvokeVoidAsync("offlineStorage.markSyncCompleted", queueId);
     }
 
     /// <summary>
@@ -154,8 +154,8 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task MarkSyncFailedAsync(int queueId, string error)
     {
-        await InitializeAsync().ConfigureAwait(false);
-        await _jsRuntime.InvokeVoidAsync("offlineStorage.markSyncFailed", queueId, error).ConfigureAwait(false);
+        await InitializeAsync();
+        await _jsRuntime.InvokeVoidAsync("offlineStorage.markSyncFailed", queueId, error);
     }
 
     /// <summary>
@@ -163,9 +163,9 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task<StorageStats> GetStorageStatsAsync()
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
-        var stats = await _jsRuntime.InvokeAsync<StorageStats>("offlineStorage.getStorageStats").ConfigureAwait(false);
+        var stats = await _jsRuntime.InvokeAsync<StorageStats>("offlineStorage.getStorageStats");
         return stats ?? new StorageStats();
     }
 
@@ -174,9 +174,9 @@ public class OfflineStorageService : IAsyncDisposable
     /// </summary>
     public async Task ClearAllDataAsync()
     {
-        await InitializeAsync().ConfigureAwait(false);
+        await InitializeAsync();
 
-        await _jsRuntime.InvokeVoidAsync("offlineStorage.clearAllData").ConfigureAwait(false);
+        await _jsRuntime.InvokeVoidAsync("offlineStorage.clearAllData");
         _logger.LogInformation("All offline data cleared");
     }
 

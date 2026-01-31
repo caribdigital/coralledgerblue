@@ -86,7 +86,7 @@ public static class SecurityConfiguration
                     error = "Too Many Requests",
                     message = "Rate limit exceeded. Please try again later.",
                     retryAfterSeconds = retryAfter
-                }, token).ConfigureAwait(false);
+                }, token);
             };
         });
 
@@ -174,7 +174,7 @@ public static class SecurityConfiguration
                     "frame-ancestors 'none';";
             }
 
-            await next().ConfigureAwait(false);
+            await next();
         });
     }
 
