@@ -1,4 +1,5 @@
 using CoralLedger.Blue.Application.Common.Interfaces;
+using CoralLedger.Blue.Application.Common.Models;
 using CoralLedger.Blue.Application.Features.Bleaching.Queries.GetMpaBleachingHistory;
 using MediatR;
 
@@ -20,8 +21,17 @@ public static class BleachingEndpoints
             CancellationToken ct = default) =>
         {
             var targetDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
-            var data = await crwClient.GetBleachingDataAsync(lon, lat, targetDate, ct);
-            return data is null ? Results.NotFound() : Results.Ok(data);
+            var result = await crwClient.GetBleachingDataAsync(lon, lat, targetDate, ct);
+
+            if (!result.Success)
+            {
+                return Results.Problem(
+                    detail: result.ErrorMessage,
+                    statusCode: 500,
+                    title: "Failed to fetch bleaching data");
+            }
+
+            return result.Value is null ? Results.NotFound() : Results.Ok(result.Value);
         })
         .WithName("GetBleachingDataPoint")
         .WithDescription("Get coral bleaching heat stress data for a specific location from NOAA Coral Reef Watch")
@@ -39,9 +49,18 @@ public static class BleachingEndpoints
             DateOnly endDate,
             CancellationToken ct = default) =>
         {
-            var data = await crwClient.GetBleachingDataForRegionAsync(
+            var result = await crwClient.GetBleachingDataForRegionAsync(
                 minLon, minLat, maxLon, maxLat, startDate, endDate, ct);
-            return Results.Ok(data);
+
+            if (!result.Success)
+            {
+                return Results.Problem(
+                    detail: result.ErrorMessage,
+                    statusCode: 500,
+                    title: "Failed to fetch regional bleaching data");
+            }
+
+            return Results.Ok(result.Value ?? Enumerable.Empty<CrwBleachingData>());
         })
         .WithName("GetBleachingDataRegion")
         .WithDescription("Get coral bleaching heat stress data for a geographic region from NOAA Coral Reef Watch")
@@ -53,7 +72,18 @@ public static class BleachingEndpoints
             DateOnly? date,
             CancellationToken ct = default) =>
         {
-            var data = await crwClient.GetBahamasBleachingAlertsAsync(date, ct);
+            var result = await crwClient.GetBahamasBleachingAlertsAsync(date, ct);
+
+            if (!result.Success)
+            {
+                return Results.Problem(
+                    detail: result.ErrorMessage,
+                    statusCode: 500,
+                    title: "Failed to fetch Bahamas bleaching alerts");
+            }
+
+            var data = result.Value ?? Enumerable.Empty<CrwBleachingData>();
+
             return Results.Ok(new BahamasBleachingResponse
             {
                 Date = date ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1)),
@@ -79,8 +109,17 @@ public static class BleachingEndpoints
             DateOnly endDate,
             CancellationToken ct = default) =>
         {
-            var data = await crwClient.GetBleachingTimeSeriesAsync(lon, lat, startDate, endDate, ct);
-            return Results.Ok(data);
+            var result = await crwClient.GetBleachingTimeSeriesAsync(lon, lat, startDate, endDate, ct);
+
+            if (!result.Success)
+            {
+                return Results.Problem(
+                    detail: result.ErrorMessage,
+                    statusCode: 500,
+                    title: "Failed to fetch bleaching time series");
+            }
+
+            return Results.Ok(result.Value ?? Enumerable.Empty<CrwBleachingData>());
         })
         .WithName("GetBleachingTimeSeries")
         .WithDescription("Get bleaching heat stress time series for a specific location")
@@ -100,9 +139,17 @@ public static class BleachingEndpoints
 
             var centroid = mpa.Centroid;
             var targetDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
-            var data = await crwClient.GetBleachingDataAsync(centroid.X, centroid.Y, targetDate, ct);
+            var result = await crwClient.GetBleachingDataAsync(centroid.X, centroid.Y, targetDate, ct);
 
-            if (data is null)
+            if (!result.Success)
+            {
+                return Results.Problem(
+                    detail: result.ErrorMessage,
+                    statusCode: 500,
+                    title: "Failed to fetch MPA bleaching data");
+            }
+
+            if (result.Value is null)
                 return Results.NotFound("No bleaching data available");
 
             return Results.Ok(new MpaBleachingResponse
@@ -110,7 +157,7 @@ public static class BleachingEndpoints
                 MpaId = mpaId,
                 MpaName = mpa.Name,
                 Date = targetDate,
-                Data = data
+                Data = result.Value
             });
         })
         .WithName("GetMpaBleachingData")

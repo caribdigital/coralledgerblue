@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CoralLedger.Blue.Application.Common.Interfaces;
+using CoralLedger.Blue.Application.Common.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -38,12 +39,12 @@ public class AisClient : IAisClient
 
     public bool IsConfigured => _options.Enabled && !string.IsNullOrEmpty(_options.ApiKey);
 
-    public async Task<IReadOnlyList<AisVesselPosition>> GetVesselPositionsAsync(CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IReadOnlyList<AisVesselPosition>>> GetVesselPositionsAsync(CancellationToken cancellationToken = default)
     {
         if (!IsConfigured)
         {
-            _logger.LogWarning("AIS client is not configured");
-            return GetDemoVesselPositions();
+            _logger.LogWarning("AIS client is not configured, returning demo data");
+            return ServiceResult<IReadOnlyList<AisVesselPosition>>.Ok(GetDemoVesselPositions());
         }
 
         try
@@ -63,35 +64,45 @@ public class AisClient : IAisClient
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-            return _options.Provider switch
+            var positions = _options.Provider switch
             {
                 "MarineTraffic" => ParseMarineTrafficResponse(content),
                 "AISHub" => ParseAisHubResponse(content),
                 _ => Array.Empty<AisVesselPosition>()
             };
+
+            return ServiceResult<IReadOnlyList<AisVesselPosition>>.Ok(positions);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching AIS vessel positions");
-            return GetDemoVesselPositions();
+            return ServiceResult<IReadOnlyList<AisVesselPosition>>.Fail(
+                "Failed to fetch AIS vessel positions from provider", ex);
         }
     }
 
-    public async Task<IReadOnlyList<AisVesselPosition>> GetVesselPositionsNearAsync(
+    public async Task<ServiceResult<IReadOnlyList<AisVesselPosition>>> GetVesselPositionsNearAsync(
         double longitude,
         double latitude,
         double radiusKm,
         CancellationToken cancellationToken = default)
     {
         // Get all positions and filter by distance
-        var allPositions = await GetVesselPositionsAsync(cancellationToken);
+        var result = await GetVesselPositionsAsync(cancellationToken);
 
-        return allPositions.Where(p =>
+        if (!result.Success)
+        {
+            return result;
+        }
+
+        var nearbyPositions = result.Value!.Where(p =>
             CalculateDistanceKm(longitude, latitude, p.Longitude, p.Latitude) <= radiusKm
         ).ToList();
+
+        return ServiceResult<IReadOnlyList<AisVesselPosition>>.Ok(nearbyPositions);
     }
 
-    public async Task<IReadOnlyList<AisVesselPosition>> GetVesselTrackAsync(
+    public async Task<ServiceResult<IReadOnlyList<AisVesselPosition>>> GetVesselTrackAsync(
         string mmsi,
         int hours = 24,
         CancellationToken cancellationToken = default)
@@ -99,7 +110,7 @@ public class AisClient : IAisClient
         if (!IsConfigured)
         {
             _logger.LogWarning("AIS client is not configured");
-            return Array.Empty<AisVesselPosition>();
+            return ServiceResult<IReadOnlyList<AisVesselPosition>>.Fail("AIS client is not configured");
         }
 
         try
@@ -112,15 +123,18 @@ public class AisClient : IAisClient
                 response.EnsureSuccessStatusCode();
 
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                return ParseMarineTrafficTrackResponse(content, mmsi);
+                var track = ParseMarineTrafficTrackResponse(content, mmsi);
+                return ServiceResult<IReadOnlyList<AisVesselPosition>>.Ok(track);
             }
 
-            return Array.Empty<AisVesselPosition>();
+            // Provider doesn't support track data
+            return ServiceResult<IReadOnlyList<AisVesselPosition>>.OkEmpty();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching vessel track for MMSI {Mmsi}", mmsi);
-            return Array.Empty<AisVesselPosition>();
+            return ServiceResult<IReadOnlyList<AisVesselPosition>>.Fail(
+                $"Failed to fetch vessel track for MMSI {mmsi}", ex);
         }
     }
 

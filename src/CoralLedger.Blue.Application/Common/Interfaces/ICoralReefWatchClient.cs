@@ -1,3 +1,5 @@
+using CoralLedger.Blue.Application.Common.Models;
+
 namespace CoralLedger.Blue.Application.Common.Interfaces;
 
 /// <summary>
@@ -9,7 +11,7 @@ public interface ICoralReefWatchClient
     /// <summary>
     /// Get bleaching heat stress data for a specific location and date
     /// </summary>
-    Task<CrwBleachingData?> GetBleachingDataAsync(
+    Task<ServiceResult<CrwBleachingData?>> GetBleachingDataAsync(
         double longitude,
         double latitude,
         DateOnly date,
@@ -18,7 +20,7 @@ public interface ICoralReefWatchClient
     /// <summary>
     /// Get bleaching heat stress data for a geographic region and date range
     /// </summary>
-    Task<IEnumerable<CrwBleachingData>> GetBleachingDataForRegionAsync(
+    Task<ServiceResult<IEnumerable<CrwBleachingData>>> GetBleachingDataForRegionAsync(
         double minLon,
         double minLat,
         double maxLon,
@@ -30,14 +32,14 @@ public interface ICoralReefWatchClient
     /// <summary>
     /// Get current bleaching alerts for the Bahamas region
     /// </summary>
-    Task<IEnumerable<CrwBleachingData>> GetBahamasBleachingAlertsAsync(
+    Task<ServiceResult<IEnumerable<CrwBleachingData>>> GetBahamasBleachingAlertsAsync(
         DateOnly? date = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get time series of bleaching data for a specific location
     /// </summary>
-    Task<IEnumerable<CrwBleachingData>> GetBleachingTimeSeriesAsync(
+    Task<ServiceResult<IEnumerable<CrwBleachingData>>> GetBleachingTimeSeriesAsync(
         double longitude,
         double latitude,
         DateOnly startDate,

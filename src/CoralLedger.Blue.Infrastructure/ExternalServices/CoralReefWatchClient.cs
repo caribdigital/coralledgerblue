@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CoralLedger.Blue.Application.Common.Interfaces;
+using CoralLedger.Blue.Application.Common.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -77,7 +78,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         }
     }
 
-    public async Task<CrwBleachingData?> GetBleachingDataAsync(
+    public async Task<ServiceResult<CrwBleachingData?>> GetBleachingDataAsync(
         double longitude,
         double latitude,
         DateOnly date,
@@ -85,7 +86,8 @@ public class CoralReefWatchClient : ICoralReefWatchClient
     {
         if (TryGetMockData(out var mockData))
         {
-            return mockData.FirstOrDefault(record => MatchesPoint(record, longitude, latitude, date));
+            var result = mockData.FirstOrDefault(record => MatchesPoint(record, longitude, latitude, date));
+            return ServiceResult<CrwBleachingData?>.Ok(result);
         }
 
         // Use cache with point-specific key
@@ -96,22 +98,22 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         var cached = await _cache.GetAsync<CrwBleachingDataWrapper>(cacheKey, cancellationToken);
         if (cached is not null)
         {
-            return cached.Data;
+            return ServiceResult<CrwBleachingData?>.Ok(cached.Data);
         }
 
         // Fetch fresh data
-        var data = await FetchBleachingDataAsync(longitude, latitude, date, cancellationToken);
+        var fetchResult = await FetchBleachingDataAsync(longitude, latitude, date, cancellationToken);
         
-        // Cache the result (even if null, wrap it)
-        if (data is not null)
+        if (fetchResult.Success && fetchResult.Value is not null)
         {
-            await _cache.SetAsync(cacheKey, new CrwBleachingDataWrapper { Data = data }, cacheTtl, cancellationToken);
+            // Cache the result
+            await _cache.SetAsync(cacheKey, new CrwBleachingDataWrapper { Data = fetchResult.Value }, cacheTtl, cancellationToken);
         }
 
-        return data;
+        return fetchResult;
     }
 
-    private async Task<CrwBleachingData?> FetchBleachingDataAsync(
+    private async Task<ServiceResult<CrwBleachingData?>> FetchBleachingDataAsync(
         double longitude,
         double latitude,
         DateOnly date,
@@ -138,21 +140,24 @@ public class CoralReefWatchClient : ICoralReefWatchClient
             {
                 _logger.LogWarning("ERDDAP request failed with status {Status} for location ({Lon}, {Lat}) on {Date}",
                     response.StatusCode, longitude, latitude, date);
-                return null;
+                return ServiceResult<CrwBleachingData?>.Fail(
+                    $"ERDDAP API returned status code {response.StatusCode}");
             }
 
             var result = await ParseErddapResponseAsync(response, cancellationToken);
-            return result.FirstOrDefault();
+            var data = result.FirstOrDefault();
+            return ServiceResult<CrwBleachingData?>.Ok(data);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching bleaching data for ({Lon}, {Lat}) on {Date}",
                 longitude, latitude, date);
-            return null;
+            return ServiceResult<CrwBleachingData?>.Fail(
+                $"Failed to fetch bleaching data", ex);
         }
     }
 
-    public async Task<IEnumerable<CrwBleachingData>> GetBleachingDataForRegionAsync(
+    public async Task<ServiceResult<IEnumerable<CrwBleachingData>>> GetBleachingDataForRegionAsync(
         double minLon,
         double minLat,
         double maxLon,
@@ -163,7 +168,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
     {
         if (TryGetMockData(out var mockData))
         {
-            return mockData
+            var result = mockData
                 .Where(record =>
                     record.Longitude >= minLon &&
                     record.Longitude <= maxLon &&
@@ -172,6 +177,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
                     record.Date >= startDate &&
                     record.Date <= endDate)
                 .ToList();
+            return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(result);
         }
 
         // Use cache with region-specific key
@@ -182,19 +188,22 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken);
         if (cached?.Data is not null)
         {
-            return cached.Data;
+            return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(cached.Data);
         }
 
         // Fetch fresh data
-        var data = await FetchBleachingDataForRegionAsync(minLon, minLat, maxLon, maxLat, startDate, endDate, cancellationToken);
+        var fetchResult = await FetchBleachingDataForRegionAsync(minLon, minLat, maxLon, maxLat, startDate, endDate, cancellationToken);
         
-        // Cache the result
-        await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = data }, cacheTtl, cancellationToken);
+        // Cache the result if successful
+        if (fetchResult.Success && fetchResult.Value is not null)
+        {
+            await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = fetchResult.Value }, cacheTtl, cancellationToken);
+        }
 
-        return data;
+        return fetchResult;
     }
 
-    private async Task<IEnumerable<CrwBleachingData>> FetchBleachingDataForRegionAsync(
+    private async Task<ServiceResult<IEnumerable<CrwBleachingData>>> FetchBleachingDataForRegionAsync(
         double minLon,
         double minLat,
         double maxLon,
@@ -223,16 +232,18 @@ public class CoralReefWatchClient : ICoralReefWatchClient
             var response = await _httpClient.GetAsync(query, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            return await ParseErddapResponseAsync(response, cancellationToken);
+            var data = await ParseErddapResponseAsync(response, cancellationToken);
+            return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(data);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching bleaching data for region");
-            return Enumerable.Empty<CrwBleachingData>();
+            return ServiceResult<IEnumerable<CrwBleachingData>>.Fail(
+                "Failed to fetch bleaching data for region", ex);
         }
     }
 
-    public async Task<IEnumerable<CrwBleachingData>> GetBahamasBleachingAlertsAsync(
+    public async Task<ServiceResult<IEnumerable<CrwBleachingData>>> GetBahamasBleachingAlertsAsync(
         DateOnly? date = null,
         CancellationToken cancellationToken = default)
     {
@@ -248,7 +259,7 @@ public class CoralReefWatchClient : ICoralReefWatchClient
             cancellationToken);
     }
 
-    public async Task<IEnumerable<CrwBleachingData>> GetBleachingTimeSeriesAsync(
+    public async Task<ServiceResult<IEnumerable<CrwBleachingData>>> GetBleachingTimeSeriesAsync(
         double longitude,
         double latitude,
         DateOnly startDate,
@@ -257,13 +268,14 @@ public class CoralReefWatchClient : ICoralReefWatchClient
     {
         if (TryGetMockData(out var mockData))
         {
-            return mockData
+            var result = mockData
                 .Where(record =>
                     IsSameLocation(record, longitude, latitude) &&
                     record.Date >= startDate &&
                     record.Date <= endDate)
                 .OrderBy(record => record.Date)
                 .ToList();
+            return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(result);
         }
 
         // Use cache with time series-specific key
@@ -274,19 +286,22 @@ public class CoralReefWatchClient : ICoralReefWatchClient
         var cached = await _cache.GetAsync<CrwBleachingDataCollectionWrapper>(cacheKey, cancellationToken);
         if (cached?.Data is not null)
         {
-            return cached.Data;
+            return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(cached.Data);
         }
 
         // Fetch fresh data
-        var data = await FetchBleachingTimeSeriesAsync(longitude, latitude, startDate, endDate, cancellationToken);
+        var fetchResult = await FetchBleachingTimeSeriesAsync(longitude, latitude, startDate, endDate, cancellationToken);
         
-        // Cache the result
-        await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = data }, cacheTtl, cancellationToken);
+        // Cache the result if successful
+        if (fetchResult.Success && fetchResult.Value is not null)
+        {
+            await _cache.SetAsync(cacheKey, new CrwBleachingDataCollectionWrapper { Data = fetchResult.Value }, cacheTtl, cancellationToken);
+        }
 
-        return data;
+        return fetchResult;
     }
 
-    private async Task<IEnumerable<CrwBleachingData>> FetchBleachingTimeSeriesAsync(
+    private async Task<ServiceResult<IEnumerable<CrwBleachingData>>> FetchBleachingTimeSeriesAsync(
         double longitude,
         double latitude,
         DateOnly startDate,
@@ -310,13 +325,15 @@ public class CoralReefWatchClient : ICoralReefWatchClient
             var response = await _httpClient.GetAsync(query, cancellationToken);
             response.EnsureSuccessStatusCode();
 
-            return await ParseErddapResponseAsync(response, cancellationToken);
+            var data = await ParseErddapResponseAsync(response, cancellationToken);
+            return ServiceResult<IEnumerable<CrwBleachingData>>.Ok(data);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error fetching bleaching time series for ({Lon}, {Lat})",
                 longitude, latitude);
-            return Enumerable.Empty<CrwBleachingData>();
+            return ServiceResult<IEnumerable<CrwBleachingData>>.Fail(
+                "Failed to fetch bleaching time series", ex);
         }
     }
 
