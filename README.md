@@ -35,6 +35,7 @@ The Aspire dashboard opens at `https://localhost:17088` with links to the web ap
 - 🌡️ **Monitor coral bleaching risk** with live NOAA satellite data (SST, DHW, alerts)
 - 🚢 **Track fishing vessels** and detect activity inside protected areas
 - 📊 **Access everything via REST API** for your own analysis or integrations
+- 🌍 **Use in your native language** - Available in English, Spanish, and Haitian Creole
 - ⚡ **Run locally in 30 seconds** with .NET Aspire (PostgreSQL + PostGIS included)
 
 ## Why This Matters
@@ -55,7 +56,6 @@ We're actively looking for contributors in these areas:
 |------|------------|----------------|
 | 🧪 **Testing** | Medium | Help build comprehensive test coverage |
 | 🌍 **Spanish Translation** | Easy | Translate UI strings for Spanish speakers |
-| 🇭🇹 **Haitian Creole** | Easy | Support Bahamian fishing communities |
 | 🗺️ **GIS Optimization** | Advanced | Improve PostGIS query performance |
 | 📝 **Documentation** | Easy | Expand guides and tutorials |
 | ? **Brand & assets** | Medium | Refresh github-header.png, og-image.png, or favicons; see docs/brand-guidelines.md |
@@ -93,6 +93,7 @@ We're actively looking for contributors in these areas:
 | **Jobs** | Quartz.NET 3.13 |
 | **Orchestration** | .NET Aspire 13.0 |
 | **Containers** | Docker |
+| **Localization** | ASP.NET Core i18n (English, Spanish, Haitian Creole) |
 
 ## Visual Regression & Accessibility
 
