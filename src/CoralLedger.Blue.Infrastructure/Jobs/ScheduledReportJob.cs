@@ -64,8 +64,7 @@ public class ScheduledReportJob : IJob
                 return;
             }
 
-            var recipientList = recipients.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList();
+            var recipientList = recipients.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
             // Send email with PDF attachment
             var subject = $"CoralLedger Blue - {reportType.Replace("Job", "")} Report";
@@ -106,7 +105,7 @@ public class ScheduledReportJob : IJob
             }
 
             _logger.LogInformation("Successfully completed {ReportType}, sent to {Count} recipients",
-                reportType, recipientList.Count);
+                reportType, recipientList.Length);
         }
         catch (Exception ex)
         {

@@ -285,9 +285,11 @@ public static class DependencyInjection
                 .StartNow()); // Also run immediately on startup
 
             // ScheduledReportJob - Weekly Report
+            // Configure recipients in appsettings.json or via environment variable:
+            // "Quartz": { "JobDataMap": { "WeeklyReportJob:Recipients": "user1@example.com,user2@example.com" } }
             q.AddJob<ScheduledReportJob>(opts => opts
                 .WithIdentity(ScheduledReportJob.WeeklyReportKey)
-                .UsingJobData("Recipients", "") // Configure in appsettings.json or environment variables
+                .UsingJobData("Recipients", "") // Recipients configured via appsettings.json or environment
                 .StoreDurably());
 
             q.AddTrigger(opts => opts
@@ -297,9 +299,11 @@ public static class DependencyInjection
                 .WithCronSchedule("0 0 8 ? * MON")); // Every Monday at 8:00 AM UTC
 
             // ScheduledReportJob - Monthly Report
+            // Configure recipients in appsettings.json or via environment variable:
+            // "Quartz": { "JobDataMap": { "MonthlyReportJob:Recipients": "user1@example.com,user2@example.com" } }
             q.AddJob<ScheduledReportJob>(opts => opts
                 .WithIdentity(ScheduledReportJob.MonthlyReportKey)
-                .UsingJobData("Recipients", "") // Configure in appsettings.json or environment variables
+                .UsingJobData("Recipients", "") // Recipients configured via appsettings.json or environment
                 .StoreDurably());
 
             q.AddTrigger(opts => opts

@@ -393,7 +393,7 @@ public class PdfReportGenerationService : IReportGenerationService
                     {
                         table.Cell().Element(CellStyle).Text(obs.ObservedAt.ToString("yyyy-MM-dd"));
                         table.Cell().Element(CellStyle).Text(obs.Description.Length > 50 ? 
-                            obs.Description.Substring(0, 47) + "..." : obs.Description);
+                            obs.Description[..47] + "..." : obs.Description);
                         table.Cell().Element(CellStyle).Text($"{obs.Severity}/5");
                         table.Cell().Element(CellStyle).Text(obs.Status);
                     }
