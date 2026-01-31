@@ -367,11 +367,11 @@
             {
                 try
                 {
-                    var data = await CrwClient.GetBleachingDataAsync(
+                    var result = await CrwClient.GetBleachingDataAsync(
                         mpa.CentroidLongitude,
                         mpa.CentroidLatitude,
                         yesterday);
-                    return (MpaId: mpa.Id, Data: data);
+                    return (MpaId: mpa.Id, Data: result.Success && result.Value is not null ? result.Value : null);
                 }
                 catch
                 {

@@ -84,12 +84,14 @@ public class CoralReefWatchClientTests
 
         // Assert
         result.Should().NotBeNull();
-        result!.Longitude.Should().BeApproximately(-77.35, 0.01);
-        result.Latitude.Should().BeApproximately(25.05, 0.01);
-        result.SeaSurfaceTemperature.Should().BeApproximately(28.5, 0.01);
-        result.SstAnomaly.Should().BeApproximately(1.2, 0.01);
-        result.DegreeHeatingWeek.Should().BeApproximately(2.5, 0.01);
-        result.AlertLevel.Should().Be(1);
+        result.Success.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Longitude.Should().BeApproximately(-77.35, 0.01);
+        result.Value.Latitude.Should().BeApproximately(25.05, 0.01);
+        result.Value.SeaSurfaceTemperature.Should().BeApproximately(28.5, 0.01);
+        result.Value.SstAnomaly.Should().BeApproximately(1.2, 0.01);
+        result.Value.DegreeHeatingWeek.Should().BeApproximately(2.5, 0.01);
+        result.Value.AlertLevel.Should().Be(1);
     }
 
     [Fact]
@@ -103,7 +105,9 @@ public class CoralReefWatchClientTests
         var result = await client.GetBleachingDataAsync(-77.35, 25.05, DateOnly.FromDateTime(DateTime.UtcNow));
 
         // Assert
-        result.Should().BeNull();
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -126,7 +130,9 @@ public class CoralReefWatchClientTests
         var result = await client.GetBleachingDataAsync(-77.35, 25.05, DateOnly.FromDateTime(DateTime.UtcNow));
 
         // Assert
-        result.Should().BeNull();
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.Value.Should().BeNull();
     }
 
     [Fact]
@@ -152,8 +158,10 @@ public class CoralReefWatchClientTests
         var result = await client.GetBleachingTimeSeriesAsync(-76.58, 24.47, startDate, endDate);
 
         // Assert
-        result.Should().NotBeEmpty();
-        result.First().SeaSurfaceTemperature.Should().BeApproximately(29.0, 0.01);
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.Value.Should().NotBeEmpty();
+        result.Value!.First().SeaSurfaceTemperature.Should().BeApproximately(29.0, 0.01);
     }
 
     [Fact]
@@ -176,7 +184,9 @@ public class CoralReefWatchClientTests
         var result = await client.GetBahamasBleachingAlertsAsync();
 
         // Assert
-        result.Should().NotBeEmpty();
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.Value.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -207,7 +217,9 @@ public class CoralReefWatchClientTests
             endDate: date);
 
         // Assert
-        result.Should().NotBeEmpty();
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.Value.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -231,8 +243,10 @@ public class CoralReefWatchClientTests
         // Act
         var result = await client.GetBleachingDataAsync(-77.0, 25.0, new DateOnly(2024, 6, 15));
 
-        // Assert - Should return null when essential values are NaN
-        result.Should().BeNull();
+        // Assert - Should return success with null value when essential values are NaN
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.Value.Should().BeNull();
     }
 
     [Fact]
