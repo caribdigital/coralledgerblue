@@ -46,7 +46,7 @@ public class DataExportService : IDataExportService
         if (options.Limit.HasValue)
             query = query.Take(options.Limit.Value);
 
-        var mpas = await query.ToListAsync(ct);
+        var mpas = await query.ToListAsync(ct).ConfigureAwait(false);
 
         var features = mpas.Select(mpa => new Feature(
             mpa.Boundary ?? mpa.Centroid,
@@ -87,7 +87,7 @@ public class DataExportService : IDataExportService
         if (options.Limit.HasValue)
             query = query.Take(options.Limit.Value);
 
-        var events = await query.ToListAsync(ct);
+        var events = await query.ToListAsync(ct).ConfigureAwait(false);
 
         var features = events.Select(e => new Feature(
             e.Location,
@@ -134,7 +134,7 @@ public class DataExportService : IDataExportService
         if (options.Limit.HasValue)
             query = query.Take(options.Limit.Value);
 
-        var alerts = await query.ToListAsync(ct);
+        var alerts = await query.ToListAsync(ct).ConfigureAwait(false);
 
         var features = alerts.Select(b => new Feature(
             b.Location,
@@ -174,7 +174,7 @@ public class DataExportService : IDataExportService
         if (options.Limit.HasValue)
             query = query.Take(options.Limit.Value);
 
-        var observations = await query.ToListAsync(ct);
+        var observations = await query.ToListAsync(ct).ConfigureAwait(false);
 
         var features = observations.Select(o => new Feature(
             o.Location,
@@ -206,7 +206,7 @@ public class DataExportService : IDataExportService
         if (options.MpaIds?.Count > 0)
             query = query.Where(m => options.MpaIds.Contains(m.Id));
 
-        var mpas = await query.ToListAsync(ct);
+        var mpas = await query.ToListAsync(ct).ConfigureAwait(false);
 
         // Create shapefile as zip with GeoJSON inside (simplified approach without NetTopologySuite.IO.ShapeFile)
         // For production, consider adding NetTopologySuite.IO.ShapeFile package
@@ -234,7 +234,7 @@ public class DataExportService : IDataExportService
         using (var writer = new StreamWriter(entryStream))
         {
             var geoJson = SerializeToGeoJson(features.ToList());
-            await writer.WriteAsync(geoJson);
+            await writer.WriteAsync(geoJson).ConfigureAwait(false);
         }
 
         // Add PRJ file with WGS84 projection info
@@ -242,7 +242,7 @@ public class DataExportService : IDataExportService
         using (var prjStream = prjEntry.Open())
         using (var prjWriter = new StreamWriter(prjStream))
         {
-            await prjWriter.WriteAsync("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]");
+            await prjWriter.WriteAsync("GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]]").ConfigureAwait(false);
         }
 
         // Add README for conversion instructions
@@ -250,7 +250,7 @@ public class DataExportService : IDataExportService
         using (var readmeStream = readmeEntry.Open())
         using (var readmeWriter = new StreamWriter(readmeStream))
         {
-            await readmeWriter.WriteAsync("This archive contains MPA data in GeoJSON format.\nTo convert to Shapefile, use QGIS or ogr2ogr:\n  ogr2ogr -f \"ESRI Shapefile\" mpas.shp mpas.geojson");
+            await readmeWriter.WriteAsync("This archive contains MPA data in GeoJSON format.\nTo convert to Shapefile, use QGIS or ogr2ogr:\n  ogr2ogr -f \"ESRI Shapefile\" mpas.shp mpas.geojson").ConfigureAwait(false);
         }
 
         archive.Dispose();
@@ -266,7 +266,7 @@ public class DataExportService : IDataExportService
         {
             case ExportDataType.MarineProtectedAreas:
                 sb.AppendLine("Id,Name,IslandGroup,ProtectionLevel,AreaKm2,DesignationDate,ManagingAuthority,Longitude,Latitude");
-                var mpas = await GetFilteredMpas(options, ct);
+                var mpas = await GetFilteredMpas(options, ct).ConfigureAwait(false);
                 foreach (var mpa in mpas)
                 {
                     var centroid = mpa.Centroid ?? mpa.Boundary?.Centroid;
@@ -276,7 +276,7 @@ public class DataExportService : IDataExportService
 
             case ExportDataType.VesselEvents:
                 sb.AppendLine("Id,EventType,VesselName,VesselMmsi,StartTime,EndTime,DurationHours,Longitude,Latitude,MpaName,IsInMpa");
-                var events = await GetFilteredVesselEvents(options, ct);
+                var events = await GetFilteredVesselEvents(options, ct).ConfigureAwait(false);
                 foreach (var e in events)
                 {
                     sb.AppendLine($"\"{e.Id}\",\"{e.EventType}\",\"{EscapeCsv(e.Vessel?.Name)}\",\"{e.Vessel?.Mmsi}\",{e.StartTime:o},{e.EndTime?.ToString("o")},{e.DurationHours},{e.Location?.X},{e.Location?.Y},\"{EscapeCsv(e.MarineProtectedArea?.Name)}\",{e.IsInMpa}");
@@ -285,7 +285,7 @@ public class DataExportService : IDataExportService
 
             case ExportDataType.BleachingAlerts:
                 sb.AppendLine("Id,Date,AlertLevel,DegreeHeatingWeek,SeaSurfaceTemperature,SstAnomaly,Longitude,Latitude,MpaName");
-                var alerts = await GetFilteredBleachingAlerts(options, ct);
+                var alerts = await GetFilteredBleachingAlerts(options, ct).ConfigureAwait(false);
                 foreach (var b in alerts)
                 {
                     sb.AppendLine($"\"{b.Id}\",{b.Date:yyyy-MM-dd},\"{b.AlertLevel}\",{b.DegreeHeatingWeek},{b.SeaSurfaceTemperature},{b.SstAnomaly},{b.Location?.X},{b.Location?.Y},\"{EscapeCsv(b.MarineProtectedArea?.Name)}\"");
@@ -294,7 +294,7 @@ public class DataExportService : IDataExportService
 
             case ExportDataType.CitizenObservations:
                 sb.AppendLine("Id,Title,Type,Severity,ObservationTime,Description,Longitude,Latitude,MpaName,CitizenName");
-                var observations = await GetFilteredObservations(options, ct);
+                var observations = await GetFilteredObservations(options, ct).ConfigureAwait(false);
                 foreach (var o in observations)
                 {
                     sb.AppendLine($"\"{o.Id}\",\"{EscapeCsv(o.Title)}\",\"{o.Type}\",{o.Severity},{o.ObservationTime:o},\"{EscapeCsv(o.Description)}\",{o.Location?.X},{o.Location?.Y},\"{EscapeCsv(o.MarineProtectedArea?.Name)}\",\"{EscapeCsv(o.CitizenName)}\"");
@@ -326,7 +326,7 @@ public class DataExportService : IDataExportService
             query = query.Where(m => options.MpaIds.Contains(m.Id));
         if (options.Limit.HasValue)
             query = query.Take(options.Limit.Value);
-        return await query.ToListAsync(ct);
+        return await query.ToListAsync(ct).ConfigureAwait(false);
     }
 
     private async Task<List<Domain.Entities.VesselEvent>> GetFilteredVesselEvents(ExportOptions options, CancellationToken ct)
@@ -338,7 +338,7 @@ public class DataExportService : IDataExportService
             query = query.Where(e => e.StartTime <= options.ToDate.Value);
         if (options.Limit.HasValue)
             query = query.Take(options.Limit.Value);
-        return await query.ToListAsync(ct);
+        return await query.ToListAsync(ct).ConfigureAwait(false);
     }
 
     private async Task<List<Domain.Entities.BleachingAlert>> GetFilteredBleachingAlerts(ExportOptions options, CancellationToken ct)
@@ -351,7 +351,7 @@ public class DataExportService : IDataExportService
         }
         if (options.Limit.HasValue)
             query = query.Take(options.Limit.Value);
-        return await query.ToListAsync(ct);
+        return await query.ToListAsync(ct).ConfigureAwait(false);
     }
 
     private async Task<List<Domain.Entities.CitizenObservation>> GetFilteredObservations(ExportOptions options, CancellationToken ct)
@@ -362,7 +362,7 @@ public class DataExportService : IDataExportService
             query = query.Where(o => o.ObservationTime >= options.FromDate.Value);
         if (options.Limit.HasValue)
             query = query.Take(options.Limit.Value);
-        return await query.ToListAsync(ct);
+        return await query.ToListAsync(ct).ConfigureAwait(false);
     }
 
     private static string TruncateString(string? value, int maxLength) =>

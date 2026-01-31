@@ -48,14 +48,14 @@ public class ReefHealthCalculator : IReefHealthCalculator
     {
         var reef = await _context.Reefs
             .Include(r => r.MarineProtectedArea)
-            .FirstOrDefaultAsync(r => r.Id == reefId, cancellationToken);
+            .FirstOrDefaultAsync(r => r.Id == reefId, cancellationToken).ConfigureAwait(false);
 
         if (reef == null)
         {
             throw new ArgumentException($"Reef with ID {reefId} not found", nameof(reefId));
         }
 
-        var metrics = await GatherMetricsAsync(reef.Id, reef.Location, cancellationToken);
+        var metrics = await GatherMetricsAsync(reef.Id, reef.Location, cancellationToken).ConfigureAwait(false);
         var assessment = CalculateFromMetrics(metrics);
 
         return assessment with
@@ -71,7 +71,7 @@ public class ReefHealthCalculator : IReefHealthCalculator
     {
         var reefs = await _context.Reefs
             .Where(r => r.MarineProtectedAreaId == mpaId)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var assessments = new List<ReefHealthAssessment>();
 
@@ -79,7 +79,7 @@ public class ReefHealthCalculator : IReefHealthCalculator
         {
             try
             {
-                var assessment = await CalculateHealthAsync(reef.Id, cancellationToken);
+                var assessment = await CalculateHealthAsync(reef.Id, cancellationToken).ConfigureAwait(false);
                 assessments.Add(assessment);
             }
             catch (Exception ex)
@@ -155,14 +155,14 @@ public class ReefHealthCalculator : IReefHealthCalculator
         // Get reef survey data
         var reef = await _context.Reefs
             .AsNoTracking()
-            .FirstOrDefaultAsync(r => r.Id == reefId, cancellationToken);
+            .FirstOrDefaultAsync(r => r.Id == reefId, cancellationToken).ConfigureAwait(false);
 
         // Get latest bleaching data for reef location
         var latestBleaching = await _context.BleachingAlerts
             .Where(b => b.ReefId == reefId ||
                         b.Location.Distance(reefLocation) < 5000) // Within 5km
             .OrderByDescending(b => b.Date)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
         // Get citizen observations near reef
         var observations = await _context.CitizenObservations
@@ -170,21 +170,21 @@ public class ReefHealthCalculator : IReefHealthCalculator
                         o.Location.Distance(reefLocation) < 2000) // Within 2km
             .Where(o => o.CreatedAt >= thirtyDaysAgo)
             .Where(o => o.Status == ObservationStatus.Approved)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         // Get fishing events near reef
         var fishingEvents = await _context.VesselEvents
             .Where(e => e.EventType == VesselEventType.Fishing)
             .Where(e => e.Location.Distance(reefLocation) < FishingProximityThresholdKm * 1000)
             .Where(e => e.StartTime >= thirtyDaysAgo)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var nearestFishing = await _context.VesselEvents
             .Where(e => e.EventType == VesselEventType.Fishing)
             .Where(e => e.StartTime >= sevenDaysAgo)
             .OrderBy(e => e.Location.Distance(reefLocation))
             .Select(e => e.Location.Distance(reefLocation))
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
         return new ReefHealthMetrics
         {

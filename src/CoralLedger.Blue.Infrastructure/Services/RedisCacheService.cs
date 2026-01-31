@@ -38,7 +38,7 @@ public class RedisCacheService : ICacheService
 
         try
         {
-            var bytes = await _cache.GetAsync(key, ct);
+            var bytes = await _cache.GetAsync(key, ct).ConfigureAwait(false);
             if (bytes is not null)
             {
                 var json = System.Text.Encoding.UTF8.GetString(bytes);
@@ -76,7 +76,7 @@ public class RedisCacheService : ICacheService
                 options.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30);
             }
 
-            await _cache.SetAsync(key, bytes, options, ct);
+            await _cache.SetAsync(key, bytes, options, ct).ConfigureAwait(false);
             _logger.LogDebug("Cache set for key: {Key}, Expiration: {Expiration}", key, expiration);
         }
         catch (Exception ex)
@@ -91,7 +91,7 @@ public class RedisCacheService : ICacheService
 
         try
         {
-            await _cache.RemoveAsync(key, ct);
+            await _cache.RemoveAsync(key, ct).ConfigureAwait(false);
             _logger.LogDebug("Cache removed for key: {Key}", key);
         }
         catch (Exception ex)
@@ -157,7 +157,7 @@ public class RedisCacheService : ICacheService
                     // Use batch deletion for optimal performance
                     var db = _redis.GetDatabase();
                     var keyArray = keysToRemove.ToArray();
-                    await db.KeyDeleteAsync(keyArray);
+                    await db.KeyDeleteAsync(keyArray).ConfigureAwait(false);
                 }
 
                 _logger.LogDebug("Cache removed {Count} entries with prefix: {Prefix}", keysToRemove.Count, prefix);
@@ -188,15 +188,15 @@ public class RedisCacheService : ICacheService
         try
         {
             // Try to get from cache first
-            var cached = await GetAsync<T>(key, ct);
+            var cached = await GetAsync<T>(key, ct).ConfigureAwait(false);
             if (cached is not null)
             {
                 return cached;
             }
 
             // Execute factory and cache result
-            var value = await factory();
-            await SetAsync(key, value, expiration, ct);
+            var value = await factory().ConfigureAwait(false);
+            await SetAsync(key, value, expiration, ct).ConfigureAwait(false);
             return value;
         }
         catch (Exception ex)
