@@ -18,27 +18,27 @@ public static class JobEndpoints
             IMarineDbContext dbContext,
             CancellationToken ct = default) =>
         {
-            var scheduler = await schedulerFactory.GetScheduler(ct);
+            var scheduler = await schedulerFactory.GetScheduler(ct).ConfigureAwait(false);
 
             // Get bleaching job info
-            var bleachingTriggers = await scheduler.GetTriggersOfJob(BleachingDataSyncJob.Key, ct);
+            var bleachingTriggers = await scheduler.GetTriggersOfJob(BleachingDataSyncJob.Key, ct).ConfigureAwait(false);
             var bleachingTrigger = bleachingTriggers.FirstOrDefault();
 
             // Get vessel sync job info
-            var vesselTriggers = await scheduler.GetTriggersOfJob(VesselEventSyncJob.Key, ct);
+            var vesselTriggers = await scheduler.GetTriggersOfJob(VesselEventSyncJob.Key, ct).ConfigureAwait(false);
             var vesselTrigger = vesselTriggers.FirstOrDefault();
 
             // Get last bleaching sync from database
             var lastBleachingSync = await dbContext.BleachingAlerts
                 .OrderByDescending(b => b.CreatedAt)
                 .Select(b => new { b.CreatedAt, b.Date })
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(ct).ConfigureAwait(false);
 
             // Get last vessel event sync from database
             var lastVesselSync = await dbContext.VesselEvents
                 .OrderByDescending(v => v.CreatedAt)
                 .Select(v => new { v.CreatedAt, v.StartTime })
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(ct).ConfigureAwait(false);
 
             // Count bleaching records by date
             var recordsByDate = await dbContext.BleachingAlerts
@@ -46,12 +46,12 @@ public static class JobEndpoints
                 .Select(g => new { Date = g.Key, Count = g.Count() })
                 .OrderByDescending(x => x.Date)
                 .Take(7)
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             // Count vessel events and MPA violations
-            var totalVesselEvents = await dbContext.VesselEvents.CountAsync(ct);
-            var mpaViolations = await dbContext.VesselEvents.CountAsync(v => v.IsInMpa == true, ct);
-            var totalVessels = await dbContext.Vessels.CountAsync(ct);
+            var totalVesselEvents = await dbContext.VesselEvents.CountAsync(ct).ConfigureAwait(false);
+            var mpaViolations = await dbContext.VesselEvents.CountAsync(v => v.IsInMpa == true, ct).ConfigureAwait(false);
+            var totalVessels = await dbContext.Vessels.CountAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new JobStatusResponse
             {
@@ -62,7 +62,7 @@ public static class JobEndpoints
                     PreviousFireTime = bleachingTrigger?.GetPreviousFireTimeUtc()?.UtcDateTime,
                     LastDataDate = lastBleachingSync?.Date,
                     LastSyncTime = lastBleachingSync?.CreatedAt,
-                    TotalRecords = await dbContext.BleachingAlerts.CountAsync(ct)
+                    TotalRecords = await dbContext.BleachingAlerts.CountAsync(ct).ConfigureAwait(false)
                 },
                 VesselSync = new VesselSyncInfo
                 {
@@ -91,17 +91,17 @@ public static class JobEndpoints
             ISchedulerFactory schedulerFactory,
             CancellationToken ct = default) =>
         {
-            var scheduler = await schedulerFactory.GetScheduler(ct);
+            var scheduler = await schedulerFactory.GetScheduler(ct).ConfigureAwait(false);
 
             // Check if job is already running
-            var runningJobs = await scheduler.GetCurrentlyExecutingJobs(ct);
+            var runningJobs = await scheduler.GetCurrentlyExecutingJobs(ct).ConfigureAwait(false);
             if (runningJobs.Any(j => j.JobDetail.Key.Equals(BleachingDataSyncJob.Key)))
             {
                 return Results.Conflict(new { Message = "Bleaching sync job is already running" });
             }
 
             // Trigger the job immediately
-            await scheduler.TriggerJob(BleachingDataSyncJob.Key, ct);
+            await scheduler.TriggerJob(BleachingDataSyncJob.Key, ct).ConfigureAwait(false);
 
             return Results.Accepted(value: new
             {
@@ -119,17 +119,17 @@ public static class JobEndpoints
             ISchedulerFactory schedulerFactory,
             CancellationToken ct = default) =>
         {
-            var scheduler = await schedulerFactory.GetScheduler(ct);
+            var scheduler = await schedulerFactory.GetScheduler(ct).ConfigureAwait(false);
 
             // Check if job is already running
-            var runningJobs = await scheduler.GetCurrentlyExecutingJobs(ct);
+            var runningJobs = await scheduler.GetCurrentlyExecutingJobs(ct).ConfigureAwait(false);
             if (runningJobs.Any(j => j.JobDetail.Key.Equals(VesselEventSyncJob.Key)))
             {
                 return Results.Conflict(new { Message = "Vessel sync job is already running" });
             }
 
             // Trigger the job immediately
-            await scheduler.TriggerJob(VesselEventSyncJob.Key, ct);
+            await scheduler.TriggerJob(VesselEventSyncJob.Key, ct).ConfigureAwait(false);
 
             return Results.Accepted(value: new
             {

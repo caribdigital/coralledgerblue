@@ -53,7 +53,7 @@ public static class AlertEndpoints
                     a.CreatedAt,
                     Location = a.Location != null ? new { Lon = a.Location.X, Lat = a.Location.Y } : null
                 })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(alerts);
         })
@@ -70,7 +70,7 @@ public static class AlertEndpoints
                 .Include(a => a.AlertRule)
                 .Include(a => a.MarineProtectedArea)
                 .Include(a => a.Vessel)
-                .FirstOrDefaultAsync(a => a.Id == id, ct);
+                .FirstOrDefaultAsync(a => a.Id == id, ct).ConfigureAwait(false);
 
             if (alert == null)
                 return Results.NotFound();
@@ -104,13 +104,13 @@ public static class AlertEndpoints
             IMarineDbContext context,
             CancellationToken ct = default) =>
         {
-            var alert = await context.Alerts.FindAsync(new object[] { id }, ct);
+            var alert = await context.Alerts.FindAsync(new object[] { id }, ct).ConfigureAwait(false);
             if (alert == null)
                 return Results.NotFound();
 
             alert.Acknowledge(request.AcknowledgedBy ?? "System");
 
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new { alert.Id, alert.IsAcknowledged, alert.AcknowledgedAt });
         })
@@ -145,7 +145,7 @@ public static class AlertEndpoints
                     r.CreatedAt,
                     r.LastTriggeredAt
                 })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(rules);
         })
@@ -183,7 +183,7 @@ public static class AlertEndpoints
             }
 
             context.AlertRules.Add(rule);
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.Created($"/api/alerts/rules/{rule.Id}", new { rule.Id, rule.Name });
         })
@@ -198,7 +198,7 @@ public static class AlertEndpoints
             IMarineDbContext context,
             CancellationToken ct = default) =>
         {
-            var rule = await context.AlertRules.FindAsync(new object[] { id }, ct);
+            var rule = await context.AlertRules.FindAsync(new object[] { id }, ct).ConfigureAwait(false);
             if (rule == null)
                 return Results.NotFound();
 
@@ -232,7 +232,7 @@ public static class AlertEndpoints
                     : (TimeSpan?)null;
                 rule.UpdateNotificationSettings(channels, emails, cooldown);
             }
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.Ok(new { rule.Id, rule.Name, rule.IsActive });
         })
@@ -246,12 +246,12 @@ public static class AlertEndpoints
             IMarineDbContext context,
             CancellationToken ct = default) =>
         {
-            var rule = await context.AlertRules.FindAsync(new object[] { id }, ct);
+            var rule = await context.AlertRules.FindAsync(new object[] { id }, ct).ConfigureAwait(false);
             if (rule == null)
                 return Results.NotFound();
 
             context.AlertRules.Remove(rule);
-            await context.SaveChangesAsync(ct);
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
 
             return Results.NoContent();
         })
@@ -265,8 +265,8 @@ public static class AlertEndpoints
             IAlertRuleEngine engine,
             CancellationToken ct = default) =>
         {
-            var alerts = await engine.EvaluateRuleAsync(id, ct);
-            var count = await engine.PersistAlertsAsync(alerts, ct);
+            var alerts = await engine.EvaluateRuleAsync(id, ct).ConfigureAwait(false);
+            var count = await engine.PersistAlertsAsync(alerts, ct).ConfigureAwait(false);
 
             return Results.Ok(new { AlertsGenerated = count });
         })
@@ -278,8 +278,8 @@ public static class AlertEndpoints
             IAlertRuleEngine engine,
             CancellationToken ct = default) =>
         {
-            var alerts = await engine.EvaluateAllRulesAsync(ct);
-            var count = await engine.PersistAlertsAsync(alerts, ct);
+            var alerts = await engine.EvaluateAllRulesAsync(ct).ConfigureAwait(false);
+            var count = await engine.PersistAlertsAsync(alerts, ct).ConfigureAwait(false);
 
             return Results.Ok(new { AlertsGenerated = count });
         })
@@ -305,10 +305,10 @@ public static class AlertEndpoints
                     Critical = g.Count(a => a.Severity == AlertSeverity.Critical),
                     High = g.Count(a => a.Severity == AlertSeverity.High)
                 })
-                .ToListAsync(ct);
+                .ToListAsync(ct).ConfigureAwait(false);
 
             var totalUnacknowledged = await context.Alerts
-                .CountAsync(a => !a.IsAcknowledged, ct);
+                .CountAsync(a => !a.IsAcknowledged, ct).ConfigureAwait(false);
 
             return Results.Ok(new
             {
