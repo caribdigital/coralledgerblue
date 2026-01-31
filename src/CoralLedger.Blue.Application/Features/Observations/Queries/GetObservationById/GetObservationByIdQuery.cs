@@ -84,7 +84,7 @@ public class GetObservationByIdQueryHandler : IRequestHandler<GetObservationById
                         p.UploadedAt))
                     .ToList(),
                 o.CreatedAt))
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
         return observation;
     }

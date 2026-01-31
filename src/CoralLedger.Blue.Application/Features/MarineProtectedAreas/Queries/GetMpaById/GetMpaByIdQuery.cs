@@ -24,7 +24,7 @@ public class GetMpaByIdQueryHandler : IRequestHandler<GetMpaByIdQuery, MpaDetail
         var mpa = await _context.MarineProtectedAreas
             .AsNoTracking()
             .Include(m => m.Reefs)
-            .FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken);
+            .FirstOrDefaultAsync(m => m.Id == request.Id, cancellationToken).ConfigureAwait(false);
 
         if (mpa is null)
             return null;

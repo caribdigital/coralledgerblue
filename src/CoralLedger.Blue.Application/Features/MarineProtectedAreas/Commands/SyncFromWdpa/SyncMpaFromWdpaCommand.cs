@@ -54,7 +54,7 @@ public class SyncMpaFromWdpaCommandHandler : IRequestHandler<SyncMpaFromWdpaComm
 
         // Find the MPA
         var mpa = await _context.MarineProtectedAreas
-            .FirstOrDefaultAsync(m => m.Id == request.MpaId, cancellationToken);
+            .FirstOrDefaultAsync(m => m.Id == request.MpaId, cancellationToken).ConfigureAwait(false);
 
         if (mpa == null)
         {
@@ -75,7 +75,7 @@ public class SyncMpaFromWdpaCommandHandler : IRequestHandler<SyncMpaFromWdpaComm
         var protectedArea = await _protectedPlanetClient.GetProtectedAreaAsync(
             mpa.WdpaId,
             withGeometry: true,
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
 
         if (protectedArea == null)
         {
@@ -123,13 +123,13 @@ public class SyncMpaFromWdpaCommandHandler : IRequestHandler<SyncMpaFromWdpaComm
         mpa.UpdateBoundaryFromWdpa(protectedArea.Boundary);
 
         // Save changes first
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         // Generate simplified geometries using PostGIS
-        await GenerateSimplifiedGeometriesAsync(mpa.Id, cancellationToken);
+        await GenerateSimplifiedGeometriesAsync(mpa.Id, cancellationToken).ConfigureAwait(false);
 
         // Invalidate all MPA-related cache entries
-        await InvalidateMpaCacheAsync(mpa.Id, cancellationToken);
+        await InvalidateMpaCacheAsync(mpa.Id, cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
             "Successfully synced MPA {MpaName} from WDPA. New area: {AreaKm2:F2} km²",
@@ -159,7 +159,7 @@ public class SyncMpaFromWdpaCommandHandler : IRequestHandler<SyncMpaFromWdpaComm
                     ""BoundarySimplifiedLow"" = ST_SimplifyPreserveTopology(""Boundary"", 0.01)
                 WHERE ""Id"" = {0}";
 
-            await _context.Database.ExecuteSqlRawAsync(sql, [mpaId], cancellationToken);
+            await _context.Database.ExecuteSqlRawAsync(sql, [mpaId], cancellationToken).ConfigureAwait(false);
 
             _logger.LogDebug("Generated simplified geometries (detail/medium/low) for MPA {MpaId}", mpaId);
         }
@@ -175,10 +175,10 @@ public class SyncMpaFromWdpaCommandHandler : IRequestHandler<SyncMpaFromWdpaComm
         try
         {
             // Invalidate all MPA GeoJSON cache entries (all resolutions)
-            await _cache.RemoveByPrefixAsync(CacheKeys.MpaPrefix, cancellationToken);
+            await _cache.RemoveByPrefixAsync(CacheKeys.MpaPrefix, cancellationToken).ConfigureAwait(false);
 
             // Also invalidate specific MPA detail cache
-            await _cache.RemoveAsync(CacheKeys.ForMpa(mpaId), cancellationToken);
+            await _cache.RemoveAsync(CacheKeys.ForMpa(mpaId), cancellationToken).ConfigureAwait(false);
 
             _logger.LogDebug("Invalidated cache for MPA {MpaId}", mpaId);
         }

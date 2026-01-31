@@ -71,6 +71,6 @@ public class SearchSpeciesQueryHandler : IRequestHandler<SearchSpeciesQuery, IRe
                 s.Habitat,
                 s.TypicalDepthMinM,
                 s.TypicalDepthMaxM))
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 }
