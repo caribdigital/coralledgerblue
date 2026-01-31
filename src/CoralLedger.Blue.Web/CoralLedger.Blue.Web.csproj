@@ -1,4 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web"><PropertyGroup>  <UserSecretsId>95029c01-0c10-4339-a102-425a313b822f</UserSecretsId>
+    <!-- Enable satellite assembly deployment for all cultures including ht -->
+    <SatelliteResourceLanguages>en;es;ht</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
