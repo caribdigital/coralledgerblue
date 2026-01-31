@@ -46,6 +46,8 @@
     <!-- HTTP Client Factory -->
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
+    <!-- Localization -->
+    <PackageVersion Include="Microsoft.Extensions.Localization" Version="10.0.0" />
     <!-- Background Jobs -->
     <PackageVersion Include="Quartz" Version="3.13.1" />
     <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.13.1" />

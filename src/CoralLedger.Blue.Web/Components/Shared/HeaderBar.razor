@@ -2,6 +2,7 @@
 @using CoralLedger.Blue.Web.Theme
 
 @inject IThemeState ThemeState
+@inject IStringLocalizer<SharedResources> Localizer
 @implements IDisposable
 
 <nav aria-label="Main navigation" class="header-nav">
@@ -13,7 +14,8 @@
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
             <NotificationCenter />
             <ThemeToggle />
-            <RadzenLink Path="/admin" Text="Admin" title="Go to admin panel" />
+            <LanguageSelector />
+            <RadzenLink Path="/admin" Text="@Localizer["Nav_Admin"]" title="@Localizer["Nav_Admin_Title"]" />
             <a href="https://github.com/caribdigital/coralledgerblue"
                target="_blank"
                rel="noopener noreferrer"

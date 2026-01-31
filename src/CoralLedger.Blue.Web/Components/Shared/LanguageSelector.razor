@@ -1,0 +1,48 @@
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<RadzenDropDown TValue="string" 
+                Value="@_currentCulture"
+                Data="@_supportedCultures"
+                TextProperty="DisplayName"
+                ValueProperty="Code"
+                Change="@OnCultureChanged"
+                Style="width: 120px; min-width: 120px;"
+                aria-label="Select language">
+</RadzenDropDown>
+
+@code {
+    private string _currentCulture = "en";
+    
+    private readonly List<CultureOption> _supportedCultures = new()
+    {
+        new CultureOption { Code = "en", DisplayName = "English" },
+        new CultureOption { Code = "es", DisplayName = "Español" },
+        new CultureOption { Code = "ht", DisplayName = "Kreyòl" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Get current culture from cookie or default to English
+        _currentCulture = await JS.InvokeAsync<string>("eval", 
+            "document.cookie.split('; ').find(row => row.startsWith('.AspNetCore.Culture='))?.split('=')[1]?.split('|')[0]?.split('=')[1] || 'en'");
+    }
+
+    private async Task OnCultureChanged(object value)
+    {
+        var culture = value?.ToString() ?? "en";
+        
+        // Set culture cookie
+        await JS.InvokeVoidAsync("eval", 
+            $"document.cookie = '.AspNetCore.Culture=c={culture}|uic={culture}; path=/; max-age=31536000'");
+        
+        // Reload page to apply new culture
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+
+    private class CultureOption
+    {
+        public string Code { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+    }
+}
