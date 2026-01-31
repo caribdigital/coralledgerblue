@@ -13,7 +13,8 @@
 
 @code {
     private string _currentCulture = "en";
-    
+    private bool _initialized;
+
     private readonly List<CultureOption> _supportedCultures = new()
     {
         new CultureOption { Code = "en", DisplayName = "English" },
@@ -21,10 +22,16 @@
         new CultureOption { Code = "ht", DisplayName = "Kreyòl" }
     };
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Get current culture from cookie using safe helper function
-        _currentCulture = await JS.InvokeAsync<string>("localization.getCurrentCulture");
+        if (firstRender && !_initialized)
+        {
+            _initialized = true;
+            // Get current culture from cookie using safe helper function
+            // Must be in OnAfterRenderAsync because JS interop is not available during prerendering
+            _currentCulture = await JS.InvokeAsync<string>("localization.getCurrentCulture");
+            StateHasChanged();
+        }
     }
 
     private async Task OnCultureChanged(object value)
