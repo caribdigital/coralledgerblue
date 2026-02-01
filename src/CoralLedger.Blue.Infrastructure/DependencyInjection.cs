@@ -5,6 +5,7 @@ using CoralLedger.Blue.Infrastructure.Data;
 using CoralLedger.Blue.Infrastructure.ExternalServices;
 using CoralLedger.Blue.Infrastructure.Jobs;
 using CoralLedger.Blue.Infrastructure.Services;
+using CoralLedger.Blue.Infrastructure.Services.PatrolExport;
 using CoralLedger.Blue.Infrastructure.Telemetry;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -105,6 +106,9 @@ public static class DependencyInjection
         // Register Observation Validation Service (citizen science validation)
         // Sprint 4.2 US-4.2.2/4.2.3/4.2.6: EXIF, geofencing, plausibility checks
         services.AddScoped<IObservationValidationService, ObservationValidationService>();
+
+        // Register Patrol Route Export Service
+        services.AddScoped<IPatrolRouteExportService, PatrolRouteExportService>();
 
         // Register Cache service (Redis or in-memory fallback)
         var redisOptions = configuration.GetSection(RedisCacheOptions.SectionName).Get<RedisCacheOptions>()

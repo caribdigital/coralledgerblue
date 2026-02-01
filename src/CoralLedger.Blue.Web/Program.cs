@@ -203,6 +203,7 @@ app.MapVesselEndpoints();
 app.MapBleachingEndpoints();
 app.MapJobEndpoints();
 app.MapObservationEndpoints();
+app.MapPatrolRouteEndpoints();
 app.MapAIEndpoints();
 app.MapAlertEndpoints();
 app.MapAisEndpoints();
