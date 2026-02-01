@@ -1,8 +1,6 @@
-# 🐚 CoralLedger Blue
+# CoralLedger Blue
 
-![CoralLedger Blue](hero.jpg)
-
-🪸 Share-ready preview: use `og-image.png` (1200×630) as the repository's `og:image`.
+![CoralLedger Blue](hero.png)
 
 **Open Source Marine Intelligence for the Blue Economy**
 
@@ -12,9 +10,9 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![GitHub](https://img.shields.io/github/stars/caribdigital/coralledgerblue?style=social)](https://github.com/caribdigital/coralledgerblue)
 
-> **Real-time coral bleaching monitoring. Fishing vessel tracking. 8 Marine Protected Areas. One command to run.**
+> **Real-time coral bleaching monitoring. Fishing vessel tracking. Multi-tenant regional deployments. One command to run.**
 
-CoralLedger Blue connects NOAA satellite data and Global Fishing Watch to help protect the Bahamas' 2,854 km² of ocean reserves.
+CoralLedger Blue connects NOAA satellite data and Global Fishing Watch to help protect the Bahamas' 2,854 km² of ocean reserves—and can be deployed across the entire Caribbean.
 
 Built with .NET 10, Blazor, PostGIS, and .NET Aspire—because saving reefs should be as easy as `dotnet run`.
 
@@ -31,12 +29,24 @@ The Aspire dashboard opens at `https://localhost:17088` with links to the web ap
 
 ## What Can You Do With It?
 
-- 🗺️ **Visualize all 8 Bahamas MPAs** on an interactive map with protection-level styling
-- 🌡️ **Monitor coral bleaching risk** with live NOAA satellite data (SST, DHW, alerts)
-- 🚢 **Track fishing vessels** and detect activity inside protected areas
-- 📊 **Access everything via REST API** for your own analysis or integrations
-- 🌍 **Use in your native language** - Available in English, Spanish, and Haitian Creole
-- ⚡ **Run locally in 30 seconds** with .NET Aspire (PostgreSQL + PostGIS included)
+### Core Features
+- **Visualize all 8 Bahamas MPAs** on an interactive map with protection-level styling
+- **Monitor coral bleaching risk** with live NOAA satellite data (SST, DHW, alerts)
+- **Track fishing vessels** and detect activity inside protected areas
+- **Generate PDF reports** for MPA status monitoring and stakeholder briefings
+- **Record patrol routes** for conservation officers with GPS tracking and playback
+
+### Platform Capabilities
+- **Multi-tenant architecture** - Deploy for multiple nations/regions from a single instance
+- **Public REST API** with OAuth2-style API key authentication for integrations
+- **Offline map tiles** - Cache map data for field use without internet connectivity
+- **Gamification system** - Badges, leaderboards, and tier progression for citizen scientists
+- **Multilingual support** - Available in English, Spanish, and Haitian Creole
+
+### Developer Experience
+- **Run locally in 30 seconds** with .NET Aspire (PostgreSQL + PostGIS included)
+- **Comprehensive API** for your own analysis or integrations
+- **797+ automated tests** covering domain, application, infrastructure, and integration layers
 
 ## Why This Matters
 
@@ -48,33 +58,33 @@ The Bahamas possesses one of the world's most extensive coral reef systems—and
 
 CoralLedger Blue puts satellite data, vessel tracking, and spatial analysis into the hands of the people protecting these ecosystems. It's not just code—it's a tool for the Blue Economy.
 
-## Help Wanted 🆘
+## Help Wanted
 
 We're actively looking for contributors in these areas:
 
 | Area | Difficulty | What You'll Do |
 |------|------------|----------------|
-| 🧪 **Testing** | Medium | Help build comprehensive test coverage |
-| 🌍 **Spanish Translation** | Easy | Translate UI strings for Spanish speakers |
-| 🗺️ **GIS Optimization** | Advanced | Improve PostGIS query performance |
-| 📝 **Documentation** | Easy | Expand guides and tutorials |
-| ? **Brand & assets** | Medium | Refresh github-header.png, og-image.png, or favicons; see docs/brand-guidelines.md |
+| **Testing** | Medium | Help build comprehensive test coverage |
+| **Translations** | Easy | Improve Spanish/Haitian Creole translations |
+| **GIS Optimization** | Advanced | Improve PostGIS query performance |
+| **Documentation** | Easy | Expand guides and tutorials |
+| **Mobile UX** | Medium | Improve responsive design for tablets |
 
-👉 **[See all Good First Issues](https://github.com/caribdigital/coralledgerblue/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)**
+[See all Good First Issues](https://github.com/caribdigital/coralledgerblue/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 
 ## Screenshots
 
 ### Marine Intelligence Dashboard
 ![Dashboard with KPI cards, map preview, and alerts panel](docs/screenshots/dashboard-dark.png)
-*The dashboard features real-time KPI cards for Protected Areas (8 MPAs), Total Protected area (2,835 km²), Sea Temperature, and Bleaching Alerts. The integrated map preview and recent alerts panel provide at-a-glance monitoring.*
+*Real-time KPI cards for Protected Areas (8 MPAs), Total Protected area (2,835 km²), Sea Temperature, and Bleaching Alerts. The integrated map preview and recent alerts panel provide at-a-glance monitoring.*
 
 ### Interactive Map with Dark Theme
 ![Interactive map with CartoDB Dark Matter tiles and MPA polygons](docs/screenshots/map-dark-with-legend.png)
-*The interactive map displays all 8 Bahamas MPAs with protection level styling (No-Take, Highly Protected, Lightly Protected), CartoDB Dark Matter tiles, and a dynamic legend. The sidebar lists all MPAs with their protection status badges.*
+*Interactive map displays all 8 Bahamas MPAs with protection level styling (No-Take, Highly Protected, Lightly Protected), CartoDB Dark Matter tiles, and a dynamic legend.*
 
 ### Light Theme with MPA List
 ![Interactive map with OpenStreetMap tiles and full MPA list](docs/screenshots/map-light-with-mpa-list.png)
-*Switch to light mode for a clean view with OpenStreetMap tiles. The MPA list shows all protected areas with quick-access badges for protection levels.*
+*Light mode with OpenStreetMap tiles and the full MPA list showing protection levels.*
 
 > **Note:** To see the app in action, run `dotnet run --project src/CoralLedger.Blue.AppHost`
 
@@ -91,20 +101,11 @@ We're actively looking for contributors in these areas:
 | **Spatial** | NetTopologySuite 2.6 |
 | **CQRS** | MediatR 12.4 |
 | **Jobs** | Quartz.NET 3.13 |
+| **PDF Generation** | QuestPDF |
 | **Orchestration** | .NET Aspire 13.0 |
 | **Containers** | Docker |
 | **Localization** | ASP.NET Core i18n (English, Spanish, Haitian Creole) |
-
-## Visual Regression & Accessibility
-
-### Visual regression
-- Start the Aspire stack with `Scripts/coralledgerblue/Start-CoralLedgerBlueAspire.ps1 -Detached`, then run `dotnet test tests/CoralLedger.Blue.E2E.Tests/CoralLedger.Blue.E2E.Tests.csproj` to exercise the Playwright suite and capture visual baselines. The fixture now probes HTTP/HTTPS before navigating and stores failure screenshots under `tests/CoralLedger.Blue.E2E.Tests/playwright-artifacts/`.
-- Store the Lighthouse/axe reports and summary screenshots near `docs/accessibility-audit.md` so regressions are traceable.
-
-### Accessibility
-- The design system tokens (`wwwroot/css/base/_variables.css`) and `docs/design-system.md` guarantee consistent focus, contrast, and typography, but the audit doc records the current gaps and remediation plan.
-- Brand usage (logo, favicons, hero assets) is described in `docs/brand-guidelines.md`; re-run `scripts/create_brand_assets.py` and `scripts/create_favicons.py` whenever the palette or tagline changes so the README hero and `og:image` stay aligned.
-- Protected Planet API tokens live in `docs/DEVELOPER.md` (section covering `ProtectedPlanet:ApiToken`) and `secrets.template.json`. Keep them in user secrets or environment variables rather than checked in.
+| **Testing** | xUnit, Playwright (E2E), 797+ tests |
 
 ## Architecture
 
@@ -121,11 +122,11 @@ src/
 └── CoralLedger.Blue.ServiceDefaults/ # Shared Aspire Configuration
 ```
 
-## API Endpoints
+## API Reference
 
-> **Public API with OAuth2 Authentication**  
-> CoralLedger Blue provides a public REST API for third-party integrations. Authenticate using API keys in the `X-API-Key` header.  
-> 📖 [Developer Portal Documentation](docs/API-DEVELOPER-PORTAL.md)
+> **Public API with API Key Authentication**
+> CoralLedger Blue provides a public REST API for third-party integrations. Authenticate using API keys in the `X-API-Key` header.
+> [Developer Portal Documentation](docs/API-DEVELOPER-PORTAL.md)
 
 ### API Key Management
 | Endpoint | Method | Description |
@@ -137,6 +138,13 @@ src/
 | `/api/api-keys/{keyId}/revoke` | POST | Revoke API key |
 | `/api/api-keys/clients/{id}/usage` | GET | Get usage statistics |
 | `/api/api-keys/clients/{id}/logs` | GET | Get usage logs |
+
+### Tenant Management (Multi-tenant)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/tenants` | GET | Get all active tenants |
+| `/api/tenants/{tenantId}` | GET | Get tenant by ID with configuration |
+| `/api/tenants` | POST | Create a new tenant |
 
 ### Marine Protected Areas
 | Endpoint | Method | Description |
@@ -164,6 +172,28 @@ src/
 | `/api/bleaching/timeseries` | GET | DHW time series for a location |
 | `/api/bleaching/mpa/{mpaId}` | GET | Bleaching data for an MPA |
 
+### PDF Reports
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/reports/mpa/{mpaId}` | GET | Generate MPA status report (PDF) |
+| `/api/reports/bleaching/summary` | GET | Generate bleaching summary report |
+
+### Patrol Routes
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/patrols` | GET | List patrol routes |
+| `/api/patrols` | POST | Create new patrol route |
+| `/api/patrols/{id}` | GET | Get patrol route with track points |
+| `/api/patrols/{id}/points` | POST | Add GPS point to patrol |
+| `/api/patrols/{id}/complete` | POST | Complete patrol route |
+
+### Gamification
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/gamification/profile/{userId}` | GET | Get user's gamification profile |
+| `/api/gamification/leaderboard` | GET | Get leaderboard rankings |
+| `/api/gamification/badges` | GET | List available badges |
+
 ### Background Jobs
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -173,35 +203,27 @@ src/
 
 ## Database Schema
 
-### Marine Protected Areas
-- Spatial boundaries (PostGIS Geometry)
-- Protection levels (NoTake, HighlyProtected, LightlyProtected)
-- Island group classification
-- WDPA (World Database on Protected Areas) integration
+### Core Entities
+- **Marine Protected Areas** - Spatial boundaries (PostGIS), protection levels, WDPA integration
+- **Vessels** - Identity (MMSI, IMO), Global Fishing Watch integration, gear classification
+- **Vessel Events** - Fishing events, encounters, port visits with MPA intersection detection
+- **Bleaching Alerts** - NOAA metrics (SST, DHW), alert levels (Watch, Warning, Alert 1-5)
+- **Reefs** - Location geometry, health status, coral cover, survey history
 
-### Vessels
-- Vessel identity (MMSI, IMO, Call Sign)
-- Global Fishing Watch integration
-- Vessel type and gear classification
-- Flag state tracking
+### Multi-tenant Entities
+- **Tenants** - Regional deployments with configuration and branding
+- **Tenant Configuration** - Feature flags, API limits, regional settings
+- **Tenant Branding** - Custom domains, logos, color schemes
 
-### Vessel Positions & Events
-- AIS position tracking with spatial indexing
-- Fishing events, encounters, port visits
-- MPA intersection detection
-- Distance from shore calculation
+### Gamification Entities
+- **User Profiles** - Points, tier progression, streak tracking
+- **Badges** - Achievement definitions with unlock criteria
+- **User Badges** - Earned badges with timestamps
+- **Leaderboard Entries** - Weekly/monthly/all-time rankings
 
-### Bleaching Alerts
-- NOAA Coral Reef Watch metrics
-- Sea Surface Temperature (SST)
-- Degree Heating Week (DHW)
-- Alert levels (Watch, Warning, Alert 1-5)
-
-### Reefs
-- Location geometry
-- Health status tracking
-- Coral cover and bleaching metrics
-- Survey history
+### Patrol Entities
+- **Patrol Routes** - Officer patrols with start/end times, status
+- **Patrol Track Points** - GPS breadcrumb trail with timestamps
 
 ## Seeded Data
 
@@ -220,7 +242,7 @@ The application comes pre-seeded with 8 Bahamas Marine Protected Areas:
 
 ## Project Roadmap
 
-### Phase 1: Spatial Foundation ✅
+### Phase 1: Spatial Foundation
 - [x] Clean Architecture setup
 - [x] PostGIS spatial database
 - [x] MPA entity with spatial boundaries
@@ -228,33 +250,38 @@ The application comes pre-seeded with 8 Bahamas Marine Protected Areas:
 - [x] Blazor web interface
 - [x] .NET Aspire orchestration
 
-### Phase 2: Interactive Map ✅
-- [x] Leaflet.js map component with OpenStreetMap
+### Phase 2: Interactive Map
+- [x] Leaflet.js map component
 - [x] MPA polygon rendering with protection level styling
 - [x] GeoJSON API endpoints
-- [x] Blazor WebAssembly integration
 - [x] Map/List view toggle
-- [x] Click-to-select MPA on map
-- [x] Zoom-to-MPA on selection
-- [x] Selection highlight with info popup
+- [x] Click-to-select MPA with zoom and popup
 
-### Phase 3: Data Ingestion ✅
+### Phase 3: Data Ingestion
 - [x] Global Fishing Watch API v3 integration
 - [x] NOAA Coral Reef Watch ERDDAP integration
 - [x] Vessel tracking domain entities
 - [x] Bleaching alert domain entities
-- [x] REST API endpoints for external data
 - [x] Protected Planet WDPA API integration
 - [x] Automated data pipelines (Quartz.NET)
-- [ ] Vessel activity visualization on map
+- [x] 4Wings heatmap integration
 
-### Phase 4: Citizen Science
+### Phase 4: Platform Features
+- [x] Multi-tenant architecture for regional deployments
+- [x] Public API with API key authentication
+- [x] PDF report generation
+- [x] Patrol route recording and playback
+- [x] Offline map tile caching
+- [x] Multilingual support (EN, ES, HT)
+- [x] Gamification system (badges, leaderboards, tiers)
+
+### Phase 5: Citizen Science (In Progress)
 - [ ] PWA offline support
 - [ ] Photo upload with AI species identification
 - [ ] Invasive species reporting (Lionfish tracking)
 - [ ] Community observations
 
-### Phase 5: AI Intelligence
+### Phase 6: AI Intelligence
 - [ ] Semantic Kernel integration
 - [ ] Natural language queries ("Show reefs with high bleaching risk")
 - [ ] Text-to-SQL for spatial queries
@@ -281,39 +308,36 @@ NOAA Coral Reef Watch data is publicly available and requires no authentication.
 
 ### Redis Cache (Local Development)
 
-The application uses Redis for distributed caching. To run Redis locally:
+The application uses Redis for distributed caching:
 
 ```bash
 # Using Docker (recommended)
 docker run -d -p 6379:6379 --name coralledger-redis redis:7-alpine
 ```
 
-The application will automatically connect to `localhost:6379`. See [Redis Setup Guide](docs/REDIS.md) for detailed configuration options, Azure Cache for Redis setup, and troubleshooting.
+See [Redis Setup Guide](docs/REDIS.md) for detailed configuration.
 
 ### Production Deployment
 
-For production, use one of these secure options:
+For production, use:
 - **Azure Key Vault** (recommended for Azure deployments)
 - **Environment Variables**
 - **Docker Secrets** (for containerized deployments)
 
-See [.NET Secret Management](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets) for details.
-
 ## Documentation
 
 - [Architecture Overview](docs/architecture.md)
-- [Redis Caching Guide](docs/REDIS.md) - Distributed caching setup and configuration
-- [Phase 1 Delivery](docs/phase1-delivery.md)
-- [Phase 2 Delivery](docs/phase2-delivery.md)
-- [Accessibility audit plan](docs/accessibility-audit.md)
-- [Brand guidelines](docs/brand-guidelines.md)
+- [API Developer Portal](docs/API-DEVELOPER-PORTAL.md)
+- [Redis Caching Guide](docs/REDIS.md)
+- [Accessibility Audit](docs/accessibility-audit.md)
+- [Brand Guidelines](docs/brand-guidelines.md)
 - [Contributing Guide](docs/CONTRIBUTING.md)
 
 ## Community
 
-- 💬 **Discussions** — [GitHub Discussions](https://github.com/caribdigital/coralledgerblue/discussions)
-- 🐛 **Issues** — [Report bugs or request features](https://github.com/caribdigital/coralledgerblue/issues)
-- 📧 **Contact** — [DigitalCarib.com](https://digitalcarib.com)
+- **Discussions** — [GitHub Discussions](https://github.com/caribdigital/coralledgerblue/discussions)
+- **Issues** — [Report bugs or request features](https://github.com/caribdigital/coralledgerblue/issues)
+- **Contact** — [DigitalCarib.com](https://digitalcarib.com)
 
 ## Contributing
 
@@ -325,15 +349,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-If CoralLedger Blue helps you or inspires you, consider giving it a ⭐ — it helps others discover the project!
-
----
-
 ## Acknowledgments
 
 - **Bahamas National Trust** - MPA data and conservation efforts
 - **Protected Planet / WDPA** - Global protected areas database
-- **Allen Coral Atlas** - Coral reef mapping data
+- **Global Fishing Watch** - Vessel tracking and fishing activity data
+- **NOAA Coral Reef Watch** - Bleaching monitoring data
 - **.NET Team** - Aspire, Blazor, and EF Core
 - **Leaflet.js** - Open source JavaScript map library
 
@@ -341,4 +362,4 @@ If CoralLedger Blue helps you or inspires you, consider giving it a ⭐ — it h
 
 **Created by Robbie McKenzie - Founder, [DigitalCarib.com](https://digitalcarib.com)**
 
-**Built with love for the Bahamian Blue Economy** 🇧🇸
+**Built with love for the Caribbean Blue Economy**
