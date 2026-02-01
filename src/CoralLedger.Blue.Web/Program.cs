@@ -79,6 +79,17 @@ builder.Services.AddScoped<IAlertHubContext, AlertHubContext>();
 builder.Services.AddSecurityRateLimiting();
 builder.Services.AddSecurityCors(builder.Configuration);
 
+// Add API Key Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions.DefaultScheme;
+})
+.AddScheme<CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions, CoralLedger.Blue.Web.Security.ApiKeyAuthenticationHandler>(
+    CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions.DefaultScheme,
+    options => { });
+
+builder.Services.AddAuthorization();
+
 // Add Performance: Response compression and caching
 builder.Services.AddPerformanceCompression();
 
@@ -93,7 +104,8 @@ builder.Services.AddOpenApi(options =>
             Version = "v1",
             Description = "Marine Protected Area monitoring and management API for The Bahamas. " +
                           "Provides endpoints for MPA data, vessel tracking, coral bleaching alerts, " +
-                          "citizen observations, and AI-powered marine insights.",
+                          "citizen observations, and AI-powered marine insights. " +
+                          "Authentication: Use X-API-Key header with your API key.",
             Contact = new()
             {
                 Name = "CoralLedger Blue Team",
@@ -106,6 +118,7 @@ builder.Services.AddOpenApi(options =>
                 Url = new Uri("https://opensource.org/licenses/MIT")
             }
         };
+        
         return Task.CompletedTask;
     });
 });
@@ -188,8 +201,13 @@ app.UseRouting();
 // 4. Middleware that needs to know about the selected endpoint
 //    These MUST be after UseRouting() and before endpoint execution
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseRateLimiter();
 app.UseAntiforgery();
+
+// Add API usage tracking middleware (must be after authentication)
+app.UseMiddleware<CoralLedger.Blue.Web.Security.ApiUsageTrackingMiddleware>();
 
 // 5. Map Razor Components (handles Blazor routes)
 app.MapRazorComponents<App>()
@@ -211,6 +229,7 @@ app.MapExportEndpoints();
 app.MapAdminEndpoints();
 app.MapSpeciesEndpoints();
 app.MapDiagnosticsEndpoints();
+app.MapApiKeyManagementEndpoints();
 
 // 8. Map SignalR hub
 app.MapHub<AlertHub>("/hubs/alerts");

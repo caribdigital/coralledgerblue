@@ -110,6 +110,10 @@ public static class DependencyInjection
         // Register Patrol Route Export Service
         services.AddScoped<IPatrolRouteExportService, PatrolRouteExportService>();
 
+        // Register API Key Management services
+        services.AddScoped<IApiKeyService, ApiKeyService>();
+        services.AddScoped<IApiUsageService, ApiUsageService>();
+
         // Register Cache service (Redis or in-memory fallback)
         var redisOptions = configuration.GetSection(RedisCacheOptions.SectionName).Get<RedisCacheOptions>()
             ?? new RedisCacheOptions();
