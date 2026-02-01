@@ -2,6 +2,7 @@ using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Domain.Entities;
 using CoralLedger.Blue.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 
 namespace CoralLedger.Blue.Web.Endpoints;
@@ -150,15 +151,20 @@ public static class AdminEndpoints
         // GET /api/admin/system/health - System health check
         group.MapGet("/system/health", async (
             IMarineDbContext context,
+            ILoggerFactory loggerFactory,
             CancellationToken ct = default) =>
         {
+            var logger = loggerFactory.CreateLogger("AdminEndpoints");
             var dbHealthy = false;
             try
             {
                 await context.Database.ExecuteSqlRawAsync("SELECT 1", ct).ConfigureAwait(false);
                 dbHealthy = true;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Database health check failed");
+            }
 
             return Results.Ok(new
             {
