@@ -109,9 +109,9 @@ public class AisClient : IAisClient
     {
         if (!IsConfigured)
         {
-            // Return empty track when not configured (demo mode doesn't support track history)
-            _logger.LogWarning("AIS client is not configured, track data unavailable");
-            return ServiceResult<IReadOnlyList<AisVesselPosition>>.OkEmpty();
+            // Return demo track when not configured
+            _logger.LogWarning("AIS client is not configured, returning demo track data");
+            return ServiceResult<IReadOnlyList<AisVesselPosition>>.Ok(GetDemoVesselTrack(mmsi, hours));
         }
 
         try
@@ -294,6 +294,102 @@ public class AisClient : IAisClient
                 Timestamp = now.AddMinutes(-random.Next(1, 10))
             }
         };
+    }
+
+    /// <summary>
+    /// Returns demo vessel track history for testing when API is not configured
+    /// </summary>
+    private IReadOnlyList<AisVesselPosition> GetDemoVesselTrack(string mmsi, int hours)
+    {
+        // Validate input
+        if (hours <= 0 || hours > 168) // Max 1 week of history
+        {
+            _logger.LogWarning("Invalid hours parameter {Hours} for track history, using default 24 hours", hours);
+            hours = 24;
+        }
+
+        // Get the demo vessel's current position
+        var demoVessels = GetDemoVesselPositions();
+        var vessel = demoVessels.FirstOrDefault(v => v.Mmsi == mmsi);
+
+        if (vessel == null)
+        {
+            _logger.LogWarning("Demo vessel with MMSI {Mmsi} not found", mmsi);
+            return Array.Empty<AisVesselPosition>();
+        }
+
+        var now = DateTime.UtcNow;
+        var track = new List<AisVesselPosition>();
+        
+        // Generate 30-40 track points for the requested time period
+        var random = Random.Shared;
+        var pointCount = 30 + random.Next(11); // 30-40 points
+        var intervalMinutes = (hours * 60) / pointCount;
+
+        // Current vessel position is the end point
+        var endLon = vessel.Longitude;
+        var endLat = vessel.Latitude;
+        var currentSpeed = vessel.Speed ?? 8.0;
+        var currentCourse = vessel.Course ?? 45.0;
+
+        // Generate track points going backward in time
+        for (int i = 0; i < pointCount; i++)
+        {
+            var minutesAgo = i * intervalMinutes;
+            var timestamp = now.AddMinutes(-minutesAgo);
+
+            // Calculate position based on reverse path
+            // Move vessel backward along a realistic path with course variations
+            var timeRatio = (double)i / pointCount;
+            
+            // Add course variation (sinusoidal pattern for realistic maneuvering)
+            var courseVariation = Math.Sin(timeRatio * Math.PI * 2) * 15; // +/- 15 degrees
+            var trackCourse = (currentCourse + 180 + courseVariation) % 360; // Reverse course
+            
+            // Calculate distance traveled (speed in knots * time in hours)
+            var hoursBack = minutesAgo / 60.0;
+            var distanceNm = currentSpeed * hoursBack;
+            
+            // Convert to degrees (1 nm ≈ 1/60 degree)
+            var distanceDeg = distanceNm / 60.0;
+            
+            // Calculate position offset
+            var radCourse = trackCourse * Math.PI / 180;
+            var latOffset = distanceDeg * Math.Cos(radCourse);
+            var lonOffset = distanceDeg * Math.Sin(radCourse) / Math.Cos(endLat * Math.PI / 180);
+            
+            var lat = endLat - latOffset;
+            var lon = endLon - lonOffset;
+            
+            // Add slight random variation to make it more realistic
+            // Use seeded random for reproducibility based on MMSI and point index
+            var seed = mmsi.GetHashCode() + i;
+            var pointRandom = new Random(seed);
+            lat += (pointRandom.NextDouble() - 0.5) * 0.01;
+            lon += (pointRandom.NextDouble() - 0.5) * 0.01;
+            
+            // Speed variation (±20% of base speed)
+            var speedVariation = 1.0 + (pointRandom.NextDouble() - 0.5) * 0.4;
+            var speed = currentSpeed * speedVariation;
+
+            track.Add(new AisVesselPosition
+            {
+                Mmsi = mmsi,
+                Name = vessel.Name,
+                Longitude = lon,
+                Latitude = lat,
+                Speed = speed,
+                Course = (currentCourse + courseVariation + 360) % 360,
+                VesselType = vessel.VesselType,
+                Flag = vessel.Flag,
+                Timestamp = timestamp
+            });
+        }
+
+        // Reverse to get chronological order (oldest to newest)
+        track.Reverse();
+        
+        return track;
     }
 
     private static double CalculateDistanceKm(double lon1, double lat1, double lon2, double lat2)
