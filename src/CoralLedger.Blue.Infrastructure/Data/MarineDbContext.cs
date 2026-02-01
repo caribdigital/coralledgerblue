@@ -24,6 +24,9 @@ public class MarineDbContext : DbContext, IMarineDbContext
     public DbSet<SpeciesObservation> SpeciesObservations => Set<SpeciesObservation>();
     public DbSet<SpeciesMisidentificationReport> MisidentificationReports => Set<SpeciesMisidentificationReport>();
     public DbSet<NLQAuditLog> NLQAuditLogs => Set<NLQAuditLog>();
+    public DbSet<PatrolRoute> PatrolRoutes => Set<PatrolRoute>();
+    public DbSet<PatrolRoutePoint> PatrolRoutePoints => Set<PatrolRoutePoint>();
+    public DbSet<PatrolWaypoint> PatrolWaypoints => Set<PatrolWaypoint>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

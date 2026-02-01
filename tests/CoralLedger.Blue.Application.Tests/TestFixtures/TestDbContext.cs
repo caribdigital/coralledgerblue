@@ -28,6 +28,9 @@ public class TestDbContext : DbContext, IMarineDbContext
     public DbSet<SpeciesObservation> SpeciesObservations => Set<SpeciesObservation>();
     public DbSet<SpeciesMisidentificationReport> MisidentificationReports => Set<SpeciesMisidentificationReport>();
     public DbSet<NLQAuditLog> NLQAuditLogs => Set<NLQAuditLog>();
+    public DbSet<PatrolRoute> PatrolRoutes => Set<PatrolRoute>();
+    public DbSet<PatrolRoutePoint> PatrolRoutePoints => Set<PatrolRoutePoint>();
+    public DbSet<PatrolWaypoint> PatrolWaypoints => Set<PatrolWaypoint>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -109,6 +112,24 @@ public class TestDbContext : DbContext, IMarineDbContext
         modelBuilder.Entity<NLQAuditLog>(entity =>
         {
             entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<PatrolRoute>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Ignore(e => e.RouteGeometry);  // Ignore geometry
+        });
+
+        modelBuilder.Entity<PatrolRoutePoint>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Ignore(e => e.Location);  // Ignore geometry
+        });
+
+        modelBuilder.Entity<PatrolWaypoint>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Ignore(e => e.Location);  // Ignore geometry
         });
 
         base.OnModelCreating(modelBuilder);

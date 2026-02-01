@@ -11,6 +11,11 @@ x86/
 bld/
 [Bb]in/
 [Oo]bj/
+**/[Bb]in/
+**/[Oo]bj/
+# Prevent mixed path separator issues
+**/bin\\*
+**/obj\\*
 [Oo]ut/
 [Ll]og/
 [Ll]ogs/
