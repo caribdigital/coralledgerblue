@@ -174,11 +174,12 @@ await cacheService.RemoveByPrefixAsync("mpas:");
 ```
 
 **Implementation Details:**
-- Uses Redis **SCAN command** (for Redis 2.8+) for production-safe, non-blocking key iteration
+- Uses Redis **SCAN command** (for Redis 2.8+) for production-safe, non-blocking key iteration via [StackExchange.Redis KeysAsync](https://stackexchange.github.io/StackExchange.Redis/KeysScan.html)
 - Only falls back to KEYS command for legacy Redis versions (< 2.8)
 - Handles pagination automatically through cursor-based iteration
 - Safe for production use with millions of keys
 - Requires `IConnectionMultiplexer` to be registered in DI container
+- **Fallback behavior**: If `IConnectionMultiplexer` is not available, a warning is logged and the operation is skipped (no keys are removed)
 
 **Configuration:**
 ```csharp
