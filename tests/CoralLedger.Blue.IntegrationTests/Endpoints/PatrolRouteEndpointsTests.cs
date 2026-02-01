@@ -7,11 +7,11 @@ using Xunit;
 
 namespace CoralLedger.Blue.IntegrationTests.Endpoints;
 
-public class PatrolRouteEndpointsTests : IClassFixture<IntegrationTestWebApplicationFactory>
+public class PatrolRouteEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public PatrolRouteEndpointsTests(IntegrationTestWebApplicationFactory factory)
+    public PatrolRouteEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }
