@@ -172,7 +172,6 @@
 @code {
     [Parameter] public string MapId { get; set; } = "map";
 
-    private IJSObjectReference? _jsModule;
     private DotNetObjectReference<OfflineMapManager>? _dotNetRef;
     
     private bool _loading = true;
@@ -305,15 +304,10 @@
     public async ValueTask DisposeAsync()
     {
         _dotNetRef?.Dispose();
-        
-        if (_jsModule != null)
-        {
-            await _jsModule.DisposeAsync();
-        }
     }
 
     // Models for JS interop
-    private class CacheStats
+    public class CacheStats
     {
         public int totalTiles { get; set; }
         public long totalBytes { get; set; }
@@ -321,7 +315,7 @@
         public long? lastUpdated { get; set; }
     }
 
-    private class DownloadProgress
+    public class DownloadProgress
     {
         public int current { get; set; }
         public int total { get; set; }
@@ -332,7 +326,7 @@
         public long totalBytes { get; set; }
     }
 
-    private class DownloadResult
+    public class DownloadResult
     {
         public int total { get; set; }
         public int downloaded { get; set; }
@@ -341,14 +335,14 @@
         public long totalBytes { get; set; }
     }
 
-    private class EstimateResult
+    public class EstimateResult
     {
         public int tileCount { get; set; }
         public long estimatedBytes { get; set; }
         public double estimatedMB { get; set; }
     }
 
-    private class CachedRegion
+    public class CachedRegion
     {
         public string theme { get; set; } = "";
         public int zoom { get; set; }
