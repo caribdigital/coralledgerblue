@@ -315,7 +315,8 @@ public class AisClient : IAisClient
         var track = new List<AisVesselPosition>();
         
         // Generate 30-40 track points for the requested time period
-        var pointCount = 30 + new Random().Next(11); // 30-40 points
+        var random = Random.Shared;
+        var pointCount = 30 + random.Next(11); // 30-40 points
         var intervalMinutes = (hours * 60) / pointCount;
 
         // Current vessel position is the end point
@@ -354,12 +355,14 @@ public class AisClient : IAisClient
             var lon = endLon - lonOffset;
             
             // Add slight random variation to make it more realistic
-            var random = new Random(mmsi.GetHashCode() + i);
-            lat += (random.NextDouble() - 0.5) * 0.01;
-            lon += (random.NextDouble() - 0.5) * 0.01;
+            // Use seeded random for reproducibility based on MMSI and point index
+            var seed = mmsi.GetHashCode() + i;
+            var pointRandom = new Random(seed);
+            lat += (pointRandom.NextDouble() - 0.5) * 0.01;
+            lon += (pointRandom.NextDouble() - 0.5) * 0.01;
             
             // Speed variation (±20% of base speed)
-            var speedVariation = 1.0 + (random.NextDouble() - 0.5) * 0.4;
+            var speedVariation = 1.0 + (pointRandom.NextDouble() - 0.5) * 0.4;
             var speed = currentSpeed * speedVariation;
 
             track.Add(new AisVesselPosition

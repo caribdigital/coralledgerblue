@@ -167,7 +167,7 @@ public class AisClientTests
     {
         // Arrange
         var client = CreateClient();
-        var mmsi = "311000002"; // Different demo vessel
+        var mmsi = "311000001"; // Demo vessel MMSI
         var hours = 12;
 
         // Act
