@@ -123,6 +123,21 @@ src/
 
 ## API Endpoints
 
+> **Public API with OAuth2 Authentication**  
+> CoralLedger Blue provides a public REST API for third-party integrations. Authenticate using API keys in the `X-API-Key` header.  
+> 📖 [Developer Portal Documentation](docs/API-DEVELOPER-PORTAL.md)
+
+### API Key Management
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/api-keys/clients` | POST | Create API client with initial key |
+| `/api/api-keys/clients` | GET | List all API clients |
+| `/api/api-keys/clients/{id}` | GET | Get specific API client |
+| `/api/api-keys/clients/{id}/keys` | POST | Create additional API key |
+| `/api/api-keys/{keyId}/revoke` | POST | Revoke API key |
+| `/api/api-keys/clients/{id}/usage` | GET | Get usage statistics |
+| `/api/api-keys/clients/{id}/logs` | GET | Get usage logs |
+
 ### Marine Protected Areas
 | Endpoint | Method | Description |
 |----------|--------|-------------|

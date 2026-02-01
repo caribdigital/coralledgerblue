@@ -27,6 +27,9 @@ public class MarineDbContext : DbContext, IMarineDbContext
     public DbSet<PatrolRoute> PatrolRoutes => Set<PatrolRoute>();
     public DbSet<PatrolRoutePoint> PatrolRoutePoints => Set<PatrolRoutePoint>();
     public DbSet<PatrolWaypoint> PatrolWaypoints => Set<PatrolWaypoint>();
+    public DbSet<ApiClient> ApiClients => Set<ApiClient>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<ApiUsageLog> ApiUsageLogs => Set<ApiUsageLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
