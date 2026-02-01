@@ -72,6 +72,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
                 new Claim(ClaimTypes.Name, apiKey.ApiClient.Name),
                 new Claim("ApiKeyId", apiKey.Id.ToString()),
                 new Claim("ClientId", apiKey.ApiClient.ClientId),
+                new Claim("TenantId", apiKey.ApiClient.TenantId.ToString()),
                 new Claim("Scopes", apiKey.Scopes),
                 new Claim("RateLimit", apiKey.ApiClient.RateLimitPerMinute.ToString())
             };

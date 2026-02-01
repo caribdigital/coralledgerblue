@@ -40,6 +40,9 @@ public class BleachingAlertConfiguration : IEntityTypeConfiguration<BleachingAle
             .HasPrecision(8, 3)
             .IsRequired();
 
+        builder.Property(e => e.TenantId)
+            .IsRequired();
+
         // Spatial index
         builder.HasIndex(e => e.Location)
             .HasMethod("GIST");
@@ -48,6 +51,7 @@ public class BleachingAlertConfiguration : IEntityTypeConfiguration<BleachingAle
         builder.HasIndex(e => e.Date);
         builder.HasIndex(e => e.AlertLevel);
         builder.HasIndex(e => e.DegreeHeatingWeek);
+        builder.HasIndex(e => e.TenantId);
         builder.HasIndex(e => new { e.Date, e.AlertLevel });
         builder.HasIndex(e => new { e.MarineProtectedAreaId, e.Date });
 

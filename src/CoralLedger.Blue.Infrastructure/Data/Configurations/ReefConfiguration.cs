@@ -36,6 +36,9 @@ public class ReefConfiguration : IEntityTypeConfiguration<Reef>
         builder.Property(e => e.BleachingPercentage)
             .HasPrecision(5, 2);
 
+        builder.Property(e => e.TenantId)
+            .IsRequired();
+
         // Spatial index
         builder.HasIndex(e => e.Location)
             .HasMethod("GIST");
@@ -43,5 +46,6 @@ public class ReefConfiguration : IEntityTypeConfiguration<Reef>
         // Regular indexes
         builder.HasIndex(e => e.Name);
         builder.HasIndex(e => e.HealthStatus);
+        builder.HasIndex(e => e.TenantId);
     }
 }

@@ -64,6 +64,9 @@ public class MarineProtectedAreaConfiguration : IEntityTypeConfiguration<MarineP
         builder.Property(e => e.Description)
             .HasMaxLength(2000);
 
+        builder.Property(e => e.TenantId)
+            .IsRequired();
+
         // Spatial index for efficient querying
         builder.HasIndex(e => e.Boundary)
             .HasMethod("GIST");
@@ -76,6 +79,7 @@ public class MarineProtectedAreaConfiguration : IEntityTypeConfiguration<MarineP
         builder.HasIndex(e => e.WdpaId).IsUnique();
         builder.HasIndex(e => e.IslandGroup);
         builder.HasIndex(e => e.ProtectionLevel);
+        builder.HasIndex(e => e.TenantId);
 
         // Relationship
         builder.HasMany(e => e.Reefs)

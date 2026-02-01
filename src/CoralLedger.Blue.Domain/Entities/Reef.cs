@@ -4,8 +4,9 @@ using NetTopologySuite.Geometries;
 
 namespace CoralLedger.Blue.Domain.Entities;
 
-public class Reef : BaseEntity, IAuditableEntity
+public class Reef : BaseEntity, IAuditableEntity, ITenantEntity
 {
+    public Guid TenantId { get; set; }
     public string Name { get; private set; } = string.Empty;
     public Geometry Location { get; private set; } = null!;  // Point, LineString, or Polygon
     public ReefHealth HealthStatus { get; private set; }
@@ -28,6 +29,7 @@ public class Reef : BaseEntity, IAuditableEntity
     private Reef() { }
 
     public static Reef Create(
+        Guid tenantId,
         string name,
         Geometry location,
         ReefHealth healthStatus = ReefHealth.Unknown,
@@ -37,6 +39,7 @@ public class Reef : BaseEntity, IAuditableEntity
         return new Reef
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             Name = name,
             Location = location,
             HealthStatus = healthStatus,

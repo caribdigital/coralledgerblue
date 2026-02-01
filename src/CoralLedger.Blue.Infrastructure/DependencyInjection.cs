@@ -114,6 +114,10 @@ public static class DependencyInjection
         services.AddScoped<IApiKeyService, ApiKeyService>();
         services.AddScoped<IApiUsageService, ApiUsageService>();
 
+        // Register Tenant Management services
+        services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<ITenantRepository, TenantRepository>();
+
         // Register Cache service (Redis or in-memory fallback)
         var redisOptions = configuration.GetSection(RedisCacheOptions.SectionName).Get<RedisCacheOptions>()
             ?? new RedisCacheOptions();
