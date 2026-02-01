@@ -31,4 +31,24 @@ public interface IEmailService
         string severity,
         string? mpaName = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Send an email with a file attachment
+    /// </summary>
+    /// <param name="to">Recipient email address</param>
+    /// <param name="subject">Email subject</param>
+    /// <param name="htmlContent">HTML content of the email</param>
+    /// <param name="attachmentContent">File content as byte array</param>
+    /// <param name="attachmentFileName">File name for the attachment</param>
+    /// <param name="attachmentContentType">MIME type of the attachment</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>True if email was sent successfully</returns>
+    Task<bool> SendEmailWithAttachmentAsync(
+        string to,
+        string subject,
+        string htmlContent,
+        byte[] attachmentContent,
+        string attachmentFileName,
+        string attachmentContentType = "application/octet-stream",
+        CancellationToken cancellationToken = default);
 }
