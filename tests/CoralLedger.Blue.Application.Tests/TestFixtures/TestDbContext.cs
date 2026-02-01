@@ -31,6 +31,12 @@ public class TestDbContext : DbContext, IMarineDbContext
     public DbSet<PatrolRoute> PatrolRoutes => Set<PatrolRoute>();
     public DbSet<PatrolRoutePoint> PatrolRoutePoints => Set<PatrolRoutePoint>();
     public DbSet<PatrolWaypoint> PatrolWaypoints => Set<PatrolWaypoint>();
+    
+    // Gamification
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+    public DbSet<UserBadge> UserBadges => Set<UserBadge>();
+    public DbSet<UserPoints> UserPoints => Set<UserPoints>();
+    public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -130,6 +136,27 @@ public class TestDbContext : DbContext, IMarineDbContext
         {
             entity.HasKey(e => e.Id);
             entity.Ignore(e => e.Location);  // Ignore geometry
+        });
+
+        // Gamification entities
+        modelBuilder.Entity<UserProfile>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<UserBadge>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<UserPoints>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<UserAchievement>(entity =>
+        {
+            entity.HasKey(e => e.Id);
         });
 
         base.OnModelCreating(modelBuilder);
