@@ -56,7 +56,9 @@ public class ApiUsageTrackingMiddleware
         {
             stopwatch.Stop();
 
-            // Log usage asynchronously (fire and forget)
+            // Log usage asynchronously (fire and forget to avoid slowing down requests)
+            // Note: We intentionally don't await this to keep API responses fast
+            // Errors are logged but don't fail the request
             _ = Task.Run(async () =>
             {
                 try
@@ -76,9 +78,9 @@ public class ApiUsageTrackingMiddleware
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to log API usage");
+                    _logger.LogWarning(ex, "Failed to log API usage for client {ApiClientId}", apiClientId);
                 }
-            });
+            }, CancellationToken.None);
         }
     }
 

@@ -130,16 +130,13 @@ public class ApiKeyManagementEndpointsTests : IClassFixture<CustomWebApplication
 
         var revokeRequest = new RevokeApiKeyRequest("Test revocation");
 
-        // Act
-        var response = await _client.DeleteAsync($"/api/api-keys/{apiKeyId}?reason={Uri.EscapeDataString(revokeRequest.Reason)}");
-
-        // Assert - Should be OK or NotImplemented depending on endpoint signature
-        // The endpoint expects a body, so we need to send it properly
+        // Act - Send DELETE with body
         var revokeResponse = await _client.SendAsync(new HttpRequestMessage(HttpMethod.Delete, $"/api/api-keys/{apiKeyId}")
         {
             Content = JsonContent.Create(revokeRequest)
         });
 
+        // Assert
         revokeResponse.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 

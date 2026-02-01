@@ -39,7 +39,7 @@ public class ApiKey : BaseEntity, IAuditableEntity
     {
         var plainKey = GenerateApiKey();
         var keyHash = HashApiKey(plainKey);
-        var keyPrefix = plainKey.Substring(0, 8);
+        var keyPrefix = plainKey[..8]; // Take first 8 characters for display
         
         var apiKey = new ApiKey
         {

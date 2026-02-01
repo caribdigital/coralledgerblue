@@ -50,6 +50,8 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
             }
 
             // Update last used (fire and forget to avoid slowing down requests)
+            // Note: We intentionally don't await this to keep authentication fast
+            // Errors are logged but don't fail the authentication
             _ = Task.Run(async () =>
             {
                 try
@@ -59,9 +61,9 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning(ex, "Failed to update API key last used timestamp");
+                    Logger.LogWarning(ex, "Failed to update API key last used timestamp for key {ApiKeyId}", apiKey.Id);
                 }
-            });
+            }, CancellationToken.None);
 
             // Create claims
             var claims = new[]
