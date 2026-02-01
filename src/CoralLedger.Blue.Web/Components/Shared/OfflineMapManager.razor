@@ -307,6 +307,8 @@
     }
 
     // Models for JS interop
+    // Note: Using camelCase for property names to match JavaScript conventions
+    // These classes are serialized directly to/from JavaScript without custom naming
     public class CacheStats
     {
         public int totalTiles { get; set; }
