@@ -1,4 +1,5 @@
 using CoralLedger.Blue.Domain.Entities;
+using System;
 using CoralLedger.Blue.Domain.Enums;
 using FluentAssertions;
 using NetTopologySuite.Geometries;
@@ -31,7 +32,7 @@ public class MarineProtectedAreaTests
         var boundary = CreateTestPolygon();
 
         // Act
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             name,
             boundary,
             ProtectionLevel.NoTake,
@@ -59,7 +60,7 @@ public class MarineProtectedAreaTests
         var designationDate = new DateOnly(1958, 1, 1);
 
         // Act
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             name,
             boundary,
             ProtectionLevel.NoTake,
@@ -83,7 +84,7 @@ public class MarineProtectedAreaTests
         var boundary = CreateTestPolygon(centerLat: 24.5, centerLon: -77.5, size: 0.1);
 
         // Act
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             boundary,
             ProtectionLevel.HighlyProtected,
@@ -102,7 +103,7 @@ public class MarineProtectedAreaTests
         var boundary = CreateTestPolygon(size: 0.1); // 0.2 x 0.2 degree square
 
         // Act
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             boundary,
             ProtectionLevel.LightlyProtected,
@@ -120,7 +121,7 @@ public class MarineProtectedAreaTests
     public void UpdateDescription_UpdatesDescriptionAndModifiedAt()
     {
         // Arrange
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
@@ -142,7 +143,7 @@ public class MarineProtectedAreaTests
     public void UpdateProtectionLevel_UpdatesLevelAndModifiedAt()
     {
         // Arrange
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             CreateTestPolygon(),
             ProtectionLevel.LightlyProtected,
@@ -161,7 +162,7 @@ public class MarineProtectedAreaTests
     public void Decommission_SetsStatusToDecommissioned()
     {
         // Arrange
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             CreateTestPolygon(),
             ProtectionLevel.HighlyProtected,
@@ -188,7 +189,7 @@ public class MarineProtectedAreaTests
         var boundary = CreateTestPolygon();
 
         // Act
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             boundary,
             protectionLevel,
@@ -212,7 +213,7 @@ public class MarineProtectedAreaTests
         var boundary = CreateTestPolygon();
 
         // Act
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             boundary,
             ProtectionLevel.NoTake,
@@ -229,8 +230,8 @@ public class MarineProtectedAreaTests
         var boundary = CreateTestPolygon();
 
         // Act
-        var mpa1 = MarineProtectedArea.Create("MPA 1", boundary, ProtectionLevel.NoTake, IslandGroup.Exumas);
-        var mpa2 = MarineProtectedArea.Create("MPA 2", boundary, ProtectionLevel.NoTake, IslandGroup.Exumas);
+        var mpa1 = MarineProtectedArea.Create(Guid.NewGuid(), "MPA 1", boundary, ProtectionLevel.NoTake, IslandGroup.Exumas);
+        var mpa2 = MarineProtectedArea.Create(Guid.NewGuid(), "MPA 2", boundary, ProtectionLevel.NoTake, IslandGroup.Exumas);
 
         // Assert
         mpa1.Id.Should().NotBe(mpa2.Id);
@@ -241,7 +242,7 @@ public class MarineProtectedAreaTests
     {
         // Arrange
         var originalBoundary = CreateTestPolygon(centerLat: 24.0, centerLon: -77.0, size: 0.1);
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             originalBoundary,
             ProtectionLevel.NoTake,
@@ -266,7 +267,7 @@ public class MarineProtectedAreaTests
     {
         // Arrange
         var smallBoundary = CreateTestPolygon(size: 0.05);
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             smallBoundary,
             ProtectionLevel.NoTake,
@@ -287,7 +288,7 @@ public class MarineProtectedAreaTests
     {
         // Arrange
         var boundary = CreateTestPolygon();
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             boundary,
             ProtectionLevel.NoTake,
@@ -313,7 +314,7 @@ public class MarineProtectedAreaTests
     {
         // Arrange
         var boundary = CreateTestPolygon();
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             boundary,
             ProtectionLevel.NoTake,
@@ -334,7 +335,7 @@ public class MarineProtectedAreaTests
     {
         // Arrange
         var boundary = CreateTestPolygon();
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             boundary,
             ProtectionLevel.NoTake,

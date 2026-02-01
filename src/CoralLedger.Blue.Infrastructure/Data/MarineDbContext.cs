@@ -31,6 +31,12 @@ public class MarineDbContext : DbContext, IMarineDbContext
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<ApiUsageLog> ApiUsageLogs => Set<ApiUsageLog>();
     
+    // Multi-tenant
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<TenantConfiguration> TenantConfigurations => Set<TenantConfiguration>();
+    public DbSet<TenantBranding> TenantBrandings => Set<TenantBranding>();
+    public DbSet<TenantUser> TenantUsers => Set<TenantUser>();
+    
     // Gamification
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
     public DbSet<UserBadge> UserBadges => Set<UserBadge>();

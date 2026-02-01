@@ -27,7 +27,7 @@ public class BleachingAlertTests
         var hotSpot = 1.5;
 
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             location,
             date,
             sst,
@@ -53,7 +53,7 @@ public class BleachingAlertTests
         var mpaId = Guid.NewGuid();
 
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 28.0,
@@ -72,7 +72,7 @@ public class BleachingAlertTests
         var reefId = Guid.NewGuid();
 
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 28.0,
@@ -94,7 +94,7 @@ public class BleachingAlertTests
         double dhw, double? hotSpot, BleachingAlertLevel expected)
     {
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 28.0,
@@ -114,7 +114,7 @@ public class BleachingAlertTests
     public void CalculateAlertLevel_WithLowDhw_ReturnsBleachingWatch(double dhw)
     {
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 28.5,
@@ -134,7 +134,7 @@ public class BleachingAlertTests
         double dhw, double? hotSpot)
     {
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 29.0,
@@ -155,7 +155,7 @@ public class BleachingAlertTests
         double dhw, double hotSpot)
     {
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 29.5,
@@ -174,7 +174,7 @@ public class BleachingAlertTests
     public void CalculateAlertLevel_WithHighDhw_ReturnsAlertLevel2(double dhw)
     {
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 30.0,
@@ -192,7 +192,7 @@ public class BleachingAlertTests
     public void CalculateAlertLevel_WithVeryHighDhw_ReturnsAlertLevel3(double dhw)
     {
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 30.5,
@@ -210,7 +210,7 @@ public class BleachingAlertTests
     public void CalculateAlertLevel_WithSevereDhw_ReturnsAlertLevel4(double dhw)
     {
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 31.0,
@@ -228,7 +228,7 @@ public class BleachingAlertTests
     public void CalculateAlertLevel_WithExtremeDhw_ReturnsAlertLevel5(double dhw)
     {
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 32.0,
@@ -243,7 +243,7 @@ public class BleachingAlertTests
     public void UpdateMetrics_UpdatesAllMetricsAndRecalculatesAlertLevel()
     {
         // Arrange
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 28.0,
@@ -273,7 +273,7 @@ public class BleachingAlertTests
     public void UpdateMetrics_CanDowngradeAlertLevel()
     {
         // Arrange - Start at high alert level
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 30.0,
@@ -297,14 +297,14 @@ public class BleachingAlertTests
     public void Create_GeneratesUniqueIds()
     {
         // Arrange & Act
-        var alert1 = BleachingAlert.Create(
+        var alert1 = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 28.0,
             sstAnomaly: 0.5,
             dhw: 2.0);
 
-        var alert2 = BleachingAlert.Create(
+        var alert2 = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 28.0,
@@ -319,7 +319,7 @@ public class BleachingAlertTests
     public void Create_WithNullHotSpot_HandlesGracefully()
     {
         // Act
-        var alert = BleachingAlert.Create(
+        var alert = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(),
             DateOnly.FromDateTime(DateTime.UtcNow),
             sst: 28.0,

@@ -1,5 +1,6 @@
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Infrastructure.Data;
+using CoralLedger.Blue.Infrastructure.Data.Seeding;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -77,7 +78,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
     private static void SeedTestData(MarineDbContext db)
     {
-        // Add minimal test data for integration tests
-        // This ensures endpoints return valid data
+        // Seed the default tenant required for multi-tenant support
+        DefaultTenantSeeder.SeedAsync(db).GetAwaiter().GetResult();
     }
 }

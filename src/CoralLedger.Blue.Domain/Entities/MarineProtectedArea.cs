@@ -4,8 +4,9 @@ using NetTopologySuite.Geometries;
 
 namespace CoralLedger.Blue.Domain.Entities;
 
-public class MarineProtectedArea : BaseEntity, IAggregateRoot, IAuditableEntity
+public class MarineProtectedArea : BaseEntity, IAggregateRoot, IAuditableEntity, ITenantEntity
 {
+    public Guid TenantId { get; set; }
     public string Name { get; private set; } = string.Empty;
     public string? LocalName { get; private set; }
     public string? WdpaId { get; private set; }  // World Database on Protected Areas ID
@@ -30,11 +31,13 @@ public class MarineProtectedArea : BaseEntity, IAggregateRoot, IAuditableEntity
     public string? ModifiedBy { get; set; }
 
     // Navigation properties
+    public Tenant? Tenant { get; private set; }
     public ICollection<Reef> Reefs { get; private set; } = new List<Reef>();
 
     private MarineProtectedArea() { }
 
     public static MarineProtectedArea Create(
+        Guid tenantId,
         string name,
         Geometry boundary,
         ProtectionLevel protectionLevel,
@@ -47,6 +50,7 @@ public class MarineProtectedArea : BaseEntity, IAggregateRoot, IAuditableEntity
         var mpa = new MarineProtectedArea
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             Name = name,
             Boundary = boundary,
             Centroid = boundary.Centroid,

@@ -45,7 +45,8 @@ public class BleachingDataSyncJob : IJob
         {
             // Get all MPAs with their centroids
             var mpas = await dbContext.MarineProtectedAreas
-                .Select(m => new { m.Id, m.Name, m.Centroid })
+                .Where(m => m.Status == Domain.Enums.MpaStatus.Active)
+                .Select(m => new { m.Id, m.Name, m.Centroid, m.TenantId })
                 .ToListAsync(context.CancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("Syncing bleaching data for {Count} MPAs for date {Date}",
@@ -59,7 +60,7 @@ public class BleachingDataSyncJob : IJob
                     await semaphore.WaitAsync(context.CancellationToken).ConfigureAwait(false);
                     try
                     {
-                        await ProcessMpaAsync(dbContext, crwClient, mpa.Id, mpa.Name, mpa.Centroid, targetDate, context.CancellationToken).ConfigureAwait(false);
+                        await ProcessMpaAsync(dbContext, crwClient, mpa.Id, mpa.TenantId, mpa.Name, mpa.Centroid, targetDate, context.CancellationToken).ConfigureAwait(false);
                         Interlocked.Increment(ref successCount);
                     }
                     catch (Exception ex)
@@ -95,6 +96,7 @@ public class BleachingDataSyncJob : IJob
         MarineDbContext dbContext,
         ICoralReefWatchClient crwClient,
         Guid mpaId,
+        Guid tenantId,
         string mpaName,
         Point centroid,
         DateOnly targetDate,
@@ -145,6 +147,7 @@ public class BleachingDataSyncJob : IJob
         {
             // Create new record
             var alert = BleachingAlert.Create(
+                tenantId: tenantId,
                 location: centroid,
                 date: targetDate,
                 sst: bleachingData.SeaSurfaceTemperature,

@@ -35,7 +35,7 @@ public class ReefTests
         var mpaId = Guid.NewGuid();
 
         // Act
-        var reef = Reef.Create(
+        var reef = Reef.Create(Guid.NewGuid(), 
             name,
             location,
             healthStatus: ReefHealth.Good,
@@ -58,8 +58,8 @@ public class ReefTests
         var location = CreateTestPoint();
 
         // Act
-        var reef1 = Reef.Create("Reef 1", location);
-        var reef2 = Reef.Create("Reef 2", location);
+        var reef1 = Reef.Create(Guid.NewGuid(), "Reef 1", location);
+        var reef2 = Reef.Create(Guid.NewGuid(), "Reef 2", location);
 
         // Assert
         reef1.Id.Should().NotBeEmpty();
@@ -76,8 +76,8 @@ public class ReefTests
         var polygonLocation = CreateTestPolygon(-77.0, 25.0);
 
         // Act
-        var reefWithPoint = Reef.Create(name, pointLocation);
-        var reefWithPolygon = Reef.Create(name, polygonLocation);
+        var reefWithPoint = Reef.Create(Guid.NewGuid(), name, pointLocation);
+        var reefWithPolygon = Reef.Create(Guid.NewGuid(), name, polygonLocation);
 
         // Assert
         reefWithPoint.Location.Should().Be(pointLocation);
@@ -91,7 +91,7 @@ public class ReefTests
     public void UpdateHealth_UpdatesHealthStatus()
     {
         // Arrange
-        var reef = Reef.Create("Test Reef", CreateTestPoint(), healthStatus: ReefHealth.Good);
+        var reef = Reef.Create(Guid.NewGuid(), "Test Reef", CreateTestPoint(), healthStatus: ReefHealth.Good);
         reef.HealthStatus.Should().Be(ReefHealth.Good);
 
         // Act
@@ -107,7 +107,7 @@ public class ReefTests
     public void UpdateHealth_SetsModifiedAt()
     {
         // Arrange
-        var reef = Reef.Create("Test Reef", CreateTestPoint());
+        var reef = Reef.Create(Guid.NewGuid(), "Test Reef", CreateTestPoint());
         var originalModifiedAt = reef.ModifiedAt;
 
         // Act
@@ -122,7 +122,7 @@ public class ReefTests
     public void UpdateHealth_SetsLastSurveyDate()
     {
         // Arrange
-        var reef = Reef.Create("Test Reef", CreateTestPoint());
+        var reef = Reef.Create(Guid.NewGuid(), "Test Reef", CreateTestPoint());
         reef.LastSurveyDate.Should().BeNull();
 
         // Act
@@ -137,7 +137,7 @@ public class ReefTests
     public void AssignToMpa_SetsMpaReference()
     {
         // Arrange
-        var reef = Reef.Create("Test Reef", CreateTestPoint());
+        var reef = Reef.Create(Guid.NewGuid(), "Test Reef", CreateTestPoint());
         var mpaId = Guid.NewGuid();
         reef.MarineProtectedAreaId.Should().BeNull();
 
@@ -159,7 +159,7 @@ public class ReefTests
     public void Create_SupportsAllHealthLevels(ReefHealth healthStatus)
     {
         // Act
-        var reef = Reef.Create("Test Reef", CreateTestPoint(), healthStatus: healthStatus);
+        var reef = Reef.Create(Guid.NewGuid(), "Test Reef", CreateTestPoint(), healthStatus: healthStatus);
 
         // Assert
         reef.HealthStatus.Should().Be(healthStatus);
@@ -169,7 +169,7 @@ public class ReefTests
     public void Create_WithCoralCover_CanBeSetViaUpdateHealth()
     {
         // Arrange
-        var reef = Reef.Create("Test Reef", CreateTestPoint());
+        var reef = Reef.Create(Guid.NewGuid(), "Test Reef", CreateTestPoint());
         reef.CoralCoverPercentage.Should().BeNull();
 
         // Act
@@ -183,7 +183,7 @@ public class ReefTests
     public void Create_WithDefaultHealthStatus_SetsUnknown()
     {
         // Act
-        var reef = Reef.Create("Test Reef", CreateTestPoint());
+        var reef = Reef.Create(Guid.NewGuid(), "Test Reef", CreateTestPoint());
 
         // Assert
         reef.HealthStatus.Should().Be(ReefHealth.Unknown);
@@ -196,7 +196,7 @@ public class ReefTests
         var depth = 25.0;
 
         // Act
-        var reef = Reef.Create("Deep Reef", CreateTestPoint(), depthMeters: depth);
+        var reef = Reef.Create(Guid.NewGuid(), "Deep Reef", CreateTestPoint(), depthMeters: depth);
 
         // Assert
         reef.DepthMeters.Should().Be(depth);

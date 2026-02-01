@@ -8,8 +8,9 @@ namespace CoralLedger.Blue.Domain.Entities;
 /// Represents coral bleaching heat stress data from NOAA Coral Reef Watch
 /// Sourced from ERDDAP NOAA_DHW dataset (5km resolution)
 /// </summary>
-public class BleachingAlert : BaseEntity, IAuditableEntity
+public class BleachingAlert : BaseEntity, IAuditableEntity, ITenantEntity
 {
+    public Guid TenantId { get; set; }
     public Point Location { get; private set; } = null!;
     public DateOnly Date { get; private set; }
     public BleachingAlertLevel AlertLevel { get; private set; }
@@ -37,6 +38,7 @@ public class BleachingAlert : BaseEntity, IAuditableEntity
     private BleachingAlert() { }
 
     public static BleachingAlert Create(
+        Guid tenantId,
         Point location,
         DateOnly date,
         double sst,
@@ -49,6 +51,7 @@ public class BleachingAlert : BaseEntity, IAuditableEntity
         var alert = new BleachingAlert
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             Location = location,
             Date = date,
             SeaSurfaceTemperature = sst,

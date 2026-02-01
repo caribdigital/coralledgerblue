@@ -32,6 +32,9 @@ public class ApiClientConfiguration : IEntityTypeConfiguration<ApiClient>
         builder.Property(e => e.DeactivationReason)
             .HasMaxLength(500);
 
+        builder.Property(e => e.TenantId)
+            .IsRequired();
+
         builder.Property(e => e.CreatedBy)
             .HasMaxLength(100);
 
@@ -43,6 +46,8 @@ public class ApiClientConfiguration : IEntityTypeConfiguration<ApiClient>
             .IsUnique();
 
         builder.HasIndex(e => e.IsActive);
+
+        builder.HasIndex(e => e.TenantId);
 
         builder.HasIndex(e => e.CreatedAt);
 

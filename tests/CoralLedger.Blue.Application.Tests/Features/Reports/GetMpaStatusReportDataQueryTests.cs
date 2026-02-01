@@ -47,7 +47,7 @@ public class GetMpaStatusReportDataQueryTests
         // Arrange
         await using var context = CreateInMemoryDbContext();
         
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
@@ -99,7 +99,7 @@ public class GetMpaStatusReportDataQueryTests
         // Arrange
         await using var context = CreateInMemoryDbContext();
         
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
@@ -109,7 +109,7 @@ public class GetMpaStatusReportDataQueryTests
         await context.SaveChangesAsync();
 
         // Add bleaching alerts
-        var alert1 = BleachingAlert.Create(
+        var alert1 = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(), 
             new DateOnly(2024, 1, 15), 
             28.5, 
@@ -117,7 +117,7 @@ public class GetMpaStatusReportDataQueryTests
             5.0, 
             mpaId: mpa.Id);
         
-        var alert2 = BleachingAlert.Create(
+        var alert2 = BleachingAlert.Create(Guid.NewGuid(), 
             CreateTestPoint(), 
             new DateOnly(2024, 1, 20), 
             29.0, 
@@ -148,7 +148,7 @@ public class GetMpaStatusReportDataQueryTests
         // Arrange
         await using var context = CreateInMemoryDbContext();
         
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
@@ -158,8 +158,8 @@ public class GetMpaStatusReportDataQueryTests
         await context.SaveChangesAsync();
 
         // Add alerts in different months
-        var alertJan = BleachingAlert.Create(CreateTestPoint(), new DateOnly(2024, 1, 15), 28.5, 1.2, 5.0, mpaId: mpa.Id);
-        var alertDec = BleachingAlert.Create(CreateTestPoint(), new DateOnly(2023, 12, 15), 27.5, 0.8, 3.0, mpaId: mpa.Id);
+        var alertJan = BleachingAlert.Create(Guid.NewGuid(), CreateTestPoint(), new DateOnly(2024, 1, 15), 28.5, 1.2, 5.0, mpaId: mpa.Id);
+        var alertDec = BleachingAlert.Create(Guid.NewGuid(), CreateTestPoint(), new DateOnly(2023, 12, 15), 27.5, 0.8, 3.0, mpaId: mpa.Id);
 
         context.BleachingAlerts.AddRange(alertJan, alertDec);
         await context.SaveChangesAsync();

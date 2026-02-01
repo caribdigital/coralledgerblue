@@ -5,8 +5,9 @@ namespace CoralLedger.Blue.Domain.Entities;
 /// <summary>
 /// Represents a third-party application or organization registered to use the CoralLedger Blue API
 /// </summary>
-public class ApiClient : BaseEntity, IAggregateRoot, IAuditableEntity
+public class ApiClient : BaseEntity, IAggregateRoot, IAuditableEntity, ITenantEntity
 {
+    public Guid TenantId { get; set; }
     public string Name { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public string? OrganizationName { get; private set; }
@@ -26,12 +27,14 @@ public class ApiClient : BaseEntity, IAggregateRoot, IAuditableEntity
     public string? ModifiedBy { get; set; }
     
     // Navigation properties
+    public Tenant? Tenant { get; private set; }
     public ICollection<ApiKey> ApiKeys { get; private set; } = new List<ApiKey>();
     public ICollection<ApiUsageLog> UsageLogs { get; private set; } = new List<ApiUsageLog>();
     
     private ApiClient() { }
     
     public static ApiClient Create(
+        Guid tenantId,
         string name,
         string? organizationName = null,
         string? description = null,
@@ -41,6 +44,7 @@ public class ApiClient : BaseEntity, IAggregateRoot, IAuditableEntity
         var client = new ApiClient
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             Name = name,
             OrganizationName = organizationName,
             Description = description,

@@ -23,6 +23,15 @@ public interface IMarineDbContext
     DbSet<PatrolRoute> PatrolRoutes { get; }
     DbSet<PatrolRoutePoint> PatrolRoutePoints { get; }
     DbSet<PatrolWaypoint> PatrolWaypoints { get; }
+    DbSet<ApiClient> ApiClients { get; }
+    DbSet<ApiKey> ApiKeys { get; }
+    DbSet<ApiUsageLog> ApiUsageLogs { get; }
+    
+    // Multi-tenant
+    DbSet<Tenant> Tenants { get; }
+    DbSet<TenantConfiguration> TenantConfigurations { get; }
+    DbSet<TenantBranding> TenantBrandings { get; }
+    DbSet<TenantUser> TenantUsers { get; }
     
     // Gamification
     DbSet<UserProfile> UserProfiles { get; }

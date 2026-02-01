@@ -16,18 +16,22 @@ public static class BahamasMpaSeeder
         if (await context.MarineProtectedAreas.AnyAsync().ConfigureAwait(false))
             return; // Already seeded
 
-        var mpas = GetBahamasMpas().ToList();
+        // Ensure default tenant exists
+        var defaultTenant = await DefaultTenantSeeder.SeedAsync(context).ConfigureAwait(false);
+
+        var mpas = GetBahamasMpas(defaultTenant.Id).ToList();
 
         await context.MarineProtectedAreas.AddRangeAsync(mpas).ConfigureAwait(false);
         await context.SaveChangesAsync().ConfigureAwait(false);
     }
 
-    private static IEnumerable<MarineProtectedArea> GetBahamasMpas()
+    private static IEnumerable<MarineProtectedArea> GetBahamasMpas(Guid tenantId)
     {
         // Key Bahamas Marine Protected Areas
         // Data sourced from Protected Planet / WDPA and Bahamas National Trust
 
         yield return CreateMpa(
+            tenantId,
             name: "Exuma Cays Land and Sea Park",
             wdpaId: "WDPA-555705832",
             longitude: -76.60,
@@ -40,7 +44,7 @@ public static class BahamasMpaSeeder
             designationDate: new DateOnly(1958, 1, 1)
         );
 
-        yield return CreateMpa(
+        yield return CreateMpa(tenantId,
             name: "Pelican Cays Land and Sea Park",
             wdpaId: "WDPA-555705833",
             longitude: -77.02,
@@ -53,7 +57,7 @@ public static class BahamasMpaSeeder
             designationDate: new DateOnly(1972, 1, 1)
         );
 
-        yield return CreateMpa(
+        yield return CreateMpa(tenantId,
             name: "Andros West Side National Park",
             wdpaId: "WDPA-555705834",
             longitude: -78.05,
@@ -66,7 +70,7 @@ public static class BahamasMpaSeeder
             designationDate: new DateOnly(2002, 1, 1)
         );
 
-        yield return CreateMpa(
+        yield return CreateMpa(tenantId,
             name: "Conception Island National Park",
             wdpaId: "WDPA-555705835",
             longitude: -75.12,
@@ -79,7 +83,7 @@ public static class BahamasMpaSeeder
             designationDate: new DateOnly(1971, 1, 1)
         );
 
-        yield return CreateMpa(
+        yield return CreateMpa(tenantId,
             name: "Inagua National Park",
             wdpaId: "WDPA-555705836",
             longitude: -73.55,
@@ -92,7 +96,7 @@ public static class BahamasMpaSeeder
             designationDate: new DateOnly(1965, 1, 1)
         );
 
-        yield return CreateMpa(
+        yield return CreateMpa(tenantId,
             name: "Peterson Cay National Park",
             wdpaId: "WDPA-555705837",
             longitude: -78.92,
@@ -105,7 +109,7 @@ public static class BahamasMpaSeeder
             designationDate: new DateOnly(1968, 1, 1)
         );
 
-        yield return CreateMpa(
+        yield return CreateMpa(tenantId,
             name: "Lucayan National Park",
             wdpaId: "WDPA-555705838",
             longitude: -78.45,
@@ -118,7 +122,7 @@ public static class BahamasMpaSeeder
             designationDate: new DateOnly(1982, 1, 1)
         );
 
-        yield return CreateMpa(
+        yield return CreateMpa(tenantId,
             name: "Black Sound Cay National Reserve",
             wdpaId: "WDPA-555705839",
             longitude: -76.90,
@@ -133,6 +137,7 @@ public static class BahamasMpaSeeder
     }
 
     private static MarineProtectedArea CreateMpa(
+        Guid tenantId,
         string name,
         string wdpaId,
         double longitude,
@@ -150,6 +155,7 @@ public static class BahamasMpaSeeder
         var boundary = CreateCircularPolygon(longitude, latitude, radius, 32);
 
         return MarineProtectedArea.Create(
+            tenantId: tenantId,
             name: name,
             boundary: boundary,
             protectionLevel: protectionLevel,

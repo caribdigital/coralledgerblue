@@ -51,7 +51,7 @@ public class BatchContainmentServiceTests : IDisposable
 
     private void SeedTestData()
     {
-        var exumaMpa = MarineProtectedArea.Create(
+        var exumaMpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             name: "Exuma Cays Land and Sea Park",
             boundary: CreatePolygon(ExumaLon, ExumaLat, 0.5),
             protectionLevel: ProtectionLevel.NoTake,
@@ -60,7 +60,7 @@ public class BatchContainmentServiceTests : IDisposable
         );
         _exumaMpaId = exumaMpa.Id;
 
-        var inaguaMpa = MarineProtectedArea.Create(
+        var inaguaMpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             name: "Inagua National Park",
             boundary: CreatePolygon(InaguaLon, InaguaLat, 0.8),
             protectionLevel: ProtectionLevel.HighlyProtected,
