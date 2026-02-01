@@ -51,6 +51,10 @@ public class GetUserAchievementsQueryHandler : IRequestHandler<GetUserAchievemen
             var achievements = await query
                 .OrderByDescending(a => a.IsCompleted)
                 .ThenByDescending(a => a.CurrentProgress)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return achievements
                 .Select(a => new AchievementDto(
                     AchievementKey: a.AchievementKey,
                     Title: a.Title,
@@ -61,10 +65,7 @@ public class GetUserAchievementsQueryHandler : IRequestHandler<GetUserAchievemen
                     IsCompleted: a.IsCompleted,
                     CompletedAt: a.CompletedAt,
                     PointsAwarded: a.PointsAwarded))
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            return achievements;
+                .ToList();
         }
         catch (Exception ex)
         {

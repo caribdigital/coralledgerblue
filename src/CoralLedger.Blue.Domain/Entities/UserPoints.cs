@@ -37,12 +37,12 @@ public class UserPoints : BaseEntity, IAuditableEntity
         };
     }
 
-    public void AddPoints(int points, DateTime? earnedAt = null)
+    public void AddPoints(int points, DateTime? effectiveDate = null)
     {
         if (points < 0)
             throw new ArgumentException("Points must be positive", nameof(points));
 
-        var now = earnedAt ?? DateTime.UtcNow;
+        var now = effectiveDate ?? DateTime.UtcNow;
         
         // Reset weekly points if needed (every Monday)
         if (WeeklyResetAt.HasValue && now > WeeklyResetAt.Value)
