@@ -75,16 +75,16 @@ We're actively looking for contributors in these areas:
 ## Screenshots
 
 ### Marine Intelligence Dashboard
-![Dashboard with KPI cards, map preview, and alerts panel](docs/screenshots/dashboard-dark.png)
-*Real-time KPI cards for Protected Areas (8 MPAs), Total Protected area (2,835 km²), Sea Temperature, and Bleaching Alerts. The integrated map preview and recent alerts panel provide at-a-glance monitoring.*
+![Dashboard with KPI cards showing real-time marine data](docs/screenshots/dashboard-dark.png)
+*Real-time monitoring dashboard showing Protected Areas (8 MPAs), Total Protected area (2,835 km²), Sea Temperature (25.4°C), and Bleaching Alert status. Features language selector, sync controls, and quick navigation.*
 
-### Interactive Map with Dark Theme
+### Interactive Map with MPA Boundaries
 ![Interactive map with CartoDB Dark Matter tiles and MPA polygons](docs/screenshots/map-dark-with-legend.png)
-*Interactive map displays all 8 Bahamas MPAs with protection level styling (No-Take, Highly Protected, Lightly Protected), CartoDB Dark Matter tiles, and a dynamic legend.*
+*Interactive map displays all 8 Bahamas MPAs with protection level styling (No-Take, Highly Protected, Lightly Protected), CartoDB Dark Matter tiles, and a dynamic legend. Fishing Activity toggle enables vessel tracking overlay.*
 
-### Light Theme with MPA List
-![Interactive map with OpenStreetMap tiles and full MPA list](docs/screenshots/map-light-with-mpa-list.png)
-*Light mode with OpenStreetMap tiles and the full MPA list showing protection levels.*
+### MPA List View with Details
+![MPA list view showing all protected areas with details](docs/screenshots/list-view-dark.png)
+*Comprehensive list view showing all Marine Protected Areas with Name, Island Group, Protection Level, Area (km²), and GPS Coordinates. Click any MPA to view detailed information.*
 
 > **Note:** To see the app in action, run `dotnet run --project src/CoralLedger.Blue.AppHost`
 
