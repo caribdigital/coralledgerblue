@@ -78,7 +78,7 @@ public class MpaProximityServiceTests : IDisposable
     private void SeedTestData()
     {
         // Create test MPAs with different protection levels using factory methods
-        var exumaMpa = MarineProtectedArea.Create(
+        var exumaMpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             name: "Exuma Cays Land and Sea Park",
             boundary: CreatePolygon(ExumaLon, ExumaLat, 0.5), // ~55km radius
             protectionLevel: ProtectionLevel.NoTake,
@@ -86,7 +86,7 @@ public class MpaProximityServiceTests : IDisposable
             description: "Test MPA for unit tests"
         );
 
-        var inaguaMpa = MarineProtectedArea.Create(
+        var inaguaMpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             name: "Inagua National Park",
             boundary: CreatePolygon(-73.5, 21.0, 0.8), // Great Inagua
             protectionLevel: ProtectionLevel.HighlyProtected,
@@ -94,7 +94,7 @@ public class MpaProximityServiceTests : IDisposable
             description: "Test MPA for unit tests"
         );
 
-        var androsWestMpa = MarineProtectedArea.Create(
+        var androsWestMpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             name: "Andros West Side National Park",
             boundary: CreatePolygon(-78.0, 24.5, 0.6),
             protectionLevel: ProtectionLevel.LightlyProtected,
@@ -106,6 +106,7 @@ public class MpaProximityServiceTests : IDisposable
 
         // Add test reefs within MPAs using factory method
         var exumaReef = Reef.Create(
+            Guid.NewGuid(),
             name: "Warderick Wells Reef",
             location: _geometryFactory.CreatePoint(new Coordinate(ExumaLon + 0.1, ExumaLat + 0.1)),
             healthStatus: ReefHealth.Good,

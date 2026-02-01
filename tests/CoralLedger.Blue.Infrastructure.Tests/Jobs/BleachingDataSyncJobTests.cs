@@ -80,6 +80,7 @@ public class BleachingDataSyncJobTests
             for (int i = 0; i < 5; i++)
             {
                 var mpa = MarineProtectedArea.Create(
+                    Guid.NewGuid(),
                     $"Test MPA {i}",
                     GeometryFactory.CreatePolygon(new[]
                     {
@@ -147,6 +148,7 @@ public class BleachingDataSyncJobTests
             var dbContext = scope.ServiceProvider.GetRequiredService<MarineDbContext>();
             
             var mpa = MarineProtectedArea.Create(
+                Guid.NewGuid(),
                 "Test MPA",
                 GeometryFactory.CreatePolygon(new[]
                 {
@@ -161,7 +163,7 @@ public class BleachingDataSyncJobTests
             mpaId = mpa.Id;
             dbContext.MarineProtectedAreas.Add(mpa);
 
-            var existingAlert = BleachingAlert.Create(
+            var existingAlert = BleachingAlert.Create(Guid.NewGuid(), 
                 mpa.Centroid,
                 targetDate,
                 27.0,

@@ -31,6 +31,15 @@ public class TestDbContext : DbContext, IMarineDbContext
     public DbSet<PatrolRoute> PatrolRoutes => Set<PatrolRoute>();
     public DbSet<PatrolRoutePoint> PatrolRoutePoints => Set<PatrolRoutePoint>();
     public DbSet<PatrolWaypoint> PatrolWaypoints => Set<PatrolWaypoint>();
+    public DbSet<ApiClient> ApiClients => Set<ApiClient>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<ApiUsageLog> ApiUsageLogs => Set<ApiUsageLog>();
+    
+    // Multi-tenant
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<TenantConfiguration> TenantConfigurations => Set<TenantConfiguration>();
+    public DbSet<TenantBranding> TenantBrandings => Set<TenantBranding>();
+    public DbSet<TenantUser> TenantUsers => Set<TenantUser>();
     
     // Gamification
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
@@ -136,6 +145,43 @@ public class TestDbContext : DbContext, IMarineDbContext
         {
             entity.HasKey(e => e.Id);
             entity.Ignore(e => e.Location);  // Ignore geometry
+        });
+
+        // API and Tenant entities
+        modelBuilder.Entity<ApiClient>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<ApiUsageLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<Tenant>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Ignore(e => e.EezBoundary);  // Ignore geometry
+        });
+
+        modelBuilder.Entity<TenantConfiguration>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<TenantBranding>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+        });
+
+        modelBuilder.Entity<TenantUser>(entity =>
+        {
+            entity.HasKey(e => e.Id);
         });
 
         // Gamification entities

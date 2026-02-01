@@ -46,19 +46,19 @@ public class GetAllMpasSummaryReportDataQueryTests
         // Arrange
         await using var context = CreateInMemoryDbContext();
         
-        var mpa1 = MarineProtectedArea.Create(
+        var mpa1 = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Exuma Cays Land and Sea Park",
             CreateTestPolygon(-77.5, 24.5),
             ProtectionLevel.NoTake,
             IslandGroup.Exumas);
 
-        var mpa2 = MarineProtectedArea.Create(
+        var mpa2 = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Andros West Side National Park",
             CreateTestPolygon(-78.0, 25.0),
             ProtectionLevel.HighlyProtected,
             IslandGroup.Andros);
 
-        var mpa3 = MarineProtectedArea.Create(
+        var mpa3 = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Lucayan National Park",
             CreateTestPolygon(-78.5, 26.5),
             ProtectionLevel.LightlyProtected,
@@ -113,13 +113,13 @@ public class GetAllMpasSummaryReportDataQueryTests
         // Arrange
         await using var context = CreateInMemoryDbContext();
         
-        var mpa1 = MarineProtectedArea.Create(
+        var mpa1 = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Exuma MPA",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
             IslandGroup.Exumas);
 
-        var mpa2 = MarineProtectedArea.Create(
+        var mpa2 = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Andros MPA",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
@@ -148,13 +148,13 @@ public class GetAllMpasSummaryReportDataQueryTests
         // Arrange
         await using var context = CreateInMemoryDbContext();
         
-        var mpa1 = MarineProtectedArea.Create(
+        var mpa1 = MarineProtectedArea.Create(Guid.NewGuid(), 
             "No-Take MPA",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
             IslandGroup.Exumas);
 
-        var mpa2 = MarineProtectedArea.Create(
+        var mpa2 = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Highly Protected MPA",
             CreateTestPolygon(),
             ProtectionLevel.HighlyProtected,
@@ -183,13 +183,13 @@ public class GetAllMpasSummaryReportDataQueryTests
         // Arrange
         await using var context = CreateInMemoryDbContext();
         
-        var mpa1 = MarineProtectedArea.Create(
+        var mpa1 = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA 1",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
             IslandGroup.Exumas);
 
-        var mpa2 = MarineProtectedArea.Create(
+        var mpa2 = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA 2",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
@@ -199,9 +199,9 @@ public class GetAllMpasSummaryReportDataQueryTests
         await context.SaveChangesAsync();
 
         // Add bleaching alerts
-        var alert1 = BleachingAlert.Create(CreateTestPoint(), new DateOnly(2024, 1, 15), 28.5, 1.2, 5.0, mpaId: mpa1.Id);
-        var alert2 = BleachingAlert.Create(CreateTestPoint(), new DateOnly(2024, 1, 20), 29.0, 1.5, 8.0, mpaId: mpa1.Id);
-        var alert3 = BleachingAlert.Create(CreateTestPoint(), new DateOnly(2024, 1, 22), 28.0, 1.0, 4.0, mpaId: mpa2.Id);
+        var alert1 = BleachingAlert.Create(Guid.NewGuid(), CreateTestPoint(), new DateOnly(2024, 1, 15), 28.5, 1.2, 5.0, mpaId: mpa1.Id);
+        var alert2 = BleachingAlert.Create(Guid.NewGuid(), CreateTestPoint(), new DateOnly(2024, 1, 20), 29.0, 1.5, 8.0, mpaId: mpa1.Id);
+        var alert3 = BleachingAlert.Create(Guid.NewGuid(), CreateTestPoint(), new DateOnly(2024, 1, 22), 28.0, 1.0, 4.0, mpaId: mpa2.Id);
 
         context.BleachingAlerts.AddRange(alert1, alert2, alert3);
         await context.SaveChangesAsync();
@@ -231,7 +231,7 @@ public class GetAllMpasSummaryReportDataQueryTests
         // Arrange
         await using var context = CreateInMemoryDbContext();
         
-        var mpa = MarineProtectedArea.Create(
+        var mpa = MarineProtectedArea.Create(Guid.NewGuid(), 
             "Test MPA",
             CreateTestPolygon(),
             ProtectionLevel.NoTake,
@@ -241,8 +241,8 @@ public class GetAllMpasSummaryReportDataQueryTests
         await context.SaveChangesAsync();
 
         // Add alerts in different months
-        var alertJan = BleachingAlert.Create(CreateTestPoint(), new DateOnly(2024, 1, 15), 28.5, 1.2, 5.0, mpaId: mpa.Id);
-        var alertDec = BleachingAlert.Create(CreateTestPoint(), new DateOnly(2023, 12, 15), 27.5, 0.8, 3.0, mpaId: mpa.Id);
+        var alertJan = BleachingAlert.Create(Guid.NewGuid(), CreateTestPoint(), new DateOnly(2024, 1, 15), 28.5, 1.2, 5.0, mpaId: mpa.Id);
+        var alertDec = BleachingAlert.Create(Guid.NewGuid(), CreateTestPoint(), new DateOnly(2023, 12, 15), 27.5, 0.8, 3.0, mpaId: mpa.Id);
 
         context.BleachingAlerts.AddRange(alertJan, alertDec);
         await context.SaveChangesAsync();

@@ -33,7 +33,7 @@ public class GetAllMpasQueryTests
         ProtectionLevel level = ProtectionLevel.NoTake,
         IslandGroup group = IslandGroup.Exumas)
     {
-        return MarineProtectedArea.Create(
+        return MarineProtectedArea.Create(Guid.NewGuid(), 
             name,
             CreateTestPolygon(),
             level,
