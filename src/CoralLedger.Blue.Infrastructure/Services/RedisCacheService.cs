@@ -144,9 +144,10 @@ public class RedisCacheService : ICacheService
                 var pattern = $"{prefix}*";
                 var keysToRemove = new List<RedisKey>();
 
-                // Note: Using KEYS for simplicity. For production systems with millions of keys,
-                // consider using SCAN for cursor-based iteration to avoid blocking Redis.
-                // Current scale (8 MPAs) makes KEYS acceptable.
+                // Using SCAN-based iteration via KeysAsync for production-safe key scanning.
+                // KeysAsync internally uses Redis SCAN command (for Redis 2.8+) which is non-blocking
+                // and safe for production, only falling back to KEYS for legacy Redis versions.
+                // The async enumeration handles cursor-based pagination automatically.
                 await foreach (var key in server.KeysAsync(pattern: pattern))
                 {
                     keysToRemove.Add(key);

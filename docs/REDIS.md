@@ -164,6 +164,44 @@ Cache is automatically invalidated when:
 
 2. **Manual invalidation** via API endpoints (coming soon)
 
+### Prefix-Based Cache Invalidation
+
+The `RedisCacheService` supports efficient prefix-based cache invalidation using Redis SCAN:
+
+```csharp
+// Remove all cache entries starting with "mpas:"
+await cacheService.RemoveByPrefixAsync("mpas:");
+```
+
+**Implementation Details:**
+- Uses Redis **SCAN command** (for Redis 2.8+) for production-safe, non-blocking key iteration via [StackExchange.Redis KeysAsync](https://stackexchange.github.io/StackExchange.Redis/KeysScan.html)
+- Only falls back to KEYS command for legacy Redis versions (< 2.8)
+- Handles pagination automatically through cursor-based iteration
+- Safe for production use with millions of keys
+- Requires `IConnectionMultiplexer` to be registered in DI container
+- **Fallback behavior**: If `IConnectionMultiplexer` is not available, a warning is logged and the operation is skipped (no keys are removed)
+
+**Configuration:**
+```csharp
+services.AddSingleton<IConnectionMultiplexer>(sp => 
+    ConnectionMultiplexer.Connect(redisConnectionString));
+services.AddStackExchangeRedisCache(options => 
+{
+    options.Configuration = redisConnectionString;
+});
+```
+
+**Performance Characteristics:**
+- **Time Complexity**: O(N) where N is the number of keys in the database
+- **Blocking**: Non-blocking (uses SCAN, not KEYS)
+- **Network**: Multiple round trips (cursor-based pagination)
+- **Memory**: Minimal - keys are processed in batches
+
+**Best Practices:**
+- Use specific prefixes to minimize keys scanned (e.g., `"mpas:detail:123:"` instead of `"mpas:"`)
+- Consider cache versioning (e.g., `v1`, `v2`) for breaking changes instead of prefix removal
+- Monitor SCAN operation duration in production for performance insights
+
 ## Fallback Behavior
 
 If Redis is unavailable or disabled:
