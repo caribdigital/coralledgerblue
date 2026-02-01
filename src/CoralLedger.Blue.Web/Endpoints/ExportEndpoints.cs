@@ -196,15 +196,22 @@ public static class ExportEndpoints
             bool includeCharts = true,
             CancellationToken ct = default) =>
         {
-            var options = new ReportOptions
+            try
             {
-                FromDate = fromDate,
-                ToDate = toDate,
-                IncludeCharts = includeCharts
-            };
+                var options = new ReportOptions
+                {
+                    FromDate = fromDate,
+                    ToDate = toDate,
+                    IncludeCharts = includeCharts
+                };
 
-            var pdfBytes = await reportService.GenerateMpaReportAsync(mpaId, options, ct).ConfigureAwait(false);
-            return Results.File(pdfBytes, "application/pdf", $"mpa-report-{mpaId}.pdf");
+                var pdfBytes = await reportService.GenerateMpaReportAsync(mpaId, options, ct).ConfigureAwait(false);
+                return Results.File(pdfBytes, "application/pdf", $"mpa-report-{mpaId}.pdf");
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("not found"))
+            {
+                return Results.NotFound(new { error = $"MPA with ID {mpaId} not found" });
+            }
         })
         .WithName("GenerateMpaReport")
         .WithDescription("Generate a detailed PDF report for a specific Marine Protected Area")
