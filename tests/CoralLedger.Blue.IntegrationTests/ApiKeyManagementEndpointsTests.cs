@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using FluentAssertions;
 using CoralLedger.Blue.Web.Endpoints;
 
@@ -31,8 +32,8 @@ public class ApiKeyManagementEndpointsTests : IClassFixture<CustomWebApplication
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<dynamic>();
-        Assert.NotNull(result);
+        var content = await response.Content.ReadAsStringAsync();
+        Assert.False(string.IsNullOrEmpty(content));
     }
 
     [Fact]
@@ -58,8 +59,8 @@ public class ApiKeyManagementEndpointsTests : IClassFixture<CustomWebApplication
         var createResponse = await _client.PostAsJsonAsync("/api/api-keys/clients", createRequest);
         createResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var createResult = await createResponse.Content.ReadFromJsonAsync<dynamic>();
-        var clientId = createResult?.client?.Id.ToString();
+        using var createDoc = await JsonDocument.ParseAsync(await createResponse.Content.ReadAsStreamAsync());
+        var clientId = createDoc.RootElement.GetProperty("client").GetProperty("id").GetString();
         Assert.NotNull(clientId);
 
         // Act - Get the client by ID
@@ -67,9 +68,9 @@ public class ApiKeyManagementEndpointsTests : IClassFixture<CustomWebApplication
 
         // Assert
         getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var getResult = await getResponse.Content.ReadFromJsonAsync<dynamic>();
-        Assert.NotNull(getResult);
-        Assert.Equal("Test Client for GetById", getResult?.Name?.ToString());
+        using var getDoc = await JsonDocument.ParseAsync(await getResponse.Content.ReadAsStreamAsync());
+        var name = getDoc.RootElement.GetProperty("name").GetString();
+        Assert.Equal("Test Client for GetById", name);
     }
 
     [Fact]
@@ -95,8 +96,8 @@ public class ApiKeyManagementEndpointsTests : IClassFixture<CustomWebApplication
         );
 
         var createClientResponse = await _client.PostAsJsonAsync("/api/api-keys/clients", createClientRequest);
-        var createClientResult = await createClientResponse.Content.ReadFromJsonAsync<dynamic>();
-        var clientId = createClientResult?.client?.Id.ToString();
+        using var createClientDoc = await JsonDocument.ParseAsync(await createClientResponse.Content.ReadAsStreamAsync());
+        var clientId = createClientDoc.RootElement.GetProperty("client").GetProperty("id").GetString();
 
         var createKeyRequest = new CreateApiKeyRequest(
             Name: "Additional Key",
@@ -108,10 +109,9 @@ public class ApiKeyManagementEndpointsTests : IClassFixture<CustomWebApplication
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<dynamic>();
-        Assert.NotNull(result);
-        Assert.NotNull(result?.apiKey);
-        Assert.NotNull(result?.plainKey);
+        using var resultDoc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
+        Assert.True(resultDoc.RootElement.TryGetProperty("apiKey", out _));
+        Assert.True(resultDoc.RootElement.TryGetProperty("plainKey", out _));
     }
 
     [Fact]
@@ -124,8 +124,8 @@ public class ApiKeyManagementEndpointsTests : IClassFixture<CustomWebApplication
         );
 
         var createResponse = await _client.PostAsJsonAsync("/api/api-keys/clients", createRequest);
-        var createResult = await createResponse.Content.ReadFromJsonAsync<dynamic>();
-        var apiKeyId = createResult?.apiKey?.Id.ToString();
+        using var createDoc = await JsonDocument.ParseAsync(await createResponse.Content.ReadAsStreamAsync());
+        var apiKeyId = createDoc.RootElement.GetProperty("apiKey").GetProperty("id").GetString();
         Assert.NotNull(apiKeyId);
 
         var revokeRequest = new RevokeApiKeyRequest("Test revocation");
@@ -147,8 +147,8 @@ public class ApiKeyManagementEndpointsTests : IClassFixture<CustomWebApplication
         );
 
         var createResponse = await _client.PostAsJsonAsync("/api/api-keys/clients", createRequest);
-        var createResult = await createResponse.Content.ReadFromJsonAsync<dynamic>();
-        var clientId = createResult?.client?.Id.ToString();
+        using var createDoc = await JsonDocument.ParseAsync(await createResponse.Content.ReadAsStreamAsync());
+        var clientId = createDoc.RootElement.GetProperty("client").GetProperty("id").GetString();
 
         // Act
         var response = await _client.GetAsync($"/api/api-keys/clients/{clientId}/usage");
@@ -167,8 +167,8 @@ public class ApiKeyManagementEndpointsTests : IClassFixture<CustomWebApplication
         );
 
         var createResponse = await _client.PostAsJsonAsync("/api/api-keys/clients", createRequest);
-        var createResult = await createResponse.Content.ReadFromJsonAsync<dynamic>();
-        var clientId = createResult?.client?.Id.ToString();
+        using var createDoc = await JsonDocument.ParseAsync(await createResponse.Content.ReadAsStreamAsync());
+        var clientId = createDoc.RootElement.GetProperty("client").GetProperty("id").GetString();
 
         // Act
         var response = await _client.GetAsync($"/api/api-keys/clients/{clientId}/logs?pageNumber=1&pageSize=10");
