@@ -46,7 +46,7 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         // Relationships
         builder.HasOne(e => e.Configuration)
             .WithOne(c => c.Tenant)
-            .HasForeignKey<TenantConfiguration>(c => c.TenantId)
+            .HasForeignKey<Domain.Entities.TenantConfiguration>(c => c.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(e => e.Branding)

@@ -1,6 +1,7 @@
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Domain.Entities;
 using CoralLedger.Blue.Infrastructure.Data;
+using CoralLedger.Blue.Infrastructure.Data.Seeding;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoralLedger.Blue.Infrastructure.Services;
@@ -43,7 +44,17 @@ public class ApiKeyService : IApiKeyService
         int rateLimitPerMinute = 60,
         CancellationToken cancellationToken = default)
     {
-        var client = ApiClient.Create(name, organizationName, description, contactEmail, rateLimitPerMinute);
+        // Get or create default tenant for backward compatibility
+        var defaultTenant = await _context.Tenants
+            .FirstOrDefaultAsync(t => t.Slug == "bahamas", cancellationToken)
+            .ConfigureAwait(false);
+
+        if (defaultTenant == null)
+        {
+            defaultTenant = await DefaultTenantSeeder.SeedAsync(_context).ConfigureAwait(false);
+        }
+
+        var client = ApiClient.Create(defaultTenant.Id, name, organizationName, description, contactEmail, rateLimitPerMinute);
         _context.ApiClients.Add(client);
 
         var (apiKey, plainKey) = ApiKey.Create(client.Id, "Default Key", scopes: "read");
