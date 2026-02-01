@@ -33,8 +33,108 @@ window.leafletMap = {
         return typeof L !== 'undefined';
     },
 
-    // Initialize a new map with dark theme support
-    initialize: function (mapId, centerLat, centerLng, zoom, useDarkTheme = true) {
+    // Create a tile layer with offline support
+    createOfflineTileLayer: function(urlTemplate, theme, attribution) {
+        const self = this;
+        
+        // Custom tile layer that checks cache first
+        return L.tileLayer(urlTemplate, {
+            maxZoom: 19,
+            attribution: attribution,
+            
+            // Override createTile to check cache
+            createTile: function(coords, done) {
+                const tile = document.createElement('img');
+                const z = coords.z;
+                const x = coords.x;
+                const y = coords.y;
+                
+                // Try to load from cache first
+                if (window.tileCache && window.tileCache.db) {
+                    window.tileCache.getTile(theme, z, x, y)
+                        .then(cachedTile => {
+                            if (cachedTile && cachedTile.blob) {
+                                // Use cached tile
+                                const url = URL.createObjectURL(cachedTile.blob);
+                                tile.src = url;
+                                tile.onload = () => {
+                                    URL.revokeObjectURL(url);
+                                    done(null, tile);
+                                };
+                                tile.onerror = () => {
+                                    URL.revokeObjectURL(url);
+                                    // Fallback to network
+                                    self.loadTileFromNetwork(tile, urlTemplate, z, x, y, theme, done);
+                                };
+                            } else {
+                                // Not in cache, load from network
+                                self.loadTileFromNetwork(tile, urlTemplate, z, x, y, theme, done);
+                            }
+                        })
+                        .catch(() => {
+                            // Error accessing cache, load from network
+                            self.loadTileFromNetwork(tile, urlTemplate, z, x, y, theme, done);
+                        });
+                } else {
+                    // Cache not available, load from network
+                    self.loadTileFromNetwork(tile, urlTemplate, z, x, y, theme, done);
+                }
+                
+                return tile;
+            }
+        });
+    },
+
+    // Load tile from network and optionally cache it
+    loadTileFromNetwork: function(tile, urlTemplate, z, x, y, theme, done) {
+        // Only proceed if online
+        if (!navigator.onLine) {
+            tile.alt = 'Offline - tile not cached';
+            done(new Error('Offline'), tile);
+            return;
+        }
+
+        const url = this.buildTileUrl(urlTemplate, z, x, y);
+        
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.blob();
+            })
+            .then(blob => {
+                // Cache the tile if cache is available
+                if (window.tileCache && window.tileCache.db) {
+                    window.tileCache.storeTile(theme, z, x, y, blob)
+                        .catch(err => console.warn('[leaflet-map] Failed to cache tile:', err));
+                }
+                
+                // Display the tile
+                const objectUrl = URL.createObjectURL(blob);
+                tile.src = objectUrl;
+                tile.onload = () => {
+                    URL.revokeObjectURL(objectUrl);
+                    done(null, tile);
+                };
+            })
+            .catch(error => {
+                console.error(`[leaflet-map] Failed to load tile ${z}/${x}/${y}:`, error);
+                done(error, tile);
+            });
+    },
+
+    // Build tile URL from template
+    buildTileUrl: function(template, z, x, y) {
+        // Handle {s} subdomain - use 'a' by default
+        let url = template.replace('{s}', 'a');
+        url = url.replace('{z}', z);
+        url = url.replace('{x}', x);
+        url = url.replace('{y}', y);
+        url = url.replace('{r}', ''); // retina placeholder
+        return url;
+    },
+
+    // Initialize a new map with dark theme support and offline capability
+    initialize: function (mapId, centerLat, centerLng, zoom, useDarkTheme = true, enableOffline = true) {
         // Check if Leaflet is loaded
         if (!this.isLeafletReady()) {
             console.error('Leaflet library (L) is not loaded. Make sure leaflet.js is included before leaflet-map.js');
@@ -48,13 +148,20 @@ window.leafletMap = {
 
         // US-2.2.1: Use CartoDB Dark Matter by default for dark theme
         const tileConfig = useDarkTheme ? this.tileOptions.dark : this.tileOptions.light;
-        const tileLayer = L.tileLayer(tileConfig.url, {
-            maxZoom: 19,
-            attribution: tileConfig.attribution
-        }).addTo(map);
+        const theme = useDarkTheme ? 'dark' : 'light';
+        
+        // Create tile layer with offline support if enabled
+        const tileLayer = enableOffline && window.tileCache 
+            ? this.createOfflineTileLayer(tileConfig.url, theme, tileConfig.attribution)
+            : L.tileLayer(tileConfig.url, {
+                maxZoom: 19,
+                attribution: tileConfig.attribution
+            });
+        
+        tileLayer.addTo(map);
 
         this.maps[mapId] = map;
-        this.tileLayers[mapId] = { current: tileLayer, theme: useDarkTheme ? 'dark' : 'light' };
+        this.tileLayers[mapId] = { current: tileLayer, theme: theme, offlineEnabled: enableOffline };
         return true;
     },
 
@@ -80,12 +187,18 @@ window.leafletMap = {
         // Add new tile layer
         const tileConfig = this.tileOptions[theme];
         console.log('[leaflet-map.js] Adding tile layer:', tileConfig.name);
-        const newLayer = L.tileLayer(tileConfig.url, {
-            maxZoom: 19,
-            attribution: tileConfig.attribution
-        }).addTo(map);
+        
+        const offlineEnabled = this.tileLayers[mapId]?.offlineEnabled !== false;
+        const newLayer = offlineEnabled && window.tileCache
+            ? this.createOfflineTileLayer(tileConfig.url, theme, tileConfig.attribution)
+            : L.tileLayer(tileConfig.url, {
+                maxZoom: 19,
+                attribution: tileConfig.attribution
+            });
+        
+        newLayer.addTo(map);
 
-        this.tileLayers[mapId] = { current: newLayer, theme: theme };
+        this.tileLayers[mapId] = { current: newLayer, theme: theme, offlineEnabled: offlineEnabled };
         console.log('[leaflet-map.js] Tile theme switched to:', theme);
         return true;
     },
@@ -705,5 +818,225 @@ window.leafletMap = {
             delete this.legendControls[mapId];
             delete this.hoverInfoControls[mapId];
         }
+    },
+
+    // Offline tile caching methods
+
+    // Download tiles for current map view
+    async downloadCurrentView: function(mapId, minZoom, maxZoom, dotNetHelper) {
+        const map = this.maps[mapId];
+        if (!map) {
+            console.error('[leaflet-map] Map not found:', mapId);
+            return null;
+        }
+
+        if (!window.tileCache) {
+            console.error('[leaflet-map] Tile cache not available');
+            return null;
+        }
+
+        const bounds = map.getBounds();
+        const theme = this.tileLayers[mapId]?.theme || 'dark';
+        const tileConfig = this.tileOptions[theme];
+
+        const boundsObj = {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest()
+        };
+
+        console.log(`[leaflet-map] Downloading tiles for view, zoom ${minZoom}-${maxZoom}`);
+
+        try {
+            const result = await window.tileCache.downloadRegion(
+                theme,
+                boundsObj,
+                minZoom,
+                maxZoom,
+                tileConfig.url,
+                (progress) => {
+                    if (dotNetHelper) {
+                        dotNetHelper.invokeMethodAsync('OnDownloadProgress', progress);
+                    }
+                }
+            );
+
+            console.log('[leaflet-map] Download complete:', result);
+            return result;
+        } catch (error) {
+            console.error('[leaflet-map] Download failed:', error);
+            throw error;
+        }
+    },
+
+    // Download tiles for a custom region
+    async downloadRegion: function(bounds, minZoom, maxZoom, theme, dotNetHelper) {
+        if (!window.tileCache) {
+            console.error('[leaflet-map] Tile cache not available');
+            return null;
+        }
+
+        const tileConfig = this.tileOptions[theme];
+        if (!tileConfig) {
+            console.error('[leaflet-map] Invalid theme:', theme);
+            return null;
+        }
+
+        console.log(`[leaflet-map] Downloading region tiles, zoom ${minZoom}-${maxZoom}`);
+
+        try {
+            const result = await window.tileCache.downloadRegion(
+                theme,
+                bounds,
+                minZoom,
+                maxZoom,
+                tileConfig.url,
+                (progress) => {
+                    if (dotNetHelper) {
+                        dotNetHelper.invokeMethodAsync('OnDownloadProgress', progress);
+                    }
+                }
+            );
+
+            console.log('[leaflet-map] Region download complete:', result);
+            return result;
+        } catch (error) {
+            console.error('[leaflet-map] Region download failed:', error);
+            throw error;
+        }
+    },
+
+    // Estimate storage size for current view
+    estimateCurrentViewSize: function(mapId, minZoom, maxZoom) {
+        const map = this.maps[mapId];
+        if (!map || !window.tileCache) {
+            return null;
+        }
+
+        const bounds = map.getBounds();
+        const boundsObj = {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest()
+        };
+
+        return window.tileCache.estimateRegionSize(boundsObj, minZoom, maxZoom);
+    },
+
+    // Estimate storage size for a custom region
+    estimateRegionSize: function(bounds, minZoom, maxZoom) {
+        if (!window.tileCache) {
+            return null;
+        }
+
+        return window.tileCache.estimateRegionSize(bounds, minZoom, maxZoom);
+    },
+
+    // Get cache statistics
+    async getCacheStats: function() {
+        if (!window.tileCache) {
+            return null;
+        }
+
+        return await window.tileCache.getStats();
+    },
+
+    // Clear all cached tiles
+    async clearAllCache: function() {
+        if (!window.tileCache) {
+            return false;
+        }
+
+        await window.tileCache.clearAll();
+        return true;
+    },
+
+    // Clear cache by theme
+    async clearCacheByTheme: function(theme) {
+        if (!window.tileCache) {
+            return 0;
+        }
+
+        return await window.tileCache.clearByTheme(theme);
+    },
+
+    // Clear old tiles
+    async clearOldTiles: function(maxAgeDays) {
+        if (!window.tileCache) {
+            return 0;
+        }
+
+        const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+        return await window.tileCache.clearOldTiles(maxAgeMs);
+    },
+
+    // Get cached regions
+    async getCachedRegions: function() {
+        if (!window.tileCache) {
+            return [];
+        }
+
+        return await window.tileCache.getCachedRegions();
+    },
+
+    // Check online status
+    isOnline: function() {
+        return navigator.onLine;
+    },
+
+    // Add offline indicator to map
+    addOfflineIndicator: function(mapId) {
+        const map = this.maps[mapId];
+        if (!map) {
+            return false;
+        }
+
+        // Create a custom control for offline indicator
+        const OfflineControl = L.Control.extend({
+            options: {
+                position: 'topright'
+            },
+
+            onAdd: function() {
+                const div = L.DomUtil.create('div', 'leaflet-control-offline');
+                div.innerHTML = `
+                    <div class="offline-indicator" style="
+                        background: rgba(220, 53, 69, 0.9);
+                        color: white;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        font-size: 14px;
+                        font-weight: 500;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                        display: none;
+                    ">
+                        <span style="margin-right: 6px;">⚠️</span>
+                        <span>Offline Mode</span>
+                    </div>
+                `;
+
+                // Update visibility based on online status
+                const updateStatus = () => {
+                    const indicator = div.querySelector('.offline-indicator');
+                    if (indicator) {
+                        indicator.style.display = navigator.onLine ? 'none' : 'flex';
+                    }
+                };
+
+                updateStatus();
+                window.addEventListener('online', updateStatus);
+                window.addEventListener('offline', updateStatus);
+
+                L.DomEvent.disableClickPropagation(div);
+                return div;
+            }
+        });
+
+        const offlineControl = new OfflineControl();
+        offlineControl.addTo(map);
+        
+        return true;
     }
 };

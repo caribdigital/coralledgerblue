@@ -252,6 +252,9 @@
                 await JS.InvokeVoidAsync("leafletMap.initialize", _mapId, 24.5, -77.5, 7, isDark);
                 _mapInitialized = true;
 
+                // Add offline indicator
+                await JS.InvokeVoidAsync("leafletMap.addOfflineIndicator", _mapId);
+
                 // Load MPA data
                 await LoadMpaDataAsync();
 
