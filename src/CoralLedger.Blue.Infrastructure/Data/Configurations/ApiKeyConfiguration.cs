@@ -40,7 +40,8 @@ public class ApiKeyConfiguration : IEntityTypeConfiguration<ApiKey>
         // Indexes
         builder.HasIndex(e => e.ApiClientId);
 
-        builder.HasIndex(e => e.KeyHash);
+        builder.HasIndex(e => e.KeyHash)
+            .IsUnique(); // KeyHash should be unique for security
 
         builder.HasIndex(e => e.IsActive);
 

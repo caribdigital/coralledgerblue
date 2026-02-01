@@ -134,7 +134,7 @@ src/
 | `/api/api-keys/clients` | GET | List all API clients |
 | `/api/api-keys/clients/{id}` | GET | Get specific API client |
 | `/api/api-keys/clients/{id}/keys` | POST | Create additional API key |
-| `/api/api-keys/{keyId}` | DELETE | Revoke API key |
+| `/api/api-keys/{keyId}/revoke` | POST | Revoke API key |
 | `/api/api-keys/clients/{id}/usage` | GET | Get usage statistics |
 | `/api/api-keys/clients/{id}/logs` | GET | Get usage logs |
 

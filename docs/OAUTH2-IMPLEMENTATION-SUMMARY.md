@@ -40,7 +40,7 @@ POST   /api/api-keys/clients              - Create API client with initial key
 GET    /api/api-keys/clients              - List all API clients
 GET    /api/api-keys/clients/{id}         - Get specific client
 POST   /api/api-keys/clients/{id}/keys    - Create additional key for client
-DELETE /api/api-keys/{keyId}              - Revoke an API key
+POST   /api/api-keys/{keyId}/revoke       - Revoke an API key
 GET    /api/api-keys/clients/{id}/usage   - Get usage statistics
 GET    /api/api-keys/clients/{id}/logs    - Get usage logs (paginated)
 ```

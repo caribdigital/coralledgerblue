@@ -7,6 +7,9 @@ public static class ApiKeyManagementEndpoints
 {
     public static IEndpointRouteBuilder MapApiKeyManagementEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        // TODO: These endpoints should require admin authentication in production
+        // For now, they allow anonymous access to support integration tests
+        // Add proper role-based authorization (e.g., .RequireAuthorization("AdminOnly"))
         var group = endpoints.MapGroup("/api/api-keys")
             .WithTags("API Key Management");
 
@@ -96,8 +99,8 @@ public static class ApiKeyManagementEndpoints
         .Produces<object>(StatusCodes.Status200OK)
         .Produces(StatusCodes.Status404NotFound);
 
-        // DELETE /api/api-keys/{keyId} - Revoke an API key
-        group.MapDelete("/{keyId:guid}", async (
+        // POST /api/api-keys/{keyId}/revoke - Revoke an API key
+        group.MapPost("/{keyId:guid}/revoke", async (
             Guid keyId,
             RevokeApiKeyRequest request,
             IApiKeyService apiKeyService,
