@@ -334,4 +334,62 @@ public class CitizenObservationTests
         observation3.RequestReview("Uncertain");
         observation3.Status.Should().Be(ObservationStatus.NeedsReview);
     }
+
+    [Fact]
+    public void AwardPoints_ForApprovedObservation_SetsPointsAndMarksProcessed()
+    {
+        // Arrange
+        var observation = CitizenObservation.Create(
+            CreateTestPoint(),
+            DateTime.UtcNow,
+            "Test observation",
+            ObservationType.CoralBleaching);
+        observation.Approve();
+
+        // Act
+        observation.AwardPoints(50);
+
+        // Assert
+        observation.PointsAwarded.Should().Be(50);
+        observation.PointsProcessed.Should().BeTrue();
+        observation.ModifiedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void AwardPoints_ForPendingObservation_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var observation = CitizenObservation.Create(
+            CreateTestPoint(),
+            DateTime.UtcNow,
+            "Test observation",
+            ObservationType.CoralBleaching);
+
+        // Act
+        var act = () => observation.AwardPoints(50);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Can only award points for approved observations*");
+    }
+
+    [Fact]
+    public void AwardPoints_WhenAlreadyProcessed_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var observation = CitizenObservation.Create(
+            CreateTestPoint(),
+            DateTime.UtcNow,
+            "Test observation",
+            ObservationType.CoralBleaching);
+        observation.Approve();
+        observation.AwardPoints(50);
+
+        // Act
+        var act = () => observation.AwardPoints(25);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Points already awarded for this observation*");
+    }
 }

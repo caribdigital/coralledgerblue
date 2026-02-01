@@ -30,6 +30,12 @@ public class MarineDbContext : DbContext, IMarineDbContext
     public DbSet<ApiClient> ApiClients => Set<ApiClient>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
     public DbSet<ApiUsageLog> ApiUsageLogs => Set<ApiUsageLog>();
+    
+    // Gamification
+    public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
+    public DbSet<UserBadge> UserBadges => Set<UserBadge>();
+    public DbSet<UserPoints> UserPoints => Set<UserPoints>();
+    public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

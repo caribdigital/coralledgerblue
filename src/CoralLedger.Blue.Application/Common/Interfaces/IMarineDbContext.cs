@@ -23,6 +23,12 @@ public interface IMarineDbContext
     DbSet<PatrolRoute> PatrolRoutes { get; }
     DbSet<PatrolRoutePoint> PatrolRoutePoints { get; }
     DbSet<PatrolWaypoint> PatrolWaypoints { get; }
+    
+    // Gamification
+    DbSet<UserProfile> UserProfiles { get; }
+    DbSet<UserBadge> UserBadges { get; }
+    DbSet<UserPoints> UserPoints { get; }
+    DbSet<UserAchievement> UserAchievements { get; }
 
     /// <summary>
     /// Provides access to database related operations like raw SQL execution

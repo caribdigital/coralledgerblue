@@ -28,6 +28,10 @@ public class CitizenObservation : BaseEntity, IAuditableEntity
     public ObservationStatus Status { get; private set; } = ObservationStatus.Pending;
     public string? ModerationNotes { get; private set; }
     public DateTime? ModeratedAt { get; private set; }
+    
+    // Gamification - Points awarded when verified
+    public int PointsAwarded { get; private set; }
+    public bool PointsProcessed { get; private set; }
 
     // Photos
     public ICollection<ObservationPhoto> Photos { get; private set; } = new List<ObservationPhoto>();
@@ -82,6 +86,19 @@ public class CitizenObservation : BaseEntity, IAuditableEntity
         Status = ObservationStatus.Approved;
         ModerationNotes = notes;
         ModeratedAt = DateTime.UtcNow;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void AwardPoints(int points)
+    {
+        if (Status != ObservationStatus.Approved)
+            throw new InvalidOperationException("Can only award points for approved observations");
+        
+        if (PointsProcessed)
+            throw new InvalidOperationException("Points already awarded for this observation");
+
+        PointsAwarded = points;
+        PointsProcessed = true;
         ModifiedAt = DateTime.UtcNow;
     }
 
