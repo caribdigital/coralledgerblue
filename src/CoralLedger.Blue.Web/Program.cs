@@ -202,6 +202,10 @@ app.UseRouting();
 //    These MUST be after UseRouting() and before endpoint execution
 app.UseCors();
 app.UseAuthentication();
+
+// Tenant resolution - must be after authentication to access API Key claims
+app.UseTenantResolver();
+
 app.UseAuthorization();
 app.UseRateLimiter();
 app.UseAntiforgery();
@@ -216,6 +220,7 @@ app.MapRazorComponents<App>()
     .AddAdditionalAssemblies(typeof(CoralLedger.Blue.Web.Client._Imports).Assembly);
 
 // 7. Map API endpoints
+app.MapTenantManagementEndpoints();
 app.MapMpaEndpoints();
 app.MapVesselEndpoints();
 app.MapBleachingEndpoints();
