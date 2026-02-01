@@ -242,6 +242,37 @@ public class AisClientTests
     }
 
     [Fact]
+    public async Task GetVesselTrackAsync_WithInvalidHours_UsesDefaultValue()
+    {
+        // Arrange
+        var client = CreateClient();
+        var mmsi = "311000001";
+
+        // Test invalid hours values
+        var invalidHours = new[] { -1, 0, 200 }; // negative, zero, too large
+
+        foreach (var hours in invalidHours)
+        {
+            // Act
+            var result = await client.GetVesselTrackAsync(mmsi, hours);
+
+            // Assert
+            result.Success.Should().BeTrue();
+            var track = result.Value!.ToList();
+            
+            // Should use default 24 hours when invalid
+            var firstPoint = track.First();
+            var lastPoint = track.Last();
+            var timeDifference = lastPoint.Timestamp - firstPoint.Timestamp;
+            
+            timeDifference.TotalHours.Should().BeApproximately(
+                24, 
+                2.0, 
+                $"invalid hours value {hours} should default to 24 hours");
+        }
+    }
+
+    [Fact]
     public async Task GetVesselPositionsNearAsync_WhenNotConfigured_FiltersCorrectly()
     {
         // Arrange

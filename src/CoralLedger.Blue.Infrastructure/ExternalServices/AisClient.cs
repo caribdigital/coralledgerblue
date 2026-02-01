@@ -301,6 +301,13 @@ public class AisClient : IAisClient
     /// </summary>
     private IReadOnlyList<AisVesselPosition> GetDemoVesselTrack(string mmsi, int hours)
     {
+        // Validate input
+        if (hours <= 0 || hours > 168) // Max 1 week of history
+        {
+            _logger.LogWarning("Invalid hours parameter {Hours} for track history, using default 24 hours", hours);
+            hours = 24;
+        }
+
         // Get the demo vessel's current position
         var demoVessels = GetDemoVesselPositions();
         var vessel = demoVessels.FirstOrDefault(v => v.Mmsi == mmsi);
