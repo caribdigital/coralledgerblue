@@ -9,10 +9,12 @@ public static class TenantManagementEndpoints
 {
     public static IEndpointRouteBuilder MapTenantManagementEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        // TODO: These endpoints should require admin authentication in production
-        // Add proper role-based authorization (e.g., .RequireAuthorization("AdminOnly"))
+        // SECURITY: Tenant management endpoints are currently open for development/testing
+        // TODO: Add proper authorization in production - these endpoints should be restricted to system administrators
+        // Example: .RequireAuthorization(policy => policy.RequireRole("SystemAdmin"))
         var group = endpoints.MapGroup("/api/tenants")
-            .WithTags("Tenant Management");
+            .WithTags("Tenant Management")
+            .WithDescription("SECURITY WARNING: Tenant management requires admin authorization in production");
 
         // GET /api/tenants - Get all active tenants
         group.MapGet("/", async (

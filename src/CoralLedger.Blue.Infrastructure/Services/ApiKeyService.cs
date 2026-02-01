@@ -45,13 +45,16 @@ public class ApiKeyService : IApiKeyService
         CancellationToken cancellationToken = default)
     {
         // Get or create default tenant for backward compatibility
+        // Note: In production, tenants should be created explicitly through tenant management APIs
         var defaultTenant = await _context.Tenants
             .FirstOrDefaultAsync(t => t.Slug == "bahamas", cancellationToken)
             .ConfigureAwait(false);
 
         if (defaultTenant == null)
         {
-            defaultTenant = await DefaultTenantSeeder.SeedAsync(_context).ConfigureAwait(false);
+            throw new InvalidOperationException(
+                "No default tenant found. Please ensure the database is seeded with a default tenant before creating API clients. " +
+                "Run database migrations and seeding, or create a tenant using the tenant management API.");
         }
 
         var client = ApiClient.Create(defaultTenant.Id, name, organizationName, description, contactEmail, rateLimitPerMinute);

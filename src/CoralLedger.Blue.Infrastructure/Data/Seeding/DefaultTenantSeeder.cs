@@ -60,8 +60,9 @@ public static class DefaultTenantSeeder
 
     private static Geometry CreateBahamasEezBoundary()
     {
-        // Simplified Bahamas EEZ boundary
-        // Covers the major island chains from Grand Bahama in the north to Inagua in the south
+        // Simplified Bahamas EEZ boundary for development/testing
+        // TODO: Replace with accurate EEZ coordinates from official sources in production
+        // This placeholder rectangle covers the major island chains from Grand Bahama in the north to Inagua in the south
         var coordinates = new[]
         {
             new Coordinate(-79.5, 27.5),  // Northwest
