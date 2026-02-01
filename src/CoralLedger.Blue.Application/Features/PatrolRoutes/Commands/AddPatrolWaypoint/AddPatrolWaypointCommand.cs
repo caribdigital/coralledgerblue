@@ -62,6 +62,7 @@ public class AddPatrolWaypointCommandHandler : IRequestHandler<AddPatrolWaypoint
                 request.WaypointType);
 
             patrolRoute.AddWaypoint(waypoint);
+            _context.PatrolWaypoints.Add(waypoint);
             await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("Added waypoint '{Title}' to patrol route {RouteId}",

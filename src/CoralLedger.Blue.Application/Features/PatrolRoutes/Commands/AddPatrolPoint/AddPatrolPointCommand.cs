@@ -64,6 +64,7 @@ public class AddPatrolPointCommandHandler : IRequestHandler<AddPatrolPointComman
                 request.Heading);
 
             patrolRoute.AddPoint(point);
+            _context.PatrolRoutePoints.Add(point);
             await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             _logger.LogDebug("Added GPS point {Id} to patrol route {RouteId}",
