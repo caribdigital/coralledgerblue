@@ -595,7 +595,7 @@
         2 => Localizer["Alert_Warning"],
         3 => Localizer["Alert_Alert1"],
         4 => Localizer["Alert_Alert2"],
-        _ => $"{Localizer["Alert_MassBleaching"]} {level - 2}"
+        _ => string.Format(Localizer["Alert_Level"], level - 2)
     };
 
     private string GetAlertBadgeClass(int level) => level switch

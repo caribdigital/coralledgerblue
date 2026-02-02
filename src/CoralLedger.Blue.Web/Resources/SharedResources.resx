@@ -268,6 +268,10 @@
   <data name="Alert_MassBleaching" xml:space="preserve">
     <value>Mass Bleaching</value>
   </data>
+  <data name="Alert_Level" xml:space="preserve">
+    <value>Alert {0}</value>
+    <comment>{0} is the alert level number</comment>
+  </data>
 
   <!-- Bleaching Alert Descriptions (for aria-labels) -->
   <data name="Alert_NoStress_Description" xml:space="preserve">
@@ -332,6 +336,17 @@
   </data>
   <data name="Protection_LightlyProtected" xml:space="preserve">
     <value>Lightly Protected</value>
+  </data>
+
+  <!-- Protection Levels (Short forms for compact UI) -->
+  <data name="Protection_NoTake_Short" xml:space="preserve">
+    <value>No-Take</value>
+  </data>
+  <data name="Protection_HighlyProtected_Short" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="Protection_LightlyProtected_Short" xml:space="preserve">
+    <value>Light</value>
   </data>
 
   <!-- Protection Level Descriptions (for aria-labels) -->

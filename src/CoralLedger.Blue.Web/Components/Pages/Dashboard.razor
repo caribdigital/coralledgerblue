@@ -712,7 +712,7 @@
             2 => Localizer["Alert_Warning"],
             3 => Localizer["Alert_Alert1"],
             4 => Localizer["Alert_Alert2"],
-            >= 5 => $"{Localizer["Alert_MassBleaching"]} {_maxAlertLevel.Value - 2}",
+            >= 5 => string.Format(Localizer["Alert_Level"], _maxAlertLevel.Value - 2),
             _ => "Unknown"
         };
     }
