@@ -161,11 +161,11 @@
                                         <td class="text-center">
                                             @if (hasData)
                                             {
-                                                <div class="dhw-value">
-                                                    <i class="bi @GetDhwIcon(data!.DegreeHeatingWeek)" aria-hidden="true"></i>
-                                                    <strong class="@GetDhwTextClass(data.DegreeHeatingWeek)"
-                                                            role="status"
-                                                            aria-label="@GetDhwAriaLabel(data.DegreeHeatingWeek)">
+                                                <div class="dhw-value"
+                                                     role="status"
+                                                     aria-label="@GetDhwAriaLabel(data!.DegreeHeatingWeek)">
+                                                    <i class="bi @GetDhwIcon(data.DegreeHeatingWeek)" aria-hidden="true"></i>
+                                                    <strong class="@GetDhwTextClass(data.DegreeHeatingWeek)">
                                                         @data.DegreeHeatingWeek.ToString("F1")
                                                     </strong>
                                                 </div>
@@ -552,12 +552,11 @@
         0 => "bi-check-circle-fill",
         1 => "bi-info-circle-fill",
         2 => "bi-exclamation-triangle-fill",
-        3 => "bi-exclamation-octagon-fill",
+        3 => "bi-exclamation-diamond-fill",
         4 => "bi-exclamation-octagon-fill",
         5 => "bi-x-octagon-fill",
         _ => "bi-question-circle"
-    };
-    private string GetAlertLevelAriaLabel(int level) => level switch
+    };    private string GetAlertLevelAriaLabel(int level) => level switch
     {
         0 => "No Stress - No bleaching threat detected",
         1 => "Watch - Bleaching conditions approaching threshold",
