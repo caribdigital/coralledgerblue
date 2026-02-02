@@ -560,15 +560,14 @@
 
     private string GetAlertLevelAriaLabel(int level) => level switch
     {
-        0 => "No Stress - No bleaching threat detected",
-        1 => "Watch - Bleaching conditions approaching threshold",
-        2 => "Warning - Bleaching possible, DHW 0-4°C-weeks",
-        3 => "Alert Level 1 - Bleaching likely, DHW 4-8°C-weeks",
+        0 => "No Stress - No bleaching threat detected, DHW less than 1°C-week",
+        1 => "Watch - Bleaching conditions approaching threshold, DHW 1-4°C-weeks",
+        2 => "Warning - Bleaching possible, DHW 4-8°C-weeks",
+        3 => "Alert Level 1 - Bleaching likely, DHW greater than 8°C-weeks",
         4 => "Alert Level 2 - Severe bleaching expected, DHW greater than 8°C-weeks",
         5 => "Mass Bleaching Alert - Extreme bleaching conditions, extended severe stress",
         _ => $"Alert Level {level}"
     };
-
     private string GetDhwIcon(double dhw) => dhw switch
     {
         >= 8 => "bi-exclamation-octagon-fill",
