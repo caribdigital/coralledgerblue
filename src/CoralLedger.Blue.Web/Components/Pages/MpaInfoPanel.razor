@@ -17,10 +17,15 @@
         }
         else if (_loading)
         {
-            <div class="loading-state" aria-live="polite">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading MPA details...</span>
+            <div class="loading-state" aria-busy="true" aria-live="polite">
+                @* Skeleton loading for MPA details *@
+                <div class="skeleton-card">
+                    <div class="skeleton-header"></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-line medium"></div>
                 </div>
+                <span class="visually-hidden">Loading MPA details...</span>
             </div>
         }
         else if (_detail is not null)
@@ -79,11 +84,19 @@
 
                 @if (_bleachingLoading)
                 {
-                    <div class="loading-indicator" aria-live="polite">
-                        <div class="spinner-border spinner-border-sm" role="status">
-                            <span class="visually-hidden">Loading bleaching data...</span>
+                    <div class="loading-indicator" aria-busy="true" aria-live="polite">
+                        @* Skeleton for live data cards *@
+                        <div class="live-data-grid">
+                            <div class="skeleton-card">
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-header" style="margin: 0.5rem 0;"></div>
+                            </div>
+                            <div class="skeleton-card">
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-header" style="margin: 0.5rem 0;"></div>
+                            </div>
                         </div>
-                        <span>Loading NOAA data...</span>
+                        <span class="visually-hidden">Loading bleaching data...</span>
                     </div>
                 }
                 else if (_bleachingError)
@@ -156,11 +169,16 @@
             @if (_historyLoading)
             {
                 <section class="trend-section">
-                    <div class="loading-indicator" aria-live="polite">
-                        <div class="spinner-border spinner-border-sm" role="status">
-                            <span class="visually-hidden">Loading trend data...</span>
+                    <h5 id="trend-heading">
+                        <i class="bi bi-graph-up" aria-hidden="true"></i>
+                        30-Day DHW Trend
+                    </h5>
+                    <div class="loading-indicator" aria-busy="true" aria-live="polite">
+                        @* Skeleton for trend chart *@
+                        <div style="height: 60px; margin-bottom: 0.5rem;">
+                            <div class="skeleton-line" style="height: 60px; width: 100%;"></div>
                         </div>
-                        <span>Loading trend data...</span>
+                        <span class="visually-hidden">Loading trend data...</span>
                     </div>
                 </section>
             }
@@ -225,7 +243,11 @@
         {
             <div class="error-state" role="alert">
                 <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
-                <span>Failed to load MPA details</span>
+                <h4>Failed to load MPA details</h4>
+                <p>Unable to retrieve information for this Marine Protected Area</p>
+                <button class="btn-retry" @onclick="async () => await OnParametersSetAsync()" aria-label="Retry loading MPA details">
+                    <i class="bi bi-arrow-clockwise"></i> Try Again
+                </button>
             </div>
         }
     </div>
