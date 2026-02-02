@@ -568,6 +568,7 @@
         5 => "Mass Bleaching Alert - Extreme bleaching conditions, extended severe stress",
         _ => $"Alert Level {level}"
     };
+
     private string GetDhwIcon(double dhw) => dhw switch
     {
         >= 8 => "bi-exclamation-octagon-fill",
