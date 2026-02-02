@@ -774,4 +774,33 @@ public class MapTests : PlaywrightFixture
 
         File.Exists(screenshotPath).Should().BeTrue("List view baseline screenshot should be saved");
     }
+
+    [Test]
+    [Description("Verifies map initializes without timeout error (critical for incognito mode)")]
+    public async Task Map_InitializesWithoutTimeoutError()
+    {
+        // Navigate to map page
+        await Page.GotoAsync($"{BaseUrl}/map");
+        await Page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
+
+        // Wait for page to fully render (give extra time for JS to load)
+        await Task.Delay(10000);
+
+        // Check for initialization error message in the page
+        var errorMessage = Page.Locator("text='Map initialization failed'");
+        var hasError = await errorMessage.CountAsync() > 0;
+
+        // Also check for timeout error specifically
+        var timeoutError = Page.Locator("text='timeout'");
+        var hasTimeoutError = await timeoutError.CountAsync() > 0 && hasError;
+
+        // Check that the leaflet container is visible (map actually loaded)
+        var leafletContainer = Page.Locator(".leaflet-container, .leaflet-map-container").First;
+        var mapLoaded = await leafletContainer.IsVisibleAsync();
+
+        // Assert
+        hasError.Should().BeFalse("Map should initialize without showing error message");
+        hasTimeoutError.Should().BeFalse("Map should not show timeout error");
+        mapLoaded.Should().BeTrue("Leaflet map container should be visible after initialization");
+    }
 }

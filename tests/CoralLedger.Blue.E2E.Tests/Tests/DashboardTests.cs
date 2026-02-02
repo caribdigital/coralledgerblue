@@ -94,4 +94,39 @@ public class DashboardTests : PlaywrightFixture
             await darkButton.ClickAsync();
         }
     }
+
+    [Test]
+    [Description("Verifies lazy-loaded map initializes without timeout error after clicking Load Map Now")]
+    public async Task Dashboard_MapLoadsWithoutTimeoutError()
+    {
+        // Navigate to dashboard
+        await _dashboard.NavigateAsync();
+        await Task.Delay(2000);
+
+        // Look for Load Map Now button and click it
+        var loadMapButton = Page.Locator("button:has-text('Load Map Now')").First;
+        if (await loadMapButton.IsVisibleAsync())
+        {
+            await loadMapButton.ClickAsync();
+            await Task.Delay(15000); // Wait for map to initialize
+        }
+        else
+        {
+            // Map might have auto-loaded, scroll to it
+            await Page.Locator(".lazy-map-container, .leaflet-container").First.ScrollIntoViewIfNeededAsync();
+            await Task.Delay(10000);
+        }
+
+        // Check for initialization error message
+        var errorMessage = Page.Locator("text='Map initialization failed'");
+        var hasError = await errorMessage.CountAsync() > 0;
+
+        // Check for timeout error specifically
+        var timeoutError = Page.Locator("text='timeout'");
+        var hasTimeoutError = await timeoutError.CountAsync() > 0 && hasError;
+
+        // Assert
+        hasError.Should().BeFalse("Dashboard map should initialize without showing error message");
+        hasTimeoutError.Should().BeFalse("Dashboard map should not show timeout error");
+    }
 }

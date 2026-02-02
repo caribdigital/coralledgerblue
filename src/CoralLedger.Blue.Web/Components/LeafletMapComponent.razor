@@ -245,6 +245,9 @@
                 // Subscribe to global theme changes
                 ThemeState.ThemeChanged += OnGlobalThemeChanged;
 
+                // Wait for leafletMap to be available (deferred script loading)
+                await WaitForLeafletMapAsync();
+
                 // US-2.2.1: Initialize map with theme - read directly from localStorage for accuracy
                 var savedTheme = await JS.InvokeAsync<string>("CoralLedgerThemeManager.getMode");
                 var isDark = savedTheme != "light"; // Default to dark if not explicitly light
@@ -507,6 +510,39 @@
     {
         Console.WriteLine($"Fishing event clicked: {eventId}");
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Waits for the leafletMap JavaScript object to be available.
+    /// This is necessary because scripts may still be loading.
+    /// </summary>
+    private async Task WaitForLeafletMapAsync(int maxAttempts = 150, int delayMs = 200)
+    {
+        for (int i = 0; i < maxAttempts; i++)
+        {
+            try
+            {
+                // Use inline check that doesn't depend on any external function
+                var isReady = await JS.InvokeAsync<bool>(
+                    "eval",
+                    "typeof window.leafletMap !== 'undefined' && typeof window.leafletMap.initialize === 'function' && typeof L !== 'undefined'");
+                if (isReady)
+                {
+                    Console.WriteLine($"[LeafletMap] JavaScript ready after {i * delayMs}ms");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log for debugging but continue waiting
+                if (i % 10 == 0) // Log every 2 seconds
+                {
+                    Console.WriteLine($"[LeafletMap] Waiting for JS... attempt {i}, error: {ex.Message}");
+                }
+            }
+            await Task.Delay(delayMs);
+        }
+        throw new InvalidOperationException("Leaflet map JavaScript failed to load after timeout (30 seconds). Please refresh the page.");
     }
 
     public async ValueTask DisposeAsync()

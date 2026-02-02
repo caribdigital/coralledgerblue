@@ -1,4 +1,12 @@
 // Leaflet Map Interop for CoralLedger Blue
+
+// Helper function to check if leafletMap is ready (called from Blazor)
+window.isLeafletMapReady = function() {
+    return typeof window.leafletMap !== 'undefined' &&
+           typeof window.leafletMap.initialize === 'function' &&
+           typeof L !== 'undefined';
+};
+
 window.leafletMap = {
     maps: {},
     mpaLayers: {},
@@ -823,7 +831,7 @@ window.leafletMap = {
     // Offline tile caching methods
 
     // Download tiles for current map view
-    async downloadCurrentView: function(mapId, minZoom, maxZoom, dotNetHelper) {
+    downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper) {
         const map = this.maps[mapId];
         if (!map) {
             console.error('[leaflet-map] Map not found:', mapId);
@@ -871,7 +879,7 @@ window.leafletMap = {
     },
 
     // Download tiles for a custom region
-    async downloadRegion: function(bounds, minZoom, maxZoom, theme, dotNetHelper) {
+    downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper) {
         if (!window.tileCache) {
             console.error('[leaflet-map] Tile cache not available');
             return null;
@@ -935,7 +943,7 @@ window.leafletMap = {
     },
 
     // Get cache statistics
-    async getCacheStats: function() {
+    getCacheStats: async function() {
         if (!window.tileCache) {
             return null;
         }
@@ -944,7 +952,7 @@ window.leafletMap = {
     },
 
     // Clear all cached tiles
-    async clearAllCache: function() {
+    clearAllCache: async function() {
         if (!window.tileCache) {
             return false;
         }
@@ -954,7 +962,7 @@ window.leafletMap = {
     },
 
     // Clear cache by theme
-    async clearCacheByTheme: function(theme) {
+    clearCacheByTheme: async function(theme) {
         if (!window.tileCache) {
             return 0;
         }
@@ -963,7 +971,7 @@ window.leafletMap = {
     },
 
     // Clear old tiles
-    async clearOldTiles: function(maxAgeDays) {
+    clearOldTiles: async function(maxAgeDays) {
         if (!window.tileCache) {
             return 0;
         }
@@ -973,7 +981,7 @@ window.leafletMap = {
     },
 
     // Get cached regions
-    async getCachedRegions: function() {
+    getCachedRegions: async function() {
         if (!window.tileCache) {
             return [];
         }
