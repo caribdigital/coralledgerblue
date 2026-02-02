@@ -2745,7 +2745,8 @@ body.theme-light .header-nav .rz-text,
 
 /* Value Count-Up (smooth transition) */
 .value-transition {
-    transition: all 0.5s ease-out;
+    transition: color 0.5s ease-out,
+                opacity 0.5s ease-out;
 }
 
 /* Status Badge Transitions */
