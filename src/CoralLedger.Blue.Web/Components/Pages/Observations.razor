@@ -59,8 +59,12 @@
                                                 <span class="badge @GetTypeBadgeClass(obs.Type) me-2">@obs.Type</span>
                                                 <strong>@obs.Title</strong>
                                             </div>
-                                            <span class="severity-indicator severity-@obs.Severity" title="Severity @obs.Severity">
-                                                @obs.Severity
+                                            <span class="severity-indicator severity-@obs.Severity" 
+                                                  role="status"
+                                                  aria-label="@GetSeverityAriaLabel(obs.Severity)"
+                                                  title="@GetSeverityTitle(obs.Severity)">
+                                                <i class="bi @GetSeverityIcon(obs.Severity)" aria-hidden="true"></i>
+                                                <span class="severity-number">@obs.Severity</span>
                                             </span>
                                         </div>
                                         <div class="text-muted small mt-1">
@@ -127,15 +131,25 @@
     }
 
     .severity-indicator {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
+        width: 40px;
+        height: 28px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 0.125rem;
         font-size: 12px;
         font-weight: bold;
         color: white;
+        flex-shrink: 0;
+    }
+
+    .severity-indicator i {
+        font-size: 10px;
+    }
+
+    .severity-number {
+        font-weight: bold;
     }
 
     .severity-1 { background: #28a745; }
@@ -209,6 +223,36 @@
         "BoatAnchorDamage" => "bg-warning text-dark",
         "WaterQuality" => "bg-primary",
         _ => "bg-secondary"
+    };
+
+    private string GetSeverityIcon(int severity) => severity switch
+    {
+        1 => "bi-check-circle-fill",
+        2 => "bi-info-circle-fill",
+        3 => "bi-exclamation-circle-fill",
+        4 => "bi-exclamation-triangle-fill",
+        5 => "bi-x-octagon-fill",
+        _ => "bi-circle-fill"
+    };
+
+    private string GetSeverityAriaLabel(int severity) => severity switch
+    {
+        1 => "Low severity - Level 1",
+        2 => "Minor severity - Level 2",
+        3 => "Moderate severity - Level 3",
+        4 => "High severity - Level 4",
+        5 => "Critical severity - Level 5",
+        _ => $"Severity level {severity}"
+    };
+
+    private string GetSeverityTitle(int severity) => severity switch
+    {
+        1 => "Severity Level 1 - Low",
+        2 => "Severity Level 2 - Minor",
+        3 => "Severity Level 3 - Moderate",
+        4 => "Severity Level 4 - High",
+        5 => "Severity Level 5 - Critical",
+        _ => $"Severity {severity}"
     };
 
     public class ObservationSummary
