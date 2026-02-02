@@ -248,4 +248,207 @@
   <data name="Nav_Admin_Title" xml:space="preserve">
     <value>Ir al panel de administración</value>
   </data>
+
+  <!-- Bleaching Alert Levels -->
+  <data name="Alert_NoStress" xml:space="preserve">
+    <value>Sin Estrés</value>
+  </data>
+  <data name="Alert_Watch" xml:space="preserve">
+    <value>Vigilancia</value>
+  </data>
+  <data name="Alert_Warning" xml:space="preserve">
+    <value>Advertencia</value>
+  </data>
+  <data name="Alert_Alert1" xml:space="preserve">
+    <value>Alerta 1</value>
+  </data>
+  <data name="Alert_Alert2" xml:space="preserve">
+    <value>Alerta 2</value>
+  </data>
+  <data name="Alert_MassBleaching" xml:space="preserve">
+    <value>Blanqueamiento Masivo</value>
+  </data>
+  <data name="Alert_Level" xml:space="preserve">
+    <value>Alerta {0}</value>
+    <comment>{0} es el número de nivel de alerta</comment>
+  </data>
+
+  <!-- Bleaching Alert Descriptions (for aria-labels) -->
+  <data name="Alert_NoStress_Description" xml:space="preserve">
+    <value>No se detectó estrés de blanqueamiento</value>
+  </data>
+  <data name="Alert_Watch_Description" xml:space="preserve">
+    <value>Vigilancia de Blanqueamiento - las condiciones se acercan al umbral</value>
+  </data>
+  <data name="Alert_Warning_Description" xml:space="preserve">
+    <value>Advertencia de Blanqueamiento - posible blanqueamiento esperado</value>
+  </data>
+  <data name="Alert_Alert1_Description" xml:space="preserve">
+    <value>Alerta Nivel 1 - blanqueamiento esperado</value>
+  </data>
+  <data name="Alert_Alert2_Description" xml:space="preserve">
+    <value>Alerta Nivel 2 - blanqueamiento severo esperado</value>
+  </data>
+  <data name="Alert_MassBleaching_Description" xml:space="preserve">
+    <value>Alerta de Blanqueamiento Masivo - condiciones de blanqueamiento extremas</value>
+  </data>
+
+  <!-- Bleaching Alert Tooltips -->
+  <data name="Alert_NoStress_Tooltip" xml:space="preserve">
+    <value>Sin estrés térmico. DHW &lt; 1°C-semanas</value>
+  </data>
+  <data name="Alert_Watch_Tooltip" xml:space="preserve">
+    <value>Vigilancia: DHW 1-4°C-semanas. Monitorear condiciones.</value>
+  </data>
+  <data name="Alert_Warning_Tooltip" xml:space="preserve">
+    <value>Advertencia: DHW 4-8°C-semanas. Blanqueamiento posible.</value>
+  </data>
+  <data name="Alert_Alert1_Tooltip" xml:space="preserve">
+    <value>Alerta 1: DHW &gt; 8°C-semanas. Blanqueamiento probable.</value>
+  </data>
+  <data name="Alert_Alert2_Tooltip" xml:space="preserve">
+    <value>Alerta 2: DHW &gt; 8°C-semanas. Blanqueamiento severo.</value>
+  </data>
+  <data name="Alert_MassBleaching_Tooltip" xml:space="preserve">
+    <value>Blanqueamiento Masivo: Estrés extremo prolongado.</value>
+  </data>
+
+  <!-- DHW Legend Labels -->
+  <data name="DHW_Legend_NoStress" xml:space="preserve">
+    <value>DHW &lt; 1</value>
+  </data>
+  <data name="DHW_Legend_Watch" xml:space="preserve">
+    <value>DHW 1-4</value>
+  </data>
+  <data name="DHW_Legend_Warning" xml:space="preserve">
+    <value>DHW 4-8</value>
+  </data>
+  <data name="DHW_Legend_Alert" xml:space="preserve">
+    <value>DHW &gt; 8</value>
+  </data>
+
+  <!-- Protection Levels -->
+  <data name="Protection_NoTake" xml:space="preserve">
+    <value>Sin Extracción</value>
+  </data>
+  <data name="Protection_HighlyProtected" xml:space="preserve">
+    <value>Altamente Protegida</value>
+  </data>
+  <data name="Protection_LightlyProtected" xml:space="preserve">
+    <value>Levemente Protegida</value>
+  </data>
+
+  <!-- Protection Levels (Short forms for compact UI) -->
+  <data name="Protection_NoTake_Short" xml:space="preserve">
+    <value>Sin Extracción</value>
+  </data>
+  <data name="Protection_HighlyProtected_Short" xml:space="preserve">
+    <value>Alta</value>
+  </data>
+  <data name="Protection_LightlyProtected_Short" xml:space="preserve">
+    <value>Leve</value>
+  </data>
+
+  <!-- Protection Level Descriptions (for aria-labels) -->
+  <data name="Protection_NoTake_Description" xml:space="preserve">
+    <value>Zona Sin Extracción - Nivel de protección más alto, no se permite pesca ni extracción</value>
+  </data>
+  <data name="Protection_HighlyProtected_Description" xml:space="preserve">
+    <value>Área Altamente Protegida - Alto nivel de protección, actividades limitadas permitidas</value>
+  </data>
+  <data name="Protection_LightlyProtected_Description" xml:space="preserve">
+    <value>Área Levemente Protegida - Nivel de protección básico, algunas actividades permitidas</value>
+  </data>
+
+  <!-- Bleaching Comparison Page -->
+  <data name="Bleaching_PageTitle" xml:space="preserve">
+    <value>Estado del Blanqueamiento de Coral</value>
+  </data>
+  <data name="Bleaching_PageSubtitle" xml:space="preserve">
+    <value>Comparación de AMP - Datos en Tiempo Real de NOAA Coral Reef Watch</value>
+  </data>
+  <data name="Bleaching_HighestRisk" xml:space="preserve">
+    <value>Mayor Riesgo</value>
+  </data>
+  <data name="Bleaching_MPAsAtRisk" xml:space="preserve">
+    <value>AMP en Riesgo</value>
+  </data>
+  <data name="Bleaching_AvgSeaTemp" xml:space="preserve">
+    <value>Temp. Promedio del Mar</value>
+  </data>
+  <data name="Bleaching_DataDate" xml:space="preserve">
+    <value>Fecha de Datos</value>
+  </data>
+  <data name="Bleaching_Loading" xml:space="preserve">
+    <value>Cargando...</value>
+  </data>
+  <data name="Bleaching_AcrossAllMPAs" xml:space="preserve">
+    <value>En todas las AMP</value>
+  </data>
+  <data name="Bleaching_AtRiskWarning" xml:space="preserve">
+    <value>DHW &gt; 4 (Advertencia+)</value>
+  </data>
+  <data name="Bleaching_MPAComparison" xml:space="preserve">
+    <value>Comparación de Blanqueamiento de AMP</value>
+  </data>
+  <data name="Bleaching_SortBy" xml:space="preserve">
+    <value>Ordenar por:</value>
+  </data>
+  <data name="Bleaching_Sort_DHW" xml:space="preserve">
+    <value>DHW (Mayor Riesgo)</value>
+  </data>
+  <data name="Bleaching_Sort_SST" xml:space="preserve">
+    <value>SST (Más Caliente)</value>
+  </data>
+  <data name="Bleaching_Sort_Alert" xml:space="preserve">
+    <value>Nivel de Alerta</value>
+  </data>
+  <data name="Bleaching_Sort_Name" xml:space="preserve">
+    <value>Nombre (A-Z)</value>
+  </data>
+  <data name="Bleaching_Sort_Area" xml:space="preserve">
+    <value>Área (Mayor)</value>
+  </data>
+  <data name="Bleaching_Table_MPAName" xml:space="preserve">
+    <value>Nombre de AMP</value>
+  </data>
+  <data name="Bleaching_Table_IslandGroup" xml:space="preserve">
+    <value>Grupo de Islas</value>
+  </data>
+  <data name="Bleaching_Table_SST" xml:space="preserve">
+    <value>SST</value>
+  </data>
+  <data name="Bleaching_Table_DHW" xml:space="preserve">
+    <value>DHW</value>
+  </data>
+  <data name="Bleaching_Table_Alert" xml:space="preserve">
+    <value>Alerta</value>
+  </data>
+  <data name="Bleaching_Table_Anomaly" xml:space="preserve">
+    <value>Anomalía</value>
+  </data>
+  <data name="Bleaching_Table_Area" xml:space="preserve">
+    <value>Área (km²)</value>
+  </data>
+  <data name="Bleaching_LoadingMPAs" xml:space="preserve">
+    <value>Cargando AMP...</value>
+  </data>
+  <data name="Bleaching_LoadingProgress" xml:space="preserve">
+    <value>Cargando {0} de {1} AMP...</value>
+  </data>
+  <data name="Bleaching_FetchingNOAAData" xml:space="preserve">
+    <value>Obteniendo datos de NOAA para cada Área Marina Protegida</value>
+  </data>
+  <data name="Bleaching_NoMPAsFound" xml:space="preserve">
+    <value>No se encontraron Áreas Marinas Protegidas.</value>
+  </data>
+  <data name="Bleaching_DHWAlertLevels" xml:space="preserve">
+    <value>Niveles de Alerta DHW</value>
+  </data>
+  <data name="Bleaching_DataSource" xml:space="preserve">
+    <value>Fuente de Datos</value>
+  </data>
+  <data name="Bleaching_NOAAAttribution" xml:space="preserve">
+    <value>NOAA Coral Reef Watch - Datos Satelitales Diarios de 5km</value>
+  </data>
 </root>

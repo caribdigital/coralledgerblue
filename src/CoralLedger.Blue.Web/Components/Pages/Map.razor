@@ -365,9 +365,9 @@
 
     private string GetProtectionLabel(string level) => level switch
     {
-        "NoTake" => "No-Take",
-        "HighlyProtected" => "High",
-        "LightlyProtected" => "Light",
+        "NoTake" => Localizer["Protection_NoTake_Short"],
+        "HighlyProtected" => Localizer["Protection_HighlyProtected_Short"],
+        "LightlyProtected" => Localizer["Protection_LightlyProtected_Short"],
         _ => level
     };
 }
