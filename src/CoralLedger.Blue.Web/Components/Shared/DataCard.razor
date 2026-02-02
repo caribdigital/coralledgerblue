@@ -1,5 +1,5 @@
 @* US-2.1.2: DataCard Component - Reusable KPI card with icon, value, trend *@
-<div class="data-card @StatusClass" role="region" aria-label="@Label statistic">
+<div class="data-card @StatusClass @AdditionalCssClass card-appear" role="region" aria-label="@Label statistic">
     <div class="data-card-header">
         <div class="data-card-icon" aria-hidden="true">
             <i class="bi @Icon"></i>
@@ -25,7 +25,7 @@
         else
         {
             <div class="data-card-value">
-                <span class="value" aria-label="@Value @Unit">@Value</span>
+                <span class="value value-transition" aria-label="@Value @Unit">@Value</span>
                 @if (!string.IsNullOrEmpty(Unit))
                 {
                     <span class="unit">@Unit</span>
@@ -63,7 +63,8 @@
         padding: 1rem;
         border: 1px solid var(--color-border, rgba(255,255,255,0.18));
         transition: box-shadow var(--transition-base, 0.35s ease),
-                    border-color var(--transition-base, 0.35s ease);
+                    border-color var(--transition-base, 0.35s ease),
+                    transform 0.2s ease;
     }
 
     .data-card:hover {
@@ -275,6 +276,9 @@
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string AdditionalCssClass { get; set; } = "";
 
     private string StatusClass => CardStatus switch
     {
