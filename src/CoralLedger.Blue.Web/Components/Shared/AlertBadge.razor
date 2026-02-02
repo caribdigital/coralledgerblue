@@ -228,10 +228,10 @@
 
     private string TooltipText => Level switch
     {
-        0 => "No thermal stress. DHW < 0°C-weeks",
-        1 => "Watch: Hotspot detected. Monitor conditions.",
-        2 => "Warning: DHW 0-4°C-weeks. Bleaching possible.",
-        3 => "Alert 1: DHW 4-8°C-weeks. Bleaching likely.",
+        0 => "No thermal stress. DHW < 1°C-weeks",
+        1 => "Watch: DHW 1-4°C-weeks. Monitor conditions.",
+        2 => "Warning: DHW 4-8°C-weeks. Bleaching possible.",
+        3 => "Alert 1: DHW > 8°C-weeks. Bleaching likely.",
         4 => "Alert 2: DHW > 8°C-weeks. Severe bleaching.",
         5 => "Mass Bleaching: Extended extreme stress.",
         _ => $"Alert Level {Level}"
