@@ -193,13 +193,9 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @{
-                                        int rowIndex = 0;
-                                    }
-                                    @foreach (var mpa in _mpas.OrderByDescending(m => m.AreaSquareKm))
+                                    @foreach (var (mpa, index) in _mpas.OrderByDescending(m => m.AreaSquareKm).Select((m, i) => (m, i)))
                                     {
-                                        rowIndex++;
-                                        var staggerClass = $"table-row-animate stagger-{Math.Min(rowIndex, 8)}";
+                                        var staggerClass = $"table-row-animate stagger-{Math.Min(index + 1, 8)}";
                                         <tr @onclick="() => NavigateToMpa(mpa.Id)"
                                             class="@staggerClass"
                                             style="cursor: pointer;"

@@ -51,13 +51,9 @@
                             }
                             else
                             {
-                                @{
-                                    int itemIndex = 0;
-                                }
-                                @foreach (var obs in _observations)
+                                @foreach (var (obs, index) in _observations.Select((o, i) => (o, i)))
                                 {
-                                    itemIndex++;
-                                    var staggerClass = $"list-item-animate stagger-{Math.Min(itemIndex, 8)}";
+                                    var staggerClass = $"list-item-animate stagger-{Math.Min(index + 1, 8)}";
                                     <div class="observation-item @staggerClass">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div>
