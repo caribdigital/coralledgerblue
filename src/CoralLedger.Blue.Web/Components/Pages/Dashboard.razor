@@ -39,7 +39,8 @@
                 TrendDirection="DataCard.Trend.Stable"
                 ShowTrend="false"
                 CardStatus="DataCard.Status.Success"
-                Loading="@_loading" />
+                Loading="@_loading"
+                AdditionalCssClass="stagger-1" />
 
             <DataCard
                 Icon="bi-geo-alt-fill"
@@ -50,7 +51,8 @@
                 TrendDirection="DataCard.Trend.Stable"
                 ShowTrend="true"
                 CardStatus="DataCard.Status.Success"
-                Loading="@_loading" />
+                Loading="@_loading"
+                AdditionalCssClass="stagger-2" />
 
             <DataCard
                 Icon="bi-thermometer-half"
@@ -61,7 +63,8 @@
                 TrendLabel="@Localizer["Dashboard_FromNormal"]"
                 TrendDirection="@GetSstTrend()"
                 CardStatus="@GetSstStatus()"
-                Loading="@(!_avgSst.HasValue && !_bleachingError)" />
+                Loading="@(!_avgSst.HasValue && !_bleachingError)"
+                AdditionalCssClass="stagger-3" />
 
             <DataCard
                 Icon="bi-exclamation-triangle"
@@ -72,7 +75,8 @@
                 CardStatus="@GetBleachingStatus()"
                 Loading="@(!_maxAlertLevel.HasValue && !_bleachingError)"
                 HasError="@_bleachingError"
-                ErrorMessage="@Localizer["Dashboard_UnableToLoadBleachingData"]">
+                ErrorMessage="@Localizer["Dashboard_UnableToLoadBleachingData"]"
+                AdditionalCssClass="stagger-4">
                 @if (_maxAlertLevel.HasValue)
                 {
                     <AlertBadge Level="@_maxAlertLevel.Value" Size="AlertBadge.BadgeSize.Small" />
@@ -189,9 +193,15 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @{
+                                        int rowIndex = 0;
+                                    }
                                     @foreach (var mpa in _mpas.OrderByDescending(m => m.AreaSquareKm))
                                     {
+                                        rowIndex++;
+                                        var staggerClass = $"table-row-animate stagger-{Math.Min(rowIndex, 8)}";
                                         <tr @onclick="() => NavigateToMpa(mpa.Id)"
+                                            class="@staggerClass"
                                             style="cursor: pointer;"
                                             tabindex="0"
                                             role="row"

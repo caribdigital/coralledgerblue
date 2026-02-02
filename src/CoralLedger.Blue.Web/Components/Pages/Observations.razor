@@ -51,9 +51,14 @@
                             }
                             else
                             {
+                                @{
+                                    int itemIndex = 0;
+                                }
                                 @foreach (var obs in _observations)
                                 {
-                                    <div class="observation-item">
+                                    itemIndex++;
+                                    var staggerClass = $"list-item-animate stagger-{Math.Min(itemIndex, 8)}";
+                                    <div class="observation-item @staggerClass">
                                         <div class="d-flex justify-content-between align-items-start">
                                             <div>
                                                 <span class="badge @GetTypeBadgeClass(obs.Type) me-2">@obs.Type</span>
