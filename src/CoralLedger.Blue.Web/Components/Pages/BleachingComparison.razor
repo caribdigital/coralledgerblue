@@ -161,9 +161,14 @@
                                         <td class="text-center">
                                             @if (hasData)
                                             {
-                                                <strong class="@GetDhwTextClass(data!.DegreeHeatingWeek)">
-                                                    @data.DegreeHeatingWeek.ToString("F1")
-                                                </strong>
+                                                <div class="dhw-value">
+                                                    <i class="bi @GetDhwIcon(data!.DegreeHeatingWeek)" aria-hidden="true"></i>
+                                                    <strong class="@GetDhwTextClass(data.DegreeHeatingWeek)"
+                                                            role="status"
+                                                            aria-label="@GetDhwAriaLabel(data.DegreeHeatingWeek)">
+                                                        @data.DegreeHeatingWeek.ToString("F1")
+                                                    </strong>
+                                                </div>
                                             }
                                             else
                                             {
@@ -173,7 +178,10 @@
                                         <td class="text-center">
                                             @if (hasData)
                                             {
-                                                <span class="badge @GetAlertBadgeClass(data!.AlertLevel)">
+                                                <span class="badge @GetAlertBadgeClass(data!.AlertLevel)"
+                                                      role="status"
+                                                      aria-label="@GetAlertLevelAriaLabel(data.AlertLevel)">
+                                                    <i class="bi @GetAlertIcon(data.AlertLevel)" aria-hidden="true"></i>
                                                     @GetAlertLevelName(data.AlertLevel)
                                                 </span>
                                             }
@@ -229,19 +237,31 @@
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-3">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-success">No Stress</span>
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+                                    No Stress
+                                </span>
                                 <small class="text-muted">DHW &lt; 1</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-info">Watch</span>
+                                <span class="badge bg-info">
+                                    <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                                    Watch
+                                </span>
                                 <small class="text-muted">DHW 1-4</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-warning text-dark">Warning</span>
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                                    Warning
+                                </span>
                                 <small class="text-muted">DHW 4-8</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-danger">Alert</span>
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
+                                    Alert
+                                </span>
                                 <small class="text-muted">DHW &gt; 8</small>
                             </div>
                         </div>
@@ -323,6 +343,26 @@
 
     .comparison-table tr.row-info {
         background-color: rgba(13, 202, 240, 0.1);
+    }
+
+    .dhw-value {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+
+    .dhw-value i {
+        font-size: 1rem;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .badge i {
+        font-size: 0.875rem;
     }
 </style>
 
@@ -505,6 +545,41 @@
         2 => "bg-warning text-dark",
         >= 3 => "bg-danger",
         _ => "bg-secondary"
+    };
+
+    private string GetAlertIcon(int level) => level switch
+    {
+        0 => "bi-check-circle-fill",
+        1 => "bi-info-circle-fill",
+        2 => "bi-exclamation-triangle-fill",
+        >= 3 => "bi-exclamation-octagon-fill",
+        _ => "bi-question-circle"
+    };
+
+    private string GetAlertLevelAriaLabel(int level) => level switch
+    {
+        0 => "No Stress - No bleaching threat detected",
+        1 => "Watch - Bleaching conditions approaching threshold",
+        2 => "Warning - Bleaching possible, DHW 4-8°C-weeks",
+        3 => "Alert Level 1 - Bleaching likely, DHW 4-8°C-weeks",
+        4 => "Alert Level 2 - Severe bleaching expected, DHW greater than 8°C-weeks",
+        _ => $"Alert Level {level - 2}"
+    };
+
+    private string GetDhwIcon(double dhw) => dhw switch
+    {
+        >= 8 => "bi-exclamation-octagon-fill",
+        >= 4 => "bi-exclamation-triangle-fill",
+        >= 1 => "bi-info-circle-fill",
+        _ => "bi-check-circle-fill"
+    };
+
+    private string GetDhwAriaLabel(double dhw) => dhw switch
+    {
+        >= 8 => $"Critical: Degree Heating Week {dhw:F1} - Severe bleaching expected",
+        >= 4 => $"Warning: Degree Heating Week {dhw:F1} - Bleaching likely",
+        >= 1 => $"Watch: Degree Heating Week {dhw:F1} - Monitor conditions",
+        _ => $"Normal: Degree Heating Week {dhw:F1} - No stress"
     };
 
     private string GetDhwTextClass(double dhw) => dhw switch

@@ -171,7 +171,10 @@
                                             <td><strong>@mpa.Name</strong></td>
                                             <td>@mpa.IslandGroup</td>
                                             <td>
-                                                <span class="protection-badge @GetProtectionClass(mpa.ProtectionLevel)">
+                                                <span class="protection-badge @GetProtectionClass(mpa.ProtectionLevel)"
+                                                      role="status"
+                                                      aria-label="@GetProtectionAriaLabel(mpa.ProtectionLevel)">
+                                                    <i class="bi @GetProtectionIcon(mpa.ProtectionLevel)" aria-hidden="true"></i>
                                                     @GetProtectionLabel(mpa.ProtectionLevel)
                                                 </span>
                                             </td>
@@ -539,6 +542,8 @@
 
     .protection-badge {
         display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
         padding: 0.25rem 0.5rem;
         border-radius: 4px;
         font-size: 0.6875rem;
@@ -739,5 +744,21 @@
         "HighlyProtected" => "Highly Protected",
         "LightlyProtected" => "Lightly Protected",
         _ => level
+    };
+
+    private string GetProtectionIcon(string level) => level switch
+    {
+        "NoTake" => "bi-shield-fill-x",
+        "HighlyProtected" => "bi-shield-fill-check",
+        "LightlyProtected" => "bi-shield-fill",
+        _ => "bi-shield"
+    };
+
+    private string GetProtectionAriaLabel(string level) => level switch
+    {
+        "NoTake" => "No-Take Zone - Highest protection level, no fishing or extraction allowed",
+        "HighlyProtected" => "Highly Protected Area - High protection level, limited activities allowed",
+        "LightlyProtected" => "Lightly Protected Area - Basic protection level, some activities permitted",
+        _ => $"Protection level: {level}"
     };
 }
