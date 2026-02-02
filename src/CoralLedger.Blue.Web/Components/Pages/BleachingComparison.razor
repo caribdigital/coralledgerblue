@@ -552,20 +552,21 @@
         0 => "bi-check-circle-fill",
         1 => "bi-info-circle-fill",
         2 => "bi-exclamation-triangle-fill",
-        >= 3 => "bi-exclamation-octagon-fill",
+        3 => "bi-exclamation-octagon-fill",
+        4 => "bi-exclamation-octagon-fill",
+        5 => "bi-x-octagon-fill",
         _ => "bi-question-circle"
     };
-
     private string GetAlertLevelAriaLabel(int level) => level switch
     {
         0 => "No Stress - No bleaching threat detected",
         1 => "Watch - Bleaching conditions approaching threshold",
-        2 => "Warning - Bleaching possible, DHW 4-8°C-weeks",
+        2 => "Warning - Bleaching possible, DHW 0-4°C-weeks",
         3 => "Alert Level 1 - Bleaching likely, DHW 4-8°C-weeks",
         4 => "Alert Level 2 - Severe bleaching expected, DHW greater than 8°C-weeks",
-        _ => $"Alert Level {level - 2}"
+        5 => "Mass Bleaching Alert - Extreme bleaching conditions, extended severe stress",
+        _ => $"Alert Level {level}"
     };
-
     private string GetDhwIcon(double dhw) => dhw switch
     {
         >= 8 => "bi-exclamation-octagon-fill",
@@ -573,7 +574,6 @@
         >= 1 => "bi-info-circle-fill",
         _ => "bi-check-circle-fill"
     };
-
     private string GetDhwAriaLabel(double dhw) => dhw switch
     {
         >= 8 => $"Critical: Degree Heating Week {dhw:F1} - Severe bleaching expected",
