@@ -556,7 +556,9 @@
         4 => "bi-exclamation-octagon-fill",
         5 => "bi-x-octagon-fill",
         _ => "bi-question-circle"
-    };    private string GetAlertLevelAriaLabel(int level) => level switch
+    };
+
+    private string GetAlertLevelAriaLabel(int level) => level switch
     {
         0 => "No Stress - No bleaching threat detected",
         1 => "Watch - Bleaching conditions approaching threshold",
@@ -566,6 +568,7 @@
         5 => "Mass Bleaching Alert - Extreme bleaching conditions, extended severe stress",
         _ => $"Alert Level {level}"
     };
+
     private string GetDhwIcon(double dhw) => dhw switch
     {
         >= 8 => "bi-exclamation-octagon-fill",
@@ -573,6 +576,7 @@
         >= 1 => "bi-info-circle-fill",
         _ => "bi-check-circle-fill"
     };
+
     private string GetDhwAriaLabel(double dhw) => dhw switch
     {
         >= 8 => $"Critical: Degree Heating Week {dhw:F1} - Severe bleaching expected",
