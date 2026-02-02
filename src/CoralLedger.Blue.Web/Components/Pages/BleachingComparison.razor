@@ -147,7 +147,7 @@
                         @* Progress indicator *@
                         <div class="progress-status">
                             <div class="progress">
-                                <div class="progress-bar" style="width: @((_loadedMpaCount * 100.0 / Math.Max(_totalMpaCount, 1)).ToString("F0"))%"></div>
+                                <div class="progress-bar" style="width: @GetProgressPercentage()%"></div>
                             </div>
                             <span>Loading @_loadedMpaCount of @_totalMpaCount MPAs...</span>
                         </div>
@@ -452,15 +452,15 @@
                         mpa.CentroidLatitude,
                         yesterday);
                     
-                    // Update progress
-                    _loadedMpaCount++;
+                    // Update progress with thread-safe increment
+                    Interlocked.Increment(ref _loadedMpaCount);
                     StateHasChanged();
                     
                     return (MpaId: mpa.Id, Data: result.Success && result.Value is not null ? result.Value : null);
                 }
                 catch
                 {
-                    _loadedMpaCount++;
+                    Interlocked.Increment(ref _loadedMpaCount);
                     StateHasChanged();
                     return (MpaId: mpa.Id, Data: (CrwBleachingData?)null);
                 }
@@ -490,6 +490,12 @@
             _bleachingLoading = false;
             StateHasChanged();
         }
+    }
+
+    private string GetProgressPercentage()
+    {
+        if (_totalMpaCount == 0) return "0";
+        return (_loadedMpaCount * 100.0 / _totalMpaCount).ToString("F0");
     }
 
     private void CalculateSummaryStats()
