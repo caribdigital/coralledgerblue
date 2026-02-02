@@ -77,6 +77,12 @@
                 {
                     <AlertBadge Level="@_maxAlertLevel.Value" Size="AlertBadge.BadgeSize.Small" />
                 }
+                else if (_bleachingError)
+                {
+                    <button class="btn-retry" @onclick="RetryBleachingDataAsync" aria-label="Retry loading bleaching data">
+                        <i class="bi bi-arrow-clockwise"></i> Try Again
+                    </button>
+                }
             </DataCard>
         </section>
 
@@ -142,10 +148,32 @@
                 <div class="card-body table-body">
                     @if (_loading)
                     {
-                        <div class="loading-state">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading MPAs...</span>
+                        <div class="loading-state" aria-busy="true" aria-live="polite">
+                            @* Skeleton loading for table *@
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Island Group</th>
+                                            <th scope="col">Protection</th>
+                                            <th scope="col" class="text-end">Area</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int i = 0; i < 5; i++)
+                                        {
+                                            <tr class="skeleton-table-row">
+                                                <td><div class="skeleton-line" style="width: 70%;"></div></td>
+                                                <td><div class="skeleton-line" style="width: 60%;"></div></td>
+                                                <td><div class="skeleton-line" style="width: 50%;"></div></td>
+                                                <td class="text-end"><div class="skeleton-line" style="width: 40%; margin-left: auto;"></div></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
                             </div>
+                            <span class="visually-hidden">Loading Marine Protected Areas...</span>
                         </div>
                     }
                     else if (_mpas is not null)
@@ -642,6 +670,7 @@
                 _maxDhw = result.Value.DegreeHeatingWeek;
                 _avgSst = result.Value.SeaSurfaceTemperature;
                 _maxAlertLevel = result.Value.AlertLevel;
+                _bleachingError = false;
                 StateHasChanged();
             }
             else if (!result.Success)
@@ -657,6 +686,13 @@
             Console.WriteLine($"Error loading bleaching data: {ex.Message}");
             StateHasChanged();
         }
+    }
+
+    private async Task RetryBleachingDataAsync()
+    {
+        _bleachingError = false;
+        StateHasChanged();
+        await LoadBleachingDataAsync();
     }
 
     private string GetBleachingAlertText()

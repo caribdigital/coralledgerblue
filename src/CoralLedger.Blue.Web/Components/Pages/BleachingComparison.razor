@@ -107,19 +107,51 @@
             <div class="card-body p-0">
                 @if (_loading)
                 {
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading MPAs...</span>
+                    <div class="text-center py-5" aria-busy="true" aria-live="polite">
+                        @* Skeleton loading for table *@
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 comparison-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>MPA Name</th>
+                                        <th>Island Group</th>
+                                        <th class="text-center">SST</th>
+                                        <th class="text-center">DHW</th>
+                                        <th class="text-center">Alert</th>
+                                        <th class="text-center">Anomaly</th>
+                                        <th class="text-end">Area (km²)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < 5; i++)
+                                    {
+                                        <tr class="skeleton-table-row">
+                                            <td><div class="skeleton-line" style="width: 70%;"></div></td>
+                                            <td><div class="skeleton-line" style="width: 60%;"></div></td>
+                                            <td class="text-center"><div class="skeleton-line" style="width: 50%; margin: 0 auto;"></div></td>
+                                            <td class="text-center"><div class="skeleton-line" style="width: 50%; margin: 0 auto;"></div></td>
+                                            <td class="text-center"><div class="skeleton-line" style="width: 60%; margin: 0 auto;"></div></td>
+                                            <td class="text-center"><div class="skeleton-line" style="width: 40%; margin: 0 auto;"></div></td>
+                                            <td class="text-end"><div class="skeleton-line" style="width: 50%; margin-left: auto;"></div></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
+                        <span class="visually-hidden">Loading MPAs...</span>
                     </div>
                 }
                 else if (_bleachingLoading)
                 {
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-warning" role="status">
-                            <span class="visually-hidden">Loading bleaching data...</span>
+                    <div class="text-center py-5" aria-busy="true" aria-live="polite">
+                        @* Progress indicator *@
+                        <div class="progress-status">
+                            <div class="progress">
+                                <div class="progress-bar" style="width: @GetProgressPercentage()%"></div>
+                            </div>
+                            <span>Loading @_loadedMpaCount of @_totalMpaCount MPAs...</span>
                         </div>
-                        <p class="text-muted mt-2">Fetching NOAA data for @(_mpas?.Count ?? 0) MPAs...</p>
+                        <p class="text-muted mt-2 small">Fetching NOAA data for each Marine Protected Area</p>
                     </div>
                 }
                 else if (_mpas is not null && _mpas.Count > 0)
@@ -379,6 +411,10 @@
     private int _mpasAtRisk;
     private double? _avgSst;
 
+    // Progress tracking
+    private int _loadedMpaCount = 0;
+    private int _totalMpaCount = 0;
+
     protected override async Task OnInitializedAsync()
     {
         // Load MPA data
@@ -397,25 +433,40 @@
         try
         {
             _bleachingLoading = true;
+            _totalMpaCount = _mpas.Count;
+            _loadedMpaCount = 0;
             StateHasChanged();
 
             var yesterday = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
             _dataDate = yesterday;
 
-            // Fetch bleaching data for all MPAs in parallel
+            // Fetch bleaching data for all MPAs in parallel with progress tracking
+            using var semaphore = new SemaphoreSlim(5); // Limit concurrent requests
             var tasks = _mpas.Select(async mpa =>
             {
+                await semaphore.WaitAsync();
                 try
                 {
                     var result = await CrwClient.GetBleachingDataAsync(
                         mpa.CentroidLongitude,
                         mpa.CentroidLatitude,
                         yesterday);
+
+                    // Update progress with thread-safe increment
+                    Interlocked.Increment(ref _loadedMpaCount);
+                    await InvokeAsync(StateHasChanged);
+
                     return (MpaId: mpa.Id, Data: result.Success && result.Value is not null ? result.Value : null);
                 }
                 catch
                 {
+                    Interlocked.Increment(ref _loadedMpaCount);
+                    await InvokeAsync(StateHasChanged);
                     return (MpaId: mpa.Id, Data: (CrwBleachingData?)null);
+                }
+                finally
+                {
+                    semaphore.Release();
                 }
             });
 
@@ -439,6 +490,12 @@
             _bleachingLoading = false;
             StateHasChanged();
         }
+    }
+
+    private string GetProgressPercentage()
+    {
+        if (_totalMpaCount == 0) return "0";
+        return (_loadedMpaCount * 100.0 / _totalMpaCount).ToString("F0");
     }
 
     private void CalculateSummaryStats()
