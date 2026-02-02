@@ -1,14 +1,17 @@
 @page "/bleaching"
 @inject IMediator Mediator
 @inject ICoralReefWatchClient CrwClient
+@inject IStringLocalizer<SharedResources> Localizer
+@using CoralLedger.Blue.Web.Resources
+@using Microsoft.Extensions.Localization
 @rendermode InteractiveServer
 
-<PageTitle>Bleaching Status - CoralLedger Blue</PageTitle>
+<PageTitle>@Localizer["Bleaching_PageTitle"] - CoralLedger Blue</PageTitle>
 
 <div class="bleaching-page">
     <div class="page-header">
-        <h2><i class="bi bi-thermometer-half"></i> Coral Bleaching Status</h2>
-        <small class="text-white-50">MPA Comparison - Real-time NOAA Coral Reef Watch Data</small>
+        <h2><i class="bi bi-thermometer-half"></i> @Localizer["Bleaching_PageTitle"]</h2>
+        <small class="text-white-50">@Localizer["Bleaching_PageSubtitle"]</small>
     </div>
 
     <div class="container-fluid py-4">
@@ -19,7 +22,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-subtitle mb-2 @GetHighestRiskSubtitleClass()">Highest Risk</h6>
+                                <h6 class="card-subtitle mb-2 @GetHighestRiskSubtitleClass()">@Localizer["Bleaching_HighestRisk"]</h6>
                                 @if (_highestDhwMpa is not null && _bleachingByMpa.TryGetValue(_highestDhwMpa.Id, out var highData))
                                 {
                                     <h2 class="card-title mb-0">@highData.DegreeHeatingWeek.ToString("F1")</h2>
@@ -28,7 +31,7 @@
                                 else
                                 {
                                     <h2 class="card-title mb-0">--</h2>
-                                    <p class="card-text mt-1 small @GetHighestRiskSubtitleClass()">Loading...</p>
+                                    <p class="card-text mt-1 small @GetHighestRiskSubtitleClass()">@Localizer["Bleaching_Loading"]</p>
                                 }
                             </div>
                             <i class="bi bi-exclamation-triangle stat-icon"></i>
@@ -41,12 +44,12 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-subtitle mb-2 opacity-75">MPAs at Risk</h6>
+                                <h6 class="card-subtitle mb-2 opacity-75">@Localizer["Bleaching_MPAsAtRisk"]</h6>
                                 <h2 class="card-title mb-0">@_mpasAtRisk / @(_mpas?.Count ?? 0)</h2>
                             </div>
                             <i class="bi bi-shield-exclamation stat-icon"></i>
                         </div>
-                        <p class="card-text mt-2 small opacity-75">DHW > 4 (Warning+)</p>
+                        <p class="card-text mt-2 small opacity-75">@Localizer["Bleaching_AtRiskWarning"]</p>
                     </div>
                 </div>
             </div>
@@ -55,7 +58,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-subtitle mb-2 text-white-50">Avg Sea Temp</h6>
+                                <h6 class="card-subtitle mb-2 text-white-50">@Localizer["Bleaching_AvgSeaTemp"]</h6>
                                 <h2 class="card-title mb-0">
                                     @if (_avgSst.HasValue)
                                     {
@@ -69,7 +72,7 @@
                             </div>
                             <i class="bi bi-water stat-icon"></i>
                         </div>
-                        <p class="card-text mt-2 small text-white-50">Across all MPAs</p>
+                        <p class="card-text mt-2 small text-white-50">@Localizer["Bleaching_AcrossAllMPAs"]</p>
                     </div>
                 </div>
             </div>
@@ -78,7 +81,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-subtitle mb-2 text-white-50">Data Date</h6>
+                                <h6 class="card-subtitle mb-2 text-white-50">@Localizer["Bleaching_DataDate"]</h6>
                                 <h2 class="card-title mb-0">@_dataDate.ToString("MMM d")</h2>
                             </div>
                             <i class="bi bi-calendar3 stat-icon"></i>
@@ -92,15 +95,15 @@
         @* Main Comparison Table *@
         <div class="card">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="bi bi-table text-danger"></i> MPA Bleaching Comparison</h5>
+                <h5 class="mb-0"><i class="bi bi-table text-danger"></i> @Localizer["Bleaching_MPAComparison"]</h5>
                 <div class="d-flex align-items-center gap-2">
-                    <label class="form-label mb-0 small text-muted">Sort by:</label>
+                    <label class="form-label mb-0 small text-muted">@Localizer["Bleaching_SortBy"]</label>
                     <select class="form-select form-select-sm" style="width: auto;" @bind="_sortBy" @bind:after="SortData">
-                        <option value="dhw">DHW (Highest Risk)</option>
-                        <option value="sst">SST (Hottest)</option>
-                        <option value="alert">Alert Level</option>
-                        <option value="name">Name (A-Z)</option>
-                        <option value="area">Area (Largest)</option>
+                        <option value="dhw">@Localizer["Bleaching_Sort_DHW"]</option>
+                        <option value="sst">@Localizer["Bleaching_Sort_SST"]</option>
+                        <option value="alert">@Localizer["Bleaching_Sort_Alert"]</option>
+                        <option value="name">@Localizer["Bleaching_Sort_Name"]</option>
+                        <option value="area">@Localizer["Bleaching_Sort_Area"]</option>
                     </select>
                 </div>
             </div>
@@ -113,13 +116,13 @@
                             <table class="table table-hover mb-0 comparison-table">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>MPA Name</th>
-                                        <th>Island Group</th>
-                                        <th class="text-center">SST</th>
-                                        <th class="text-center">DHW</th>
-                                        <th class="text-center">Alert</th>
-                                        <th class="text-center">Anomaly</th>
-                                        <th class="text-end">Area (km²)</th>
+                                        <th>@Localizer["Bleaching_Table_MPAName"]</th>
+                                        <th>@Localizer["Bleaching_Table_IslandGroup"]</th>
+                                        <th class="text-center">@Localizer["Bleaching_Table_SST"]</th>
+                                        <th class="text-center">@Localizer["Bleaching_Table_DHW"]</th>
+                                        <th class="text-center">@Localizer["Bleaching_Table_Alert"]</th>
+                                        <th class="text-center">@Localizer["Bleaching_Table_Anomaly"]</th>
+                                        <th class="text-end">@Localizer["Bleaching_Table_Area"]</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -264,37 +267,37 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header bg-white">
-                        <h6 class="mb-0"><i class="bi bi-info-circle text-info"></i> DHW Alert Levels</h6>
+                        <h6 class="mb-0"><i class="bi bi-info-circle text-info"></i> @Localizer["Bleaching_DHWAlertLevels"]</h6>
                     </div>
                     <div class="card-body">
                         <div class="d-flex flex-wrap gap-3">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-success">
                                     <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
-                                    No Stress
+                                    @Localizer["Alert_NoStress"]
                                 </span>
-                                <small class="text-muted">DHW &lt; 1</small>
+                                <small class="text-muted">@Localizer["DHW_Legend_NoStress"]</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-info">
                                     <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
-                                    Watch
+                                    @Localizer["Alert_Watch"]
                                 </span>
-                                <small class="text-muted">DHW 1-4</small>
+                                <small class="text-muted">@Localizer["DHW_Legend_Watch"]</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-warning text-dark">
                                     <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
-                                    Warning
+                                    @Localizer["Alert_Warning"]
                                 </span>
-                                <small class="text-muted">DHW 4-8</small>
+                                <small class="text-muted">@Localizer["DHW_Legend_Warning"]</small>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="badge bg-danger">
                                     <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
-                                    Alert
+                                    @Localizer["Alert_Alert1"]
                                 </span>
-                                <small class="text-muted">DHW &gt; 8</small>
+                                <small class="text-muted">@Localizer["DHW_Legend_Alert"]</small>
                             </div>
                         </div>
                     </div>
@@ -303,11 +306,11 @@
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-header bg-white">
-                        <h6 class="mb-0"><i class="bi bi-database text-primary"></i> Data Source</h6>
+                        <h6 class="mb-0"><i class="bi bi-database text-primary"></i> @Localizer["Bleaching_DataSource"]</h6>
                     </div>
                     <div class="card-body">
                         <p class="mb-1 small">
-                            <strong>NOAA Coral Reef Watch</strong> - Daily 5km Satellite Data
+                            <strong>@Localizer["Bleaching_NOAAAttribution"]</strong>
                         </p>
                         <p class="mb-0 small text-muted">
                             <a href="https://coralreefwatch.noaa.gov" target="_blank" class="text-decoration-none">
@@ -587,12 +590,12 @@
 
     private string GetAlertLevelName(int level) => level switch
     {
-        0 => "No Stress",
-        1 => "Watch",
-        2 => "Warning",
-        3 => "Alert 1",
-        4 => "Alert 2",
-        _ => $"Alert {level - 2}"
+        0 => Localizer["Alert_NoStress"],
+        1 => Localizer["Alert_Watch"],
+        2 => Localizer["Alert_Warning"],
+        3 => Localizer["Alert_Alert1"],
+        4 => Localizer["Alert_Alert2"],
+        _ => $"{Localizer["Alert_MassBleaching"]} {level - 2}"
     };
 
     private string GetAlertBadgeClass(int level) => level switch
@@ -617,12 +620,12 @@
 
     private string GetAlertLevelAriaLabel(int level) => level switch
     {
-        0 => "No Stress - No bleaching threat detected, DHW less than 1°C-week",
-        1 => "Watch - Bleaching conditions approaching threshold, DHW 1-4°C-weeks",
-        2 => "Warning - Bleaching possible, DHW 4-8°C-weeks",
-        3 => "Alert Level 1 - Bleaching likely, DHW greater than 8°C-weeks",
-        4 => "Alert Level 2 - Severe bleaching expected, DHW greater than 8°C-weeks",
-        5 => "Mass Bleaching Alert - Extreme bleaching conditions, extended severe stress",
+        0 => Localizer["Alert_NoStress_Description"],
+        1 => Localizer["Alert_Watch_Description"],
+        2 => Localizer["Alert_Warning_Description"],
+        3 => Localizer["Alert_Alert1_Description"],
+        4 => Localizer["Alert_Alert2_Description"],
+        5 => Localizer["Alert_MassBleaching_Description"],
         _ => $"Alert Level {level}"
     };
 

@@ -248,4 +248,192 @@
   <data name="Nav_Admin_Title" xml:space="preserve">
     <value>Ale nan panèl administrasyon</value>
   </data>
+
+  <!-- Bleaching Alert Levels -->
+  <data name="Alert_NoStress" xml:space="preserve">
+    <value>San Strès</value>
+  </data>
+  <data name="Alert_Watch" xml:space="preserve">
+    <value>Siveyans</value>
+  </data>
+  <data name="Alert_Warning" xml:space="preserve">
+    <value>Avètisman</value>
+  </data>
+  <data name="Alert_Alert1" xml:space="preserve">
+    <value>Alèt 1</value>
+  </data>
+  <data name="Alert_Alert2" xml:space="preserve">
+    <value>Alèt 2</value>
+  </data>
+  <data name="Alert_MassBleaching" xml:space="preserve">
+    <value>Blanchiman an Mas</value>
+  </data>
+
+  <!-- Bleaching Alert Descriptions (for aria-labels) -->
+  <data name="Alert_NoStress_Description" xml:space="preserve">
+    <value>Pa gen strès blanchiman detekte</value>
+  </data>
+  <data name="Alert_Watch_Description" xml:space="preserve">
+    <value>Siveyans Blanchiman - kondisyon yo ap pwoche sèy la</value>
+  </data>
+  <data name="Alert_Warning_Description" xml:space="preserve">
+    <value>Avètisman Blanchiman - posib blanchiman espere</value>
+  </data>
+  <data name="Alert_Alert1_Description" xml:space="preserve">
+    <value>Alèt Nivo 1 - blanchiman espere</value>
+  </data>
+  <data name="Alert_Alert2_Description" xml:space="preserve">
+    <value>Alèt Nivo 2 - blanchiman grav espere</value>
+  </data>
+  <data name="Alert_MassBleaching_Description" xml:space="preserve">
+    <value>Alèt Blanchiman an Mas - kondisyon blanchiman ekstrèm</value>
+  </data>
+
+  <!-- Bleaching Alert Tooltips -->
+  <data name="Alert_NoStress_Tooltip" xml:space="preserve">
+    <value>Pa gen strès tèmik. DHW &lt; 1°C-semèn</value>
+  </data>
+  <data name="Alert_Watch_Tooltip" xml:space="preserve">
+    <value>Siveyans: DHW 1-4°C-semèn. Sivèye kondisyon yo.</value>
+  </data>
+  <data name="Alert_Warning_Tooltip" xml:space="preserve">
+    <value>Avètisman: DHW 4-8°C-semèn. Blanchiman posib.</value>
+  </data>
+  <data name="Alert_Alert1_Tooltip" xml:space="preserve">
+    <value>Alèt 1: DHW &gt; 8°C-semèn. Blanchiman pwobab.</value>
+  </data>
+  <data name="Alert_Alert2_Tooltip" xml:space="preserve">
+    <value>Alèt 2: DHW &gt; 8°C-semèn. Blanchiman grav.</value>
+  </data>
+  <data name="Alert_MassBleaching_Tooltip" xml:space="preserve">
+    <value>Blanchiman an Mas: Strès ekstrèm pwolonge.</value>
+  </data>
+
+  <!-- DHW Legend Labels -->
+  <data name="DHW_Legend_NoStress" xml:space="preserve">
+    <value>DHW &lt; 1</value>
+  </data>
+  <data name="DHW_Legend_Watch" xml:space="preserve">
+    <value>DHW 1-4</value>
+  </data>
+  <data name="DHW_Legend_Warning" xml:space="preserve">
+    <value>DHW 4-8</value>
+  </data>
+  <data name="DHW_Legend_Alert" xml:space="preserve">
+    <value>DHW &gt; 8</value>
+  </data>
+
+  <!-- Protection Levels -->
+  <data name="Protection_NoTake" xml:space="preserve">
+    <value>San Pran</value>
+  </data>
+  <data name="Protection_HighlyProtected" xml:space="preserve">
+    <value>Trè Pwoteje</value>
+  </data>
+  <data name="Protection_LightlyProtected" xml:space="preserve">
+    <value>Pwoteje Lejèman</value>
+  </data>
+
+  <!-- Protection Level Descriptions (for aria-labels) -->
+  <data name="Protection_NoTake_Description" xml:space="preserve">
+    <value>Zòn San Pran - Nivo pwoteksyon pi wo a, pa gen lapèch oswa ekstraksyon pèmèt</value>
+  </data>
+  <data name="Protection_HighlyProtected_Description" xml:space="preserve">
+    <value>Zòn Trè Pwoteje - Nivo pwoteksyon wo, aktivite limite pèmèt</value>
+  </data>
+  <data name="Protection_LightlyProtected_Description" xml:space="preserve">
+    <value>Zòn Pwoteje Lejèman - Nivo pwoteksyon debaz, kèk aktivite pèmèt</value>
+  </data>
+
+  <!-- Bleaching Comparison Page -->
+  <data name="Bleaching_PageTitle" xml:space="preserve">
+    <value>Estati Blanchiman Koray</value>
+  </data>
+  <data name="Bleaching_PageSubtitle" xml:space="preserve">
+    <value>Konparezon AMP - Done an Tan Reyèl NOAA Coral Reef Watch</value>
+  </data>
+  <data name="Bleaching_HighestRisk" xml:space="preserve">
+    <value>Pi Gwo Risk</value>
+  </data>
+  <data name="Bleaching_MPAsAtRisk" xml:space="preserve">
+    <value>AMP ann Danje</value>
+  </data>
+  <data name="Bleaching_AvgSeaTemp" xml:space="preserve">
+    <value>Tanperati Mwayen Lanmè</value>
+  </data>
+  <data name="Bleaching_DataDate" xml:space="preserve">
+    <value>Dat Done</value>
+  </data>
+  <data name="Bleaching_Loading" xml:space="preserve">
+    <value>Ap chaje...</value>
+  </data>
+  <data name="Bleaching_AcrossAllMPAs" xml:space="preserve">
+    <value>Nan tout AMP yo</value>
+  </data>
+  <data name="Bleaching_AtRiskWarning" xml:space="preserve">
+    <value>DHW &gt; 4 (Avètisman+)</value>
+  </data>
+  <data name="Bleaching_MPAComparison" xml:space="preserve">
+    <value>Konparezon Blanchiman AMP</value>
+  </data>
+  <data name="Bleaching_SortBy" xml:space="preserve">
+    <value>Triye pa:</value>
+  </data>
+  <data name="Bleaching_Sort_DHW" xml:space="preserve">
+    <value>DHW (Pi Gwo Risk)</value>
+  </data>
+  <data name="Bleaching_Sort_SST" xml:space="preserve">
+    <value>SST (Pi Cho)</value>
+  </data>
+  <data name="Bleaching_Sort_Alert" xml:space="preserve">
+    <value>Nivo Alèt</value>
+  </data>
+  <data name="Bleaching_Sort_Name" xml:space="preserve">
+    <value>Non (A-Z)</value>
+  </data>
+  <data name="Bleaching_Sort_Area" xml:space="preserve">
+    <value>Zòn (Pi Gwo)</value>
+  </data>
+  <data name="Bleaching_Table_MPAName" xml:space="preserve">
+    <value>Non AMP</value>
+  </data>
+  <data name="Bleaching_Table_IslandGroup" xml:space="preserve">
+    <value>Gwoup Zile</value>
+  </data>
+  <data name="Bleaching_Table_SST" xml:space="preserve">
+    <value>SST</value>
+  </data>
+  <data name="Bleaching_Table_DHW" xml:space="preserve">
+    <value>DHW</value>
+  </data>
+  <data name="Bleaching_Table_Alert" xml:space="preserve">
+    <value>Alèt</value>
+  </data>
+  <data name="Bleaching_Table_Anomaly" xml:space="preserve">
+    <value>Anomali</value>
+  </data>
+  <data name="Bleaching_Table_Area" xml:space="preserve">
+    <value>Zòn (km²)</value>
+  </data>
+  <data name="Bleaching_LoadingMPAs" xml:space="preserve">
+    <value>Ap chaje AMP yo...</value>
+  </data>
+  <data name="Bleaching_LoadingProgress" xml:space="preserve">
+    <value>Ap chaje {0} sou {1} AMP...</value>
+  </data>
+  <data name="Bleaching_FetchingNOAAData" xml:space="preserve">
+    <value>Ap jwenn done NOAA pou chak Zòn Marin Pwoteje</value>
+  </data>
+  <data name="Bleaching_NoMPAsFound" xml:space="preserve">
+    <value>Pa jwenn Zòn Marin Pwoteje.</value>
+  </data>
+  <data name="Bleaching_DHWAlertLevels" xml:space="preserve">
+    <value>Nivo Alèt DHW</value>
+  </data>
+  <data name="Bleaching_DataSource" xml:space="preserve">
+    <value>Sous Done</value>
+  </data>
+  <data name="Bleaching_NOAAAttribution" xml:space="preserve">
+    <value>NOAA Coral Reef Watch - Done Satelit Chak Jou 5km</value>
+  </data>
 </root>

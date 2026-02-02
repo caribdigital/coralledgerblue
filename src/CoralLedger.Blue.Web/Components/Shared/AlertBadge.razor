@@ -1,3 +1,7 @@
+@inject IStringLocalizer<SharedResources> Localizer
+@using CoralLedger.Blue.Web.Resources
+@using Microsoft.Extensions.Localization
+
 @* US-2.3.2: AlertBadge Component - Alert level badges with icons for bleaching alerts *@
 <span class="alert-badge level-@Level @SizeClass @(Pulse && Level >= 4 ? "pulsing" : "")"
       role="status"
@@ -206,34 +210,34 @@
 
     private string BadgeText => Level switch
     {
-        0 => "No Stress",
-        1 => "Watch",
-        2 => "Warning",
-        3 => "Alert 1",
-        4 => "Alert 2",
-        5 => "Mass Bleaching",
+        0 => Localizer["Alert_NoStress"],
+        1 => Localizer["Alert_Watch"],
+        2 => Localizer["Alert_Warning"],
+        3 => Localizer["Alert_Alert1"],
+        4 => Localizer["Alert_Alert2"],
+        5 => Localizer["Alert_MassBleaching"],
         _ => $"Level {Level}"
     };
 
     private string AriaLabel => Level switch
     {
-        0 => "No bleaching stress detected",
-        1 => "Bleaching Watch - conditions approaching threshold",
-        2 => "Bleaching Warning - possible bleaching expected",
-        3 => "Alert Level 1 - bleaching expected",
-        4 => "Alert Level 2 - severe bleaching expected",
-        5 => "Mass Bleaching Alert - extreme bleaching conditions",
+        0 => Localizer["Alert_NoStress_Description"],
+        1 => Localizer["Alert_Watch_Description"],
+        2 => Localizer["Alert_Warning_Description"],
+        3 => Localizer["Alert_Alert1_Description"],
+        4 => Localizer["Alert_Alert2_Description"],
+        5 => Localizer["Alert_MassBleaching_Description"],
         _ => $"Alert Level {Level}"
     };
 
     private string TooltipText => Level switch
     {
-        0 => "No thermal stress. DHW < 1°C-weeks",
-        1 => "Watch: DHW 1-4°C-weeks. Monitor conditions.",
-        2 => "Warning: DHW 4-8°C-weeks. Bleaching possible.",
-        3 => "Alert 1: DHW > 8°C-weeks. Bleaching likely.",
-        4 => "Alert 2: DHW > 8°C-weeks. Severe bleaching.",
-        5 => "Mass Bleaching: Extended extreme stress.",
+        0 => Localizer["Alert_NoStress_Tooltip"],
+        1 => Localizer["Alert_Watch_Tooltip"],
+        2 => Localizer["Alert_Warning_Tooltip"],
+        3 => Localizer["Alert_Alert1_Tooltip"],
+        4 => Localizer["Alert_Alert2_Tooltip"],
+        5 => Localizer["Alert_MassBleaching_Tooltip"],
         _ => $"Alert Level {Level}"
     };
 

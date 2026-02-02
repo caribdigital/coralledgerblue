@@ -703,16 +703,16 @@
 
     private string GetBleachingAlertText()
     {
-        if (!_maxAlertLevel.HasValue) return "Loading...";
+        if (!_maxAlertLevel.HasValue) return Localizer["Bleaching_Loading"];
 
         return _maxAlertLevel.Value switch
         {
-            0 => "No Stress",
-            1 => "Watch",
-            2 => "Warning",
-            3 => "Alert 1",
-            4 => "Alert 2",
-            >= 5 => $"Alert {_maxAlertLevel.Value - 2}",
+            0 => Localizer["Alert_NoStress"],
+            1 => Localizer["Alert_Watch"],
+            2 => Localizer["Alert_Warning"],
+            3 => Localizer["Alert_Alert1"],
+            4 => Localizer["Alert_Alert2"],
+            >= 5 => $"{Localizer["Alert_MassBleaching"]} {_maxAlertLevel.Value - 2}",
             _ => "Unknown"
         };
     }
@@ -782,9 +782,9 @@
 
     private string GetProtectionLabel(string level) => level switch
     {
-        "NoTake" => "No-Take",
-        "HighlyProtected" => "Highly Protected",
-        "LightlyProtected" => "Lightly Protected",
+        "NoTake" => Localizer["Protection_NoTake"],
+        "HighlyProtected" => Localizer["Protection_HighlyProtected"],
+        "LightlyProtected" => Localizer["Protection_LightlyProtected"],
         _ => level
     };
 
@@ -798,9 +798,9 @@
 
     private string GetProtectionAriaLabel(string level) => level switch
     {
-        "NoTake" => "No-Take Zone - Highest protection level, no fishing or extraction allowed",
-        "HighlyProtected" => "Highly Protected Area - High protection level, limited activities allowed",
-        "LightlyProtected" => "Lightly Protected Area - Basic protection level, some activities permitted",
+        "NoTake" => Localizer["Protection_NoTake_Description"],
+        "HighlyProtected" => Localizer["Protection_HighlyProtected_Description"],
+        "LightlyProtected" => Localizer["Protection_LightlyProtected_Description"],
         _ => $"Protection level: {level}"
     };
 }
