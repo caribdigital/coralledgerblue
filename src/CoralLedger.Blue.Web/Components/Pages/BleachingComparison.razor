@@ -441,7 +441,7 @@
             _dataDate = yesterday;
 
             // Fetch bleaching data for all MPAs in parallel with progress tracking
-            var semaphore = new SemaphoreSlim(5); // Limit concurrent requests
+            using var semaphore = new SemaphoreSlim(5); // Limit concurrent requests
             var tasks = _mpas.Select(async mpa =>
             {
                 await semaphore.WaitAsync();
@@ -451,17 +451,17 @@
                         mpa.CentroidLongitude,
                         mpa.CentroidLatitude,
                         yesterday);
-                    
+
                     // Update progress with thread-safe increment
                     Interlocked.Increment(ref _loadedMpaCount);
-                    StateHasChanged();
-                    
+                    await InvokeAsync(StateHasChanged);
+
                     return (MpaId: mpa.Id, Data: result.Success && result.Value is not null ? result.Value : null);
                 }
                 catch
                 {
                     Interlocked.Increment(ref _loadedMpaCount);
-                    StateHasChanged();
+                    await InvokeAsync(StateHasChanged);
                     return (MpaId: mpa.Id, Data: (CrwBleachingData?)null);
                 }
                 finally
