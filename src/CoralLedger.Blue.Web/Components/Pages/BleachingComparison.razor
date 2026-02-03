@@ -44,7 +44,7 @@
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-md-6 col-lg-3">
-                <div class="card stat-card bg-warning text-dark h-100">
+                <div class="card stat-card @GetMpasAtRiskCardClass() h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -53,7 +53,16 @@
                             </div>
                             <i class="bi bi-shield-exclamation stat-icon"></i>
                         </div>
-                        <p class="card-text mt-2 small opacity-75">@Localizer["Bleaching_AtRiskWarning"]</p>
+                        <p class="card-text mt-2 small opacity-75">
+                            @if (_mpasAtRisk > 0)
+                            {
+                                <span>⚠️ @_mpasAtRisk @(_mpasAtRisk == 1 ? "MPA requires" : "MPAs require") monitoring</span>
+                            }
+                            else
+                            {
+                                <span>✓ All MPAs healthy</span>
+                            }
+                        </p>
                     </div>
                 </div>
             </div>
@@ -357,6 +366,19 @@
 
     .stat-card:hover {
         transform: translateY(-4px);
+    }
+
+    .card-pulse-danger {
+        animation: pulse-danger 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-danger {
+        0%, 100% {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+        50% {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 0 10px rgba(220, 53, 69, 0);
+        }
     }
 
     .stat-icon {
@@ -675,6 +697,22 @@
         {
             >= 4 and < 8 => "opacity-75",
             _ => "text-white-50"
+        };
+    }
+
+    private string GetMpasAtRiskCardClass()
+    {
+        if (_mpas is null) return "bg-secondary text-white";
+
+        var percentageAtRisk = _mpas.Count > 0 ? (_mpasAtRisk * 100.0 / _mpas.Count) : 0;
+
+        return percentageAtRisk switch
+        {
+            >= 75 => "bg-danger text-white card-pulse-danger",
+            >= 50 => "bg-danger text-white",
+            >= 25 => "bg-warning text-dark",
+            > 0 => "bg-info text-white",
+            _ => "bg-success text-white"
         };
     }
 
