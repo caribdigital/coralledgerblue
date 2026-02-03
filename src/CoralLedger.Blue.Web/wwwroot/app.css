@@ -1910,6 +1910,68 @@ body.theme-light .header-nav .rz-text,
 }
 
 /* ========================================
+   Accessibility Utilities
+   ======================================== */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.field-error {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* ========================================
+   Step Progress Indicator
+   ======================================== */
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--color-surface-alt);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.step-indicator .step {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    transition: all var(--transition-base);
+}
+
+.step-indicator .step.completed {
+    background: rgba(0, 229, 204, 0.1);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.step-indicator .step.current {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-surface);
+    box-shadow: 0 0 0 4px rgba(0, 229, 204, 0.2);
+}
+
+/* ========================================
    Observation Submit Form
    ======================================== */
 .observation-form-container {
@@ -2052,9 +2114,29 @@ body.theme-light .header-nav .rz-text,
     font-size: 1.5rem;
 }
 
+.type-option:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
 .severity-selector {
     display: flex;
     gap: 0.5rem;
+}
+
+.severity-fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.severity-fieldset legend,
+fieldset legend {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+    padding: 0;
 }
 
 .severity-option {
@@ -2083,6 +2165,11 @@ body.theme-light .header-nav .rz-text,
 .severity-option.selected.severity-3 { background: rgba(247, 197, 73, 0.1); border-color: #f7c549; }
 .severity-option.selected.severity-4 { background: rgba(253, 126, 20, 0.1); border-color: #fd7e14; }
 .severity-option.selected.severity-5 { background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
+
+.severity-option:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
 
 .severity-label {
     display: block;

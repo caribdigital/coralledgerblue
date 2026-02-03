@@ -26,6 +26,17 @@
     }
     else
     {
+        @* Step Progress Indicator *@
+        <div class="step-indicator" role="progressbar" 
+             aria-valuenow="@_currentStep" aria-valuemin="1" aria-valuemax="4"
+             aria-label="Form progress: Step @_currentStep of 4">
+            @for (int i = 1; i <= 4; i++)
+            {
+                var stepClass = i < _currentStep ? "completed" : (i == _currentStep ? "current" : "");
+                <span class="step @stepClass" aria-label="Step @i">@i</span>
+            }
+        </div>
+
         <form @onsubmit="SubmitAsync" @onsubmit:preventDefault>
             @* Step 1: Location *@
             <div class="form-step @(_currentStep == 1 ? "active" : "")">
@@ -59,7 +70,7 @@
                     </div>
                     @if (_locationError != null)
                     {
-                        <div class="field-error">@_locationError</div>
+                        <div class="field-error" role="alert">@_locationError</div>
                     }
                 </div>
             </div>
@@ -72,18 +83,28 @@
                 </div>
                 <div class="step-content">
                     <div class="form-group">
-                        <label for="type">Type of Observation *</label>
-                        <div class="type-selector">
-                            @foreach (var type in _observationTypes)
-                            {
-                                <button type="button"
-                                        class="type-option @(_selectedType == type.Value ? "selected" : "")"
-                                        @onclick="() => _selectedType = type.Value">
-                                    <span class="material-icons">@type.Icon</span>
-                                    <span>@type.Label</span>
-                                </button>
-                            }
-                        </div>
+                        <fieldset>
+                            <legend id="type-label">Type of Observation *</legend>
+                            <div class="type-selector" role="radiogroup" aria-labelledby="type-label">
+                                @{ var typeIndex = 0; }
+                                @foreach (var type in _observationTypes)
+                                {
+                                    var isSelected = _selectedType == type.Value;
+                                    var isFirst = typeIndex == 0;
+                                    <button type="button"
+                                            role="radio"
+                                            aria-checked="@(isSelected ? "true" : "false")"
+                                            tabindex="@(isSelected || (isFirst && _selectedType == default) ? "0" : "-1")"
+                                            class="type-option @(isSelected ? "selected" : "")"
+                                            @onclick="() => _selectedType = type.Value"
+                                            aria-label="@type.Label">
+                                        <span class="material-icons" aria-hidden="true">@type.Icon</span>
+                                        <span>@type.Label</span>
+                                    </button>
+                                    typeIndex++;
+                                }
+                            </div>
+                        </fieldset>
                     </div>
 
                     <div class="form-group">
@@ -97,20 +118,27 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Severity</label>
-                        <div class="severity-selector">
-                            @for (int i = 1; i <= 5; i++)
-                            {
-                                var severity = i;
-                                <button type="button"
-                                        class="severity-option @(_severity == severity ? "selected" : "") severity-@severity"
-                                        @onclick="() => _severity = severity"
-                                        title="@GetSeverityLabel(severity)">
-                                    @severity
-                                </button>
-                            }
-                        </div>
-                        <small class="severity-label">@GetSeverityLabel(_severity)</small>
+                        <fieldset class="severity-fieldset">
+                            <legend>Severity Level</legend>
+                            <div class="severity-selector" role="radiogroup" aria-label="Select severity level">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    var severity = i;
+                                    var isSelected = _severity == severity;
+                                    <button type="button"
+                                            role="radio"
+                                            aria-checked="@(isSelected ? "true" : "false")"
+                                            tabindex="@(isSelected ? "0" : "-1")"
+                                            class="severity-option @(isSelected ? "selected" : "") severity-@severity"
+                                            @onclick="() => _severity = severity"
+                                            aria-label="@GetSeverityLabel(severity)"
+                                            title="@GetSeverityLabel(severity)">
+                                        @severity
+                                    </button>
+                                }
+                            </div>
+                            <small class="severity-label" aria-live="polite">@GetSeverityLabel(_severity)</small>
+                        </fieldset>
                     </div>
 
                     <div class="form-group">
@@ -235,7 +263,7 @@
 
             @if (_submitError != null)
             {
-                <div class="form-error">
+                <div class="form-error" role="alert" aria-live="assertive">
                     <span class="material-icons">error</span>
                     @_submitError
                 </div>
@@ -268,6 +296,7 @@
     private bool _isUploadingPhotos;
     private int _uploadProgress;
     private int _totalPhotosToUpload;
+    private bool _stepChanged;
 
     private readonly List<ObservationTypeOption> _observationTypes = new()
     {
@@ -288,6 +317,17 @@
         {
             await InitializeLocationMapAsync();
             _mapInitialized = true;
+        }
+
+        // Initialize accessibility keyboard navigation after render
+        if (firstRender || _stepChanged)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("accessibility.initialize");
+            }
+            catch { }
+            _stepChanged = false;
         }
     }
 
@@ -332,6 +372,7 @@
         {
             _currentStep++;
             _hasUnsavedChanges = true;
+            _stepChanged = true;
             _ = SetUnsavedChangesWarningAsync();
         }
     }
@@ -341,6 +382,7 @@
         if (_currentStep > 1)
         {
             _currentStep--;
+            _stepChanged = true;
         }
     }
 
@@ -510,6 +552,7 @@
         _submitSuccess = false;
         _submitError = null;
         _hasUnsavedChanges = false;
+        _stepChanged = true;
         _ = ClearUnsavedChangesWarningAsync();
     }
 
