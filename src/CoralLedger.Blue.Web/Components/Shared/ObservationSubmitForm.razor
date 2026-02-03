@@ -419,7 +419,7 @@
                         try
                         {
                             var content = new MultipartFormDataContent();
-                            content.Add(new ByteArrayContent(photo.Data), "file", photo.FileName);
+                            content.Add(new System.Net.Http.ByteArrayContent(photo.Data), "file", photo.FileName);
                             var uploadResponse = await Http.PostAsync($"/api/observations/{result.Id}/photos", content);
                             if (uploadResponse.IsSuccessStatusCode)
                             {
