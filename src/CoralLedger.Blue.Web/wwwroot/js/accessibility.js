@@ -12,12 +12,19 @@ window.accessibility = {
         const options = group.querySelectorAll('[role="radio"]');
         if (options.length === 0) return;
 
-        options.forEach((option, index) => {
-            // Make focusable
-            if (!option.hasAttribute('tabindex')) {
-                option.setAttribute('tabindex', '0');
-            }
+        // Set up roving tabindex - only selected or first option is tabbable
+        const updateTabIndices = () => {
+            const selectedOption = Array.from(options).find(opt => opt.getAttribute('aria-checked') === 'true');
+            const tabbableOption = selectedOption || options[0];
+            
+            options.forEach(option => {
+                option.setAttribute('tabindex', option === tabbableOption ? '0' : '-1');
+            });
+        };
 
+        updateTabIndices();
+
+        options.forEach((option, index) => {
             option.addEventListener('keydown', (e) => {
                 let targetIndex = -1;
 
@@ -48,8 +55,16 @@ window.accessibility = {
                 }
 
                 if (targetIndex !== -1) {
-                    options[targetIndex].focus();
+                    const targetOption = options[targetIndex];
+                    targetOption.focus();
+                    // Auto-select on arrow key navigation per ARIA authoring practices
+                    targetOption.click();
                 }
+            });
+
+            // Update tabindex when selection changes
+            option.addEventListener('click', () => {
+                setTimeout(updateTabIndices, 0);
             });
         });
     },

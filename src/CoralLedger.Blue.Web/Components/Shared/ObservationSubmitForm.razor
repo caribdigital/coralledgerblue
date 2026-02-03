@@ -29,8 +29,7 @@
         @* Step Progress Indicator *@
         <div class="step-indicator" role="progressbar" 
              aria-valuenow="@_currentStep" aria-valuemin="1" aria-valuemax="4"
-             aria-label="Form progress">
-            <span class="visually-hidden">Step @_currentStep of 4</span>
+             aria-label="Form progress: Step @_currentStep of 4">
             @for (int i = 1; i <= 4; i++)
             {
                 var stepClass = i < _currentStep ? "completed" : (i == _currentStep ? "current" : "");
