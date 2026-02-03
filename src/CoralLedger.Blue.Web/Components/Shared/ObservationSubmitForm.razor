@@ -251,6 +251,7 @@
     private string? _submitError;
     private bool _submitSuccess;
     private bool _mapInitialized;
+    private bool _hasUnsavedChanges;
 
     private readonly List<ObservationTypeOption> _observationTypes = new()
     {
@@ -293,7 +294,9 @@
         _longitude = lng;
         _mpaName = mpaName;
         _locationError = null;
+        _hasUnsavedChanges = true;
         InvokeAsync(StateHasChanged);
+        SetUnsavedChangesWarning();
     }
 
     private async Task UseCurrentLocationAsync()
@@ -313,6 +316,8 @@
         if (CanProceed())
         {
             _currentStep++;
+            _hasUnsavedChanges = true;
+            SetUnsavedChangesWarning();
         }
     }
 
@@ -436,6 +441,8 @@
                 }
 
                 _submitSuccess = true;
+                _hasUnsavedChanges = false;
+                ClearUnsavedChangesWarning();
                 ToastService.ShowSuccess("Your observation has been submitted successfully!", "Observation Submitted");
                 await OnSubmitted.InvokeAsync(true);
             }
@@ -472,6 +479,26 @@
         _citizenEmail = "";
         _submitSuccess = false;
         _submitError = null;
+        _hasUnsavedChanges = false;
+        ClearUnsavedChangesWarning();
+    }
+
+    private async void SetUnsavedChangesWarning()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("formUtils.setUnsavedChangesWarning", _hasUnsavedChanges);
+        }
+        catch { }
+    }
+
+    private async void ClearUnsavedChangesWarning()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("formUtils.clearUnsavedChangesWarning");
+        }
+        catch { }
     }
 
     private string GetSeverityLabel(int severity) => severity switch
