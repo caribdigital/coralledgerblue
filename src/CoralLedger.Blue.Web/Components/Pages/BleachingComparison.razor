@@ -111,7 +111,7 @@
                 <h5 class="mb-0"><i class="bi bi-table text-danger"></i> @Localizer["Bleaching_MPAComparison"]</h5>
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-sm btn-outline-primary" @onclick="ExportToCsv">
-                        <i class="bi bi-download"></i> Export CSV
+                        <i class="bi bi-download"></i> @Localizer["Dashboard_ExportCSV"]
                     </button>
                     <label class="form-label mb-0 small text-muted">@Localizer["Bleaching_SortBy"]</label>
                     <select class="form-select form-select-sm" style="width: auto;" @bind="_sortBy" @bind:after="SortData">

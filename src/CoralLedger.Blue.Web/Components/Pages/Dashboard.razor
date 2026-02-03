@@ -154,22 +154,22 @@
                 <div class="filter-bar">
                     <div class="search-box">
                         <i class="bi bi-search"></i>
-                        <input type="search" 
-                               placeholder="Search MPAs..." 
-                               @bind="_searchTerm" 
+                        <input type="search"
+                               placeholder="@Localizer["Dashboard_SearchMPAs"]"
+                               @bind="_searchTerm"
                                @bind:event="oninput"
                                @bind:after="ApplyFilters"
-                               aria-label="Search Marine Protected Areas" />
+                               aria-label="@Localizer["Dashboard_SearchMPAs"]" />
                     </div>
-                    
-                    <select @bind="_protectionFilter" 
+
+                    <select @bind="_protectionFilter"
                             @bind:after="ApplyFilters"
                             class="filter-select"
                             aria-label="Filter by protection level">
-                        <option value="">All Protection Levels</option>
-                        <option value="NoTake">No-Take</option>
-                        <option value="HighlyProtected">Highly Protected</option>
-                        <option value="LightlyProtected">Lightly Protected</option>
+                        <option value="">@Localizer["Dashboard_AllProtectionLevels"]</option>
+                        <option value="NoTake">@Localizer["Protection_NoTake"]</option>
+                        <option value="HighlyProtected">@Localizer["Protection_HighlyProtected"]</option>
+                        <option value="LightlyProtected">@Localizer["Protection_LightlyProtected"]</option>
                     </select>
                 </div>
                 
@@ -874,6 +874,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Read filter state from URL query parameters
+        var uri = new Uri(NavigationManager.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        _searchTerm = query["search"] ?? "";
+        _protectionFilter = query["protection"] ?? "";
+
         // Load MPA data
         _mpas = await Mediator.Send(new GetAllMpasQuery());
         _mpaCount = _mpas?.Count ?? 0;
@@ -886,6 +892,19 @@
     
     private void ApplyFilters()
     {
+        // Update URL with filter state for shareable links
+        var queryParams = new List<string>();
+        if (!string.IsNullOrWhiteSpace(_searchTerm))
+            queryParams.Add($"search={Uri.EscapeDataString(_searchTerm)}");
+        if (!string.IsNullOrWhiteSpace(_protectionFilter))
+            queryParams.Add($"protection={Uri.EscapeDataString(_protectionFilter)}");
+
+        var newUrl = queryParams.Count > 0
+            ? $"/dashboard?{string.Join("&", queryParams)}"
+            : "/dashboard";
+
+        NavigationManager.NavigateTo(newUrl, forceLoad: false, replace: true);
+
         // Triggers re-render with filtered data
         StateHasChanged();
     }
