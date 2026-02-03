@@ -8,6 +8,7 @@ using CoralLedger.Blue.Web.Components;
 using CoralLedger.Blue.Web.Endpoints;
 using CoralLedger.Blue.Web.Hubs;
 using CoralLedger.Blue.Web.Security;
+using CoralLedger.Blue.Web.Services;
 using CoralLedger.Blue.Web.Theme;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -74,6 +75,9 @@ builder.Services.AddQuartzJobs();
 // Add SignalR for real-time notifications
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IAlertHubContext, AlertHubContext>();
+
+// Add Toast notification service
+builder.Services.AddScoped<IToastService, ToastService>();
 
 // Add Security: Rate limiting and CORS
 builder.Services.AddSecurityRateLimiting();

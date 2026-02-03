@@ -1,9 +1,11 @@
 @rendermode InteractiveServer
 @using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Web.Services
 @using System.Text.Json
 @inject HttpClient Http
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@inject IToastService ToastService
 
 <div class="observation-form-container">
     <div class="form-header">
@@ -335,10 +337,12 @@
 
     private async Task HandlePhotoSelectAsync(InputFileChangeEventArgs e)
     {
+        var skippedFiles = 0;
         foreach (var file in e.GetMultipleFiles(5))
         {
             if (file.Size > 10 * 1024 * 1024)
             {
+                skippedFiles++;
                 continue; // Skip files over 10MB
             }
 
@@ -360,11 +364,21 @@
             }
             catch { }
         }
+        
+        // Show toast if files were skipped
+        if (skippedFiles > 0)
+        {
+            ToastService.ShowWarning(
+                $"{skippedFiles} file(s) skipped because they exceed the 10MB size limit.",
+                "File Size Limit"
+            );
+        }
     }
 
     private void RemovePhoto(PhotoPreview photo)
     {
         _photos.Remove(photo);
+        ToastService.ShowInfo("Photo removed", null, 3000);
     }
 
     private async Task SubmitAsync()
@@ -399,29 +413,42 @@
                 // Upload photos if any
                 if (_photos.Any() && result?.Id != null)
                 {
+                    var uploadedCount = 0;
                     foreach (var photo in _photos)
                     {
                         try
                         {
                             var content = new MultipartFormDataContent();
                             content.Add(new ByteArrayContent(photo.Data), "file", photo.FileName);
-                            await Http.PostAsync($"/api/observations/{result.Id}/photos", content);
+                            var uploadResponse = await Http.PostAsync($"/api/observations/{result.Id}/photos", content);
+                            if (uploadResponse.IsSuccessStatusCode)
+                            {
+                                uploadedCount++;
+                            }
                         }
                         catch { }
+                    }
+                    
+                    if (uploadedCount > 0)
+                    {
+                        ToastService.ShowSuccess($"{uploadedCount} photo(s) uploaded successfully", "Photos Uploaded");
                     }
                 }
 
                 _submitSuccess = true;
+                ToastService.ShowSuccess("Your observation has been submitted successfully!", "Observation Submitted");
                 await OnSubmitted.InvokeAsync(true);
             }
             else
             {
                 _submitError = "Failed to submit observation. Please try again.";
+                ToastService.ShowError("Failed to submit observation. Please try again.", "Submission Failed");
             }
         }
         catch (Exception ex)
         {
             _submitError = $"Error: {ex.Message}";
+            ToastService.ShowError(ex.Message, "Submission Error");
         }
         finally
         {

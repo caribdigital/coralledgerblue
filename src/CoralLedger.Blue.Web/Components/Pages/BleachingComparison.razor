@@ -2,7 +2,9 @@
 @inject IMediator Mediator
 @inject ICoralReefWatchClient CrwClient
 @inject IStringLocalizer<SharedResources> Localizer
+@inject IToastService ToastService
 @using CoralLedger.Blue.Web.Resources
+@using CoralLedger.Blue.Web.Services
 @using Microsoft.Extensions.Localization
 @rendermode InteractiveServer
 
@@ -555,10 +557,21 @@
 
             // Sort data
             SortData();
+            
+            // Show toast notification for completion
+            ToastService.ShowSuccess(
+                $"Loaded bleaching data for {_bleachingByMpa.Count} Marine Protected Areas",
+                "Data Loaded",
+                4000
+            );
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading bleaching data: {ex.Message}");
+            ToastService.ShowError(
+                "Failed to load bleaching data. Please try again.",
+                "Loading Failed"
+            );
         }
         finally
         {
