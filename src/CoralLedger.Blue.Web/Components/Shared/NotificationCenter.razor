@@ -209,6 +209,8 @@
         });
     }
 
+    private const int MaxVisibleToasts = 5;
+
     private void HandleToastShown(object? sender, ToastEventArgs e)
     {
         var toast = new ToastNotification
@@ -222,6 +224,13 @@
         };
 
         _toasts.Add(toast);
+
+        // Remove oldest toasts if we exceed the limit
+        while (_toasts.Count > MaxVisibleToasts)
+        {
+            _toasts.RemoveAt(0);
+        }
+
         InvokeAsync(StateHasChanged);
 
         // Auto-dismiss after specified duration

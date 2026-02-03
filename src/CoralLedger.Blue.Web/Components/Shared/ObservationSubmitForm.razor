@@ -220,6 +220,19 @@
                 }
             </div>
 
+            @if (_isUploadingPhotos)
+            {
+                <div class="upload-progress-container">
+                    <div class="upload-progress-header">
+                        <span class="material-icons">cloud_upload</span>
+                        <span>Uploading photos (@_uploadProgress / @_totalPhotosToUpload)</span>
+                    </div>
+                    <div class="upload-progress-bar">
+                        <div class="upload-progress-fill" style="width: @((_uploadProgress * 100) / Math.Max(_totalPhotosToUpload, 1))%"></div>
+                    </div>
+                </div>
+            }
+
             @if (_submitError != null)
             {
                 <div class="form-error">
@@ -252,6 +265,9 @@
     private bool _submitSuccess;
     private bool _mapInitialized;
     private bool _hasUnsavedChanges;
+    private bool _isUploadingPhotos;
+    private int _uploadProgress;
+    private int _totalPhotosToUpload;
 
     private readonly List<ObservationTypeOption> _observationTypes = new()
     {
@@ -417,9 +433,15 @@
                 // Upload photos if any
                 if (_photos.Any() && result?.Id != null)
                 {
+                    _isUploadingPhotos = true;
+                    _totalPhotosToUpload = _photos.Count;
+                    _uploadProgress = 0;
+                    StateHasChanged();
+
                     var uploadedCount = 0;
-                    foreach (var photo in _photos)
+                    for (var i = 0; i < _photos.Count; i++)
                     {
+                        var photo = _photos[i];
                         try
                         {
                             var content = new MultipartFormDataContent();
@@ -431,11 +453,20 @@
                             }
                         }
                         catch { }
+
+                        _uploadProgress = i + 1;
+                        StateHasChanged();
                     }
-                    
+
+                    _isUploadingPhotos = false;
+
                     if (uploadedCount > 0)
                     {
                         ToastService.ShowSuccess($"{uploadedCount} photo(s) uploaded successfully", "Photos Uploaded");
+                    }
+                    else if (_photos.Count > 0)
+                    {
+                        ToastService.ShowWarning("Some photos could not be uploaded", "Upload Warning");
                     }
                 }
 
