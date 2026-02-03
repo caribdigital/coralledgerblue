@@ -190,9 +190,6 @@
   <data name="Dashboard_ExportCSV" xml:space="preserve">
     <value>Export CSV</value>
   </data>
-  <data name="Dashboard_MapPreview" xml:space="preserve">
-    <value>Map Preview</value>
-  </data>
   <data name="Dashboard_ExpandMap" xml:space="preserve">
     <value>Expand Map</value>
   </data>

@@ -190,9 +190,6 @@
   <data name="Dashboard_ExportCSV" xml:space="preserve">
     <value>Ekspòte CSV</value>
   </data>
-  <data name="Dashboard_MapPreview" xml:space="preserve">
-    <value>Apèsi Kat</value>
-  </data>
   <data name="Dashboard_ExpandMap" xml:space="preserve">
     <value>Elaji Kat</value>
   </data>
