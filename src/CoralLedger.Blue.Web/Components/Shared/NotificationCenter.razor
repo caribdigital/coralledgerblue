@@ -238,8 +238,19 @@
 
     private ToastType MapAlertTypeToToastType(AlertType alertType)
     {
-        // Map alert severity to toast type
-        return ToastType.Warning; // Default for alerts
+        // Map alert types to toast types
+        return alertType switch
+        {
+            AlertType.System => ToastType.Info,
+            AlertType.Bleaching or 
+            AlertType.TemperatureAnomaly or 
+            AlertType.DegreeHeatingWeek => ToastType.Warning,
+            AlertType.FishingActivity or 
+            AlertType.VesselInMPA or 
+            AlertType.VesselDarkEvent => ToastType.Error,
+            AlertType.CitizenObservation => ToastType.Info,
+            _ => ToastType.Warning
+        };
     }
 
     private void DismissToast(ToastNotification toast)

@@ -287,7 +287,6 @@
         }
     }
 
-    [JSInvokable]
     public void OnLocationSelected(double lat, double lng, string? mpaName)
     {
         _latitude = lat;
@@ -296,7 +295,7 @@
         _locationError = null;
         _hasUnsavedChanges = true;
         InvokeAsync(StateHasChanged);
-        SetUnsavedChangesWarning();
+        _ = SetUnsavedChangesWarningAsync();
     }
 
     private async Task UseCurrentLocationAsync()
@@ -317,7 +316,7 @@
         {
             _currentStep++;
             _hasUnsavedChanges = true;
-            SetUnsavedChangesWarning();
+            _ = SetUnsavedChangesWarningAsync();
         }
     }
 
@@ -442,7 +441,7 @@
 
                 _submitSuccess = true;
                 _hasUnsavedChanges = false;
-                ClearUnsavedChangesWarning();
+                await ClearUnsavedChangesWarningAsync();
                 ToastService.ShowSuccess("Your observation has been submitted successfully!", "Observation Submitted");
                 await OnSubmitted.InvokeAsync(true);
             }
@@ -480,10 +479,10 @@
         _submitSuccess = false;
         _submitError = null;
         _hasUnsavedChanges = false;
-        ClearUnsavedChangesWarning();
+        _ = ClearUnsavedChangesWarningAsync();
     }
 
-    private async void SetUnsavedChangesWarning()
+    private async Task SetUnsavedChangesWarningAsync()
     {
         try
         {
@@ -492,7 +491,7 @@
         catch { }
     }
 
-    private async void ClearUnsavedChangesWarning()
+    private async Task ClearUnsavedChangesWarningAsync()
     {
         try
         {
