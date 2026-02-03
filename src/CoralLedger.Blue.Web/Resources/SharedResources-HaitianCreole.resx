@@ -175,6 +175,15 @@
   <data name="Dashboard_UnableToLoadBleachingData" xml:space="preserve">
     <value>Pa kapab chaje done blanchiman</value>
   </data>
+  <data name="Dashboard_SearchMPAs" xml:space="preserve">
+    <value>Chèche ZPM...</value>
+  </data>
+  <data name="Dashboard_AllProtectionLevels" xml:space="preserve">
+    <value>Tout Nivo Pwoteksyon</value>
+  </data>
+  <data name="Dashboard_ExportCSV" xml:space="preserve">
+    <value>Ekspòte CSV</value>
+  </data>
 
   <!-- Alerts -->
   <data name="Alert_RecentAlerts" xml:space="preserve">

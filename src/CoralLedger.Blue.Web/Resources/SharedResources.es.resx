@@ -175,6 +175,15 @@
   <data name="Dashboard_UnableToLoadBleachingData" xml:space="preserve">
     <value>No se pueden cargar datos de blanqueamiento</value>
   </data>
+  <data name="Dashboard_SearchMPAs" xml:space="preserve">
+    <value>Buscar AMP...</value>
+  </data>
+  <data name="Dashboard_AllProtectionLevels" xml:space="preserve">
+    <value>Todos los Niveles de Protección</value>
+  </data>
+  <data name="Dashboard_ExportCSV" xml:space="preserve">
+    <value>Exportar CSV</value>
+  </data>
 
   <!-- Alerts -->
   <data name="Alert_RecentAlerts" xml:space="preserve">

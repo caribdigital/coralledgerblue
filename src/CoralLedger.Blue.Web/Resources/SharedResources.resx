@@ -175,6 +175,15 @@
   <data name="Dashboard_UnableToLoadBleachingData" xml:space="preserve">
     <value>Unable to load bleaching data</value>
   </data>
+  <data name="Dashboard_SearchMPAs" xml:space="preserve">
+    <value>Search MPAs...</value>
+  </data>
+  <data name="Dashboard_AllProtectionLevels" xml:space="preserve">
+    <value>All Protection Levels</value>
+  </data>
+  <data name="Dashboard_ExportCSV" xml:space="preserve">
+    <value>Export CSV</value>
+  </data>
 
   <!-- Alerts -->
   <data name="Alert_RecentAlerts" xml:space="preserve">

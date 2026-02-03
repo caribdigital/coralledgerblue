@@ -3,9 +3,11 @@
 @inject ICoralReefWatchClient CrwClient
 @inject IStringLocalizer<SharedResources> Localizer
 @inject IToastService ToastService
+@inject IJSRuntime JSRuntime
 @using CoralLedger.Blue.Web.Resources
 @using CoralLedger.Blue.Web.Services
 @using Microsoft.Extensions.Localization
+@using System.Text
 @rendermode InteractiveServer
 
 <PageTitle>@Localizer["Bleaching_PageTitle"] - CoralLedger Blue</PageTitle>
@@ -42,7 +44,7 @@
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-md-6 col-lg-3">
-                <div class="card stat-card bg-warning text-dark h-100">
+                <div class="card stat-card @GetMpasAtRiskCardClass() h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -51,7 +53,16 @@
                             </div>
                             <i class="bi bi-shield-exclamation stat-icon"></i>
                         </div>
-                        <p class="card-text mt-2 small opacity-75">@Localizer["Bleaching_AtRiskWarning"]</p>
+                        <p class="card-text mt-2 small opacity-75">
+                            @if (_mpasAtRisk > 0)
+                            {
+                                <span>⚠️ @_mpasAtRisk @(_mpasAtRisk == 1 ? "MPA requires" : "MPAs require") monitoring</span>
+                            }
+                            else
+                            {
+                                <span>✓ All MPAs healthy</span>
+                            }
+                        </p>
                     </div>
                 </div>
             </div>
@@ -99,6 +110,9 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-table text-danger"></i> @Localizer["Bleaching_MPAComparison"]</h5>
                 <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-primary" @onclick="ExportToCsv">
+                        <i class="bi bi-download"></i> @Localizer["Dashboard_ExportCSV"]
+                    </button>
                     <label class="form-label mb-0 small text-muted">@Localizer["Bleaching_SortBy"]</label>
                     <select class="form-select form-select-sm" style="width: auto;" @bind="_sortBy" @bind:after="SortData">
                         <option value="dhw">@Localizer["Bleaching_Sort_DHW"]</option>
@@ -352,6 +366,19 @@
 
     .stat-card:hover {
         transform: translateY(-4px);
+    }
+
+    .card-pulse-danger {
+        animation: pulse-danger 2s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-danger {
+        0%, 100% {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+        50% {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 0 10px rgba(220, 53, 69, 0);
+        }
     }
 
     .stat-icon {
@@ -673,6 +700,22 @@
         };
     }
 
+    private string GetMpasAtRiskCardClass()
+    {
+        if (_mpas is null) return "bg-secondary text-white";
+
+        var percentageAtRisk = _mpas.Count > 0 ? (_mpasAtRisk * 100.0 / _mpas.Count) : 0;
+
+        return percentageAtRisk switch
+        {
+            >= 75 => "bg-danger text-white card-pulse-danger",
+            >= 50 => "bg-danger text-white",
+            >= 25 => "bg-warning text-dark",
+            > 0 => "bg-info text-white",
+            _ => "bg-success text-white"
+        };
+    }
+
     private string GetAlertLevelName(int level) => level switch
     {
         0 => Localizer["Alert_NoStress"],
@@ -737,4 +780,53 @@
         >= 1 => "text-info",
         _ => "text-success"
     };
+
+    private async Task ExportToCsv()
+    {
+        try
+        {
+            var csv = new StringBuilder();
+            
+            // Header
+            csv.AppendLine("MPA Name,Island Group,Protection Level,Area (km²),SST (°C),DHW (°C-weeks),Alert Level,Anomaly (°C)");
+            
+            // Data rows
+            foreach (var mpa in _sortedMpas)
+            {
+                var hasData = _bleachingByMpa.TryGetValue(mpa.Id, out var data);
+                
+                csv.Append($"\"{mpa.Name}\",");
+                csv.Append($"\"{mpa.IslandGroup}\",");
+                csv.Append($"\"{mpa.ProtectionLevel}\",");
+                csv.Append($"{mpa.AreaSquareKm:N1},");
+                csv.Append(hasData ? $"{data!.SeaSurfaceTemperature:F1}," : "--,");
+                csv.Append(hasData ? $"{data!.DegreeHeatingWeek:F1}," : "--,");
+                csv.Append(hasData ? $"{GetAlertLevelName(data!.AlertLevel)}," : "N/A,");
+                csv.Append(hasData ? $"{data!.SstAnomaly:F1}" : "--");
+                csv.AppendLine();
+            }
+            
+            // Generate filename with timestamp
+            var fileName = $"bahamas-mpa-bleaching-{_dataDate:yyyy-MM-dd}.csv";
+            var csvBytes = Encoding.UTF8.GetBytes(csv.ToString());
+            var csvBase64 = Convert.ToBase64String(csvBytes);
+            
+            // Trigger download via JavaScript
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, csvBase64, "text/csv");
+            
+            ToastService.ShowSuccess(
+                $"Exported {_sortedMpas.Count} MPAs to CSV",
+                "Export Successful",
+                3000
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting CSV: {ex.Message}");
+            ToastService.ShowError(
+                "Failed to export data. Please try again.",
+                "Export Failed"
+            );
+        }
+    }
 }
