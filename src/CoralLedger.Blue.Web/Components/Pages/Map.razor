@@ -16,7 +16,7 @@
                         <input class="form-check-input" type="checkbox"
                                @bind="_showFishingEvents" id="fishingToggle">
                         <label class="form-check-label text-white" for="fishingToggle">
-                            <i class="bi bi-water"></i> Fishing Activity
+                            <i class="bi bi-water"></i> @Localizer["Map_FishingActivity"]
                         </label>
                     </div>
                     @if (_showFishingEvents)
@@ -36,12 +36,12 @@
                 <button type="button"
                         class="btn @(_viewMode == ViewMode.Map ? "btn-primary" : "btn-outline-primary")"
                         @onclick="() => _viewMode = ViewMode.Map">
-                    <i class="bi bi-map"></i> Map View
+                    <i class="bi bi-map"></i> @Localizer["Map_MapView"]
                 </button>
                 <button type="button"
                         class="btn @(_viewMode == ViewMode.List ? "btn-primary" : "btn-outline-primary")"
                         @onclick="() => _viewMode = ViewMode.List">
-                    <i class="bi bi-list-ul"></i> List View
+                    <i class="bi bi-list-ul"></i> @Localizer["Map_ListView"]
                 </button>
             </div>
         </div>

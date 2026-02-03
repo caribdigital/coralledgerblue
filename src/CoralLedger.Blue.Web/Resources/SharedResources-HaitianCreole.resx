@@ -96,6 +96,12 @@
   <data name="Map_Close" xml:space="preserve">
     <value>Fèmen</value>
   </data>
+  <data name="Map_MapView" xml:space="preserve">
+    <value>Vi Kat</value>
+  </data>
+  <data name="Map_ListView" xml:space="preserve">
+    <value>Vi Lis</value>
+  </data>
 
   <!-- Legend -->
   <data name="Legend_Title" xml:space="preserve">
@@ -184,6 +190,27 @@
   <data name="Dashboard_ExportCSV" xml:space="preserve">
     <value>Ekspòte CSV</value>
   </data>
+  <data name="Dashboard_ExpandMap" xml:space="preserve">
+    <value>Elaji Kat</value>
+  </data>
+  <data name="Dashboard_MarineProtectedAreas" xml:space="preserve">
+    <value>Zòn Marin Pwoteje</value>
+  </data>
+  <data name="Dashboard_Name" xml:space="preserve">
+    <value>Non</value>
+  </data>
+  <data name="Dashboard_IslandGroup" xml:space="preserve">
+    <value>Gwoup Zile</value>
+  </data>
+  <data name="Dashboard_Protection" xml:space="preserve">
+    <value>Pwoteksyon</value>
+  </data>
+  <data name="Dashboard_Area" xml:space="preserve">
+    <value>Zòn</value>
+  </data>
+  <data name="Dashboard_DataSources" xml:space="preserve">
+    <value>Sous Done</value>
+  </data>
 
   <!-- Alerts -->
   <data name="Alert_RecentAlerts" xml:space="preserve">
@@ -200,6 +227,9 @@
   </data>
   <data name="Alert_HeatStressDetected" xml:space="preserve">
     <value>Yo detekte estrès chalè nan dlo Bahamas</value>
+  </data>
+  <data name="Alert_AllSystemsNormal" xml:space="preserve">
+    <value>Tout sistèm nòmal</value>
   </data>
 
   <!-- Observations -->

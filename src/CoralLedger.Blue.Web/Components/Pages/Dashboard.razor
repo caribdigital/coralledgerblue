@@ -95,9 +95,9 @@
             @* US-2.1.1: Map Preview Card - Lazy loaded for performance *@
             <section class="card-map-preview" aria-label="Map preview">
                 <div class="card-header">
-                    <h2><i class="bi bi-map" aria-hidden="true"></i> Map Preview</h2>
+                    <h2><i class="bi bi-map" aria-hidden="true"></i> @Localizer["Dashboard_MapPreview"]</h2>
                     <a href="/map" class="btn-card-action">
-                        Expand Map <i class="bi bi-arrows-fullscreen"></i>
+                        @Localizer["Dashboard_ExpandMap"] <i class="bi bi-arrows-fullscreen"></i>
                     </a>
                 </div>
                 <div class="card-body map-preview-body">
@@ -113,7 +113,7 @@
             @* US-2.1.3: Alert List (placeholder for future alerts) *@
             <section class="card-alerts" aria-label="Recent alerts">
                 <div class="card-header">
-                    <h2><i class="bi bi-bell" aria-hidden="true"></i> Recent Alerts</h2>
+                    <h2><i class="bi bi-bell" aria-hidden="true"></i> @Localizer["Alert_RecentAlerts"]</h2>
                 </div>
                 <div class="card-body">
                     @if (_maxAlertLevel.HasValue && _maxAlertLevel.Value >= 2)
@@ -125,7 +125,7 @@
                                 </div>
                                 <div class="alert-content">
                                     <strong>@GetBleachingAlertText()</strong>
-                                    <span>Heat stress detected in Bahamas waters</span>
+                                    <span>@Localizer["Alert_HeatStressDetected"]</span>
                                     <small>DHW: @(_maxDhw?.ToString("F1") ?? "N/A")°C-weeks</small>
                                 </div>
                                 <AlertBadge Level="@_maxAlertLevel.Value" Size="AlertBadge.BadgeSize.Small" />
@@ -136,8 +136,8 @@
                     {
                         <div class="empty-state">
                             <i class="bi bi-check-circle"></i>
-                            <span>No active alerts</span>
-                            <small>All systems normal</small>
+                            <span>@Localizer["Alert_NoAlerts"]</span>
+                            <small>@Localizer["Alert_AllSystemsNormal"]</small>
                         </div>
                     }
                 </div>
@@ -146,7 +146,7 @@
             @* MPA Summary Table *@
             <section class="card-mpa-table" aria-label="Marine Protected Areas summary">
                 <div class="card-header">
-                    <h2><i class="bi bi-table" aria-hidden="true"></i> Marine Protected Areas</h2>
+                    <h2><i class="bi bi-table" aria-hidden="true"></i> @Localizer["Dashboard_MarineProtectedAreas"]</h2>
                     <span class="badge-count">@_filteredMpas.Count() / @_mpaCount MPAs</span>
                 </div>
                 
@@ -182,10 +182,10 @@
                                 <table class="data-table">
                                     <thead>
                                         <tr>
-                                            <th scope="col">Name</th>
-                                            <th scope="col">Island Group</th>
-                                            <th scope="col">Protection</th>
-                                            <th scope="col" class="text-end">Area</th>
+                                            <th scope="col">@Localizer["Dashboard_Name"]</th>
+                                            <th scope="col">@Localizer["Dashboard_IslandGroup"]</th>
+                                            <th scope="col">@Localizer["Dashboard_Protection"]</th>
+                                            <th scope="col" class="text-end">@Localizer["Dashboard_Area"]</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -210,10 +210,10 @@
                             <table class="data-table" role="grid">
                                 <thead>
                                     <tr>
-                                        <th scope="col">Name</th>
-                                        <th scope="col">Island Group</th>
-                                        <th scope="col">Protection</th>
-                                        <th scope="col" class="text-end">Area</th>
+                                        <th scope="col">@Localizer["Dashboard_Name"]</th>
+                                        <th scope="col">@Localizer["Dashboard_IslandGroup"]</th>
+                                        <th scope="col">@Localizer["Dashboard_Protection"]</th>
+                                        <th scope="col" class="text-end">@Localizer["Dashboard_Area"]</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -249,7 +249,7 @@
             @* Data Sources Panel *@
             <section class="card-data-sources" aria-label="Data sources">
                 <div class="card-header">
-                    <h2><i class="bi bi-database" aria-hidden="true"></i> Data Sources</h2>
+                    <h2><i class="bi bi-database" aria-hidden="true"></i> @Localizer["Dashboard_DataSources"]</h2>
                     <button class="btn-refresh" 
                             @onclick="RefreshDataAsync" 
                             disabled="@_isRefreshing"
