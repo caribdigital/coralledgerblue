@@ -24,6 +24,18 @@ window.accessibility = {
 
         updateTabIndices();
 
+        // Watch for aria-checked changes to update tabindex
+        const observer = new MutationObserver(() => {
+            updateTabIndices();
+        });
+
+        options.forEach(option => {
+            observer.observe(option, {
+                attributes: true,
+                attributeFilter: ['aria-checked']
+            });
+        });
+
         options.forEach((option, index) => {
             option.addEventListener('keydown', (e) => {
                 let targetIndex = -1;
@@ -60,11 +72,6 @@ window.accessibility = {
                     // Auto-select on arrow key navigation per ARIA authoring practices
                     targetOption.click();
                 }
-            });
-
-            // Update tabindex when selection changes
-            option.addEventListener('click', () => {
-                setTimeout(updateTabIndices, 0);
             });
         });
     },

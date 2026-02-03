@@ -91,7 +91,7 @@
                                     var isSelected = _selectedType == type.Value;
                                     <button type="button"
                                             role="radio"
-                                            aria-checked="@isSelected.ToString().ToLower()"
+                                            aria-checked="@(isSelected ? "true" : "false")"
                                             class="type-option @(isSelected ? "selected" : "")"
                                             @onclick="() => _selectedType = type.Value"
                                             aria-label="@type.Label">
@@ -123,7 +123,7 @@
                                     var isSelected = _severity == severity;
                                     <button type="button"
                                             role="radio"
-                                            aria-checked="@isSelected.ToString().ToLower()"
+                                            aria-checked="@(isSelected ? "true" : "false")"
                                             class="severity-option @(isSelected ? "selected" : "") severity-@severity"
                                             @onclick="() => _severity = severity"
                                             aria-label="@GetSeverityLabel(severity)"
