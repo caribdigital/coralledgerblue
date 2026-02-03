@@ -2223,6 +2223,75 @@ body.theme-light .header-nav .rz-text,
     margin-bottom: 1.5rem;
 }
 
+/* Mobile responsiveness for observation form */
+@media (max-width: 576px) {
+    .form-header {
+        padding: 1rem;
+    }
+
+    .form-header h2 {
+        font-size: 1rem;
+    }
+
+    .step-content {
+        padding: 0 0.75rem 0.75rem;
+    }
+
+    .type-selector {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .type-option {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.7rem;
+    }
+
+    .type-option .material-icons {
+        font-size: 1.25rem;
+    }
+
+    .severity-option {
+        width: 48px;
+        height: 48px;
+        font-size: 1.125rem;
+    }
+
+    .location-map {
+        height: 250px;
+    }
+
+    .photo-dropzone {
+        padding: 1.5rem 1rem;
+    }
+
+    .photo-preview {
+        width: 70px;
+        height: 70px;
+    }
+
+    .form-navigation {
+        padding: 0.75rem;
+    }
+
+    .btn-primary,
+    .btn-outline {
+        width: 100%;
+        min-height: 48px;
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+    .type-selector {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .severity-option {
+        width: 48px;
+        height: 48px;
+    }
+}
+
 /* ========================================
    Map Time-Lapse Control
    ======================================== */

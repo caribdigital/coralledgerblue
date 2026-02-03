@@ -357,7 +357,81 @@
         grid-row: 2;
     }
 
-    @@media (max-width: 992px) {
+    /* Mobile: Single column layout */
+    @@media (max-width: 576px) {
+        .dashboard-content {
+            padding: 1rem;
+        }
+
+        .kpi-row {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .card-map-preview,
+        .card-alerts,
+        .card-mpa-table,
+        .card-data-sources {
+            grid-column: 1;
+            grid-row: auto;
+        }
+
+        .dashboard-header {
+            padding: 1rem;
+        }
+
+        .header-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .btn-header {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Tablet Portrait: 2 column layout for KPIs */
+    @@media (min-width: 577px) and (max-width: 768px) {
+        .dashboard-content {
+            padding: 1.25rem;
+        }
+
+        .kpi-row {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        .card-map-preview,
+        .card-alerts,
+        .card-mpa-table,
+        .card-data-sources {
+            grid-column: 1;
+            grid-row: auto;
+        }
+    }
+
+    /* Tablet Landscape: 2 column layout for dashboard grid */
+    @@media (min-width: 769px) and (max-width: 991px) {
+        .kpi-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
         .dashboard-grid {
             grid-template-columns: 1fr;
         }
@@ -368,6 +442,13 @@
         .card-data-sources {
             grid-column: 1;
             grid-row: auto;
+        }
+    }
+
+    /* Large Desktop: Ensure 4-column layout for KPIs */
+    @@media (min-width: 992px) {
+        .kpi-row {
+            grid-template-columns: repeat(4, 1fr);
         }
     }
 
