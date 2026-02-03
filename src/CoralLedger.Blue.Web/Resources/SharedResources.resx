@@ -96,6 +96,12 @@
   <data name="Map_Close" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="Map_MapView" xml:space="preserve">
+    <value>Map View</value>
+  </data>
+  <data name="Map_ListView" xml:space="preserve">
+    <value>List View</value>
+  </data>
 
   <!-- Legend -->
   <data name="Legend_Title" xml:space="preserve">
@@ -184,6 +190,30 @@
   <data name="Dashboard_ExportCSV" xml:space="preserve">
     <value>Export CSV</value>
   </data>
+  <data name="Dashboard_MapPreview" xml:space="preserve">
+    <value>Map Preview</value>
+  </data>
+  <data name="Dashboard_ExpandMap" xml:space="preserve">
+    <value>Expand Map</value>
+  </data>
+  <data name="Dashboard_MarineProtectedAreas" xml:space="preserve">
+    <value>Marine Protected Areas</value>
+  </data>
+  <data name="Dashboard_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Dashboard_IslandGroup" xml:space="preserve">
+    <value>Island Group</value>
+  </data>
+  <data name="Dashboard_Protection" xml:space="preserve">
+    <value>Protection</value>
+  </data>
+  <data name="Dashboard_Area" xml:space="preserve">
+    <value>Area</value>
+  </data>
+  <data name="Dashboard_DataSources" xml:space="preserve">
+    <value>Data Sources</value>
+  </data>
 
   <!-- Alerts -->
   <data name="Alert_RecentAlerts" xml:space="preserve">
@@ -200,6 +230,9 @@
   </data>
   <data name="Alert_HeatStressDetected" xml:space="preserve">
     <value>Heat stress detected in Bahamas waters</value>
+  </data>
+  <data name="Alert_AllSystemsNormal" xml:space="preserve">
+    <value>All systems normal</value>
   </data>
 
   <!-- Observations -->
