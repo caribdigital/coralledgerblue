@@ -86,18 +86,22 @@
                         <fieldset>
                             <legend id="type-label">Type of Observation *</legend>
                             <div class="type-selector" role="radiogroup" aria-labelledby="type-label">
+                                @{ var typeIndex = 0; }
                                 @foreach (var type in _observationTypes)
                                 {
                                     var isSelected = _selectedType == type.Value;
+                                    var isFirst = typeIndex == 0;
                                     <button type="button"
                                             role="radio"
                                             aria-checked="@(isSelected ? "true" : "false")"
+                                            tabindex="@(isSelected || (isFirst && _selectedType == default) ? "0" : "-1")"
                                             class="type-option @(isSelected ? "selected" : "")"
                                             @onclick="() => _selectedType = type.Value"
                                             aria-label="@type.Label">
                                         <span class="material-icons" aria-hidden="true">@type.Icon</span>
                                         <span>@type.Label</span>
                                     </button>
+                                    typeIndex++;
                                 }
                             </div>
                         </fieldset>
@@ -124,6 +128,7 @@
                                     <button type="button"
                                             role="radio"
                                             aria-checked="@(isSelected ? "true" : "false")"
+                                            tabindex="@(isSelected ? "0" : "-1")"
                                             class="severity-option @(isSelected ? "selected" : "") severity-@severity"
                                             @onclick="() => _severity = severity"
                                             aria-label="@GetSeverityLabel(severity)"
@@ -291,6 +296,7 @@
     private bool _isUploadingPhotos;
     private int _uploadProgress;
     private int _totalPhotosToUpload;
+    private bool _stepChanged;
 
     private readonly List<ObservationTypeOption> _observationTypes = new()
     {
@@ -311,6 +317,17 @@
         {
             await InitializeLocationMapAsync();
             _mapInitialized = true;
+        }
+
+        // Initialize accessibility keyboard navigation after render
+        if (firstRender || _stepChanged)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("accessibility.initialize");
+            }
+            catch { }
+            _stepChanged = false;
         }
     }
 
@@ -355,6 +372,7 @@
         {
             _currentStep++;
             _hasUnsavedChanges = true;
+            _stepChanged = true;
             _ = SetUnsavedChangesWarningAsync();
         }
     }
@@ -364,6 +382,7 @@
         if (_currentStep > 1)
         {
             _currentStep--;
+            _stepChanged = true;
         }
     }
 
@@ -533,6 +552,7 @@
         _submitSuccess = false;
         _submitError = null;
         _hasUnsavedChanges = false;
+        _stepChanged = true;
         _ = ClearUnsavedChangesWarningAsync();
     }
 
