@@ -3,9 +3,11 @@
 @inject ICoralReefWatchClient CrwClient
 @inject IStringLocalizer<SharedResources> Localizer
 @inject IToastService ToastService
+@inject IJSRuntime JSRuntime
 @using CoralLedger.Blue.Web.Resources
 @using CoralLedger.Blue.Web.Services
 @using Microsoft.Extensions.Localization
+@using System.Text
 @rendermode InteractiveServer
 
 <PageTitle>@Localizer["Bleaching_PageTitle"] - CoralLedger Blue</PageTitle>
@@ -99,6 +101,9 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="bi bi-table text-danger"></i> @Localizer["Bleaching_MPAComparison"]</h5>
                 <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-primary" @onclick="ExportToCsv">
+                        <i class="bi bi-download"></i> Export CSV
+                    </button>
                     <label class="form-label mb-0 small text-muted">@Localizer["Bleaching_SortBy"]</label>
                     <select class="form-select form-select-sm" style="width: auto;" @bind="_sortBy" @bind:after="SortData">
                         <option value="dhw">@Localizer["Bleaching_Sort_DHW"]</option>
@@ -737,4 +742,53 @@
         >= 1 => "text-info",
         _ => "text-success"
     };
+
+    private async Task ExportToCsv()
+    {
+        try
+        {
+            var csv = new StringBuilder();
+            
+            // Header
+            csv.AppendLine("MPA Name,Island Group,Protection Level,Area (km²),SST (°C),DHW (°C-weeks),Alert Level,Anomaly (°C)");
+            
+            // Data rows
+            foreach (var mpa in _sortedMpas)
+            {
+                var hasData = _bleachingByMpa.TryGetValue(mpa.Id, out var data);
+                
+                csv.Append($"\"{mpa.Name}\",");
+                csv.Append($"\"{mpa.IslandGroup}\",");
+                csv.Append($"\"{mpa.ProtectionLevel}\",");
+                csv.Append($"{mpa.AreaSquareKm:N1},");
+                csv.Append(hasData ? $"{data!.SeaSurfaceTemperature:F1}," : "--,");
+                csv.Append(hasData ? $"{data!.DegreeHeatingWeek:F1}," : "--,");
+                csv.Append(hasData ? $"{GetAlertLevelName(data!.AlertLevel)}," : "N/A,");
+                csv.Append(hasData ? $"{data!.SstAnomaly:F1}" : "--");
+                csv.AppendLine();
+            }
+            
+            // Generate filename with timestamp
+            var fileName = $"bahamas-mpa-bleaching-{_dataDate:yyyy-MM-dd}.csv";
+            var csvBytes = Encoding.UTF8.GetBytes(csv.ToString());
+            var csvBase64 = Convert.ToBase64String(csvBytes);
+            
+            // Trigger download via JavaScript
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, csvBase64, "text/csv");
+            
+            ToastService.ShowSuccess(
+                $"Exported {_sortedMpas.Count} MPAs to CSV",
+                "Export Successful",
+                3000
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting CSV: {ex.Message}");
+            ToastService.ShowError(
+                "Failed to export data. Please try again.",
+                "Export Failed"
+            );
+        }
+    }
 }

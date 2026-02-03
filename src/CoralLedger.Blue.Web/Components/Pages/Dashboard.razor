@@ -147,8 +147,32 @@
             <section class="card-mpa-table" aria-label="Marine Protected Areas summary">
                 <div class="card-header">
                     <h2><i class="bi bi-table" aria-hidden="true"></i> Marine Protected Areas</h2>
-                    <span class="badge-count">@_mpaCount MPAs</span>
+                    <span class="badge-count">@_filteredMpas.Count() / @_mpaCount MPAs</span>
                 </div>
+                
+                @* Filter Bar *@
+                <div class="filter-bar">
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="search" 
+                               placeholder="Search MPAs..." 
+                               @bind="_searchTerm" 
+                               @bind:event="oninput"
+                               @bind:after="ApplyFilters"
+                               aria-label="Search Marine Protected Areas" />
+                    </div>
+                    
+                    <select @bind="_protectionFilter" 
+                            @bind:after="ApplyFilters"
+                            class="filter-select"
+                            aria-label="Filter by protection level">
+                        <option value="">All Protection Levels</option>
+                        <option value="NoTake">No-Take</option>
+                        <option value="HighlyProtected">Highly Protected</option>
+                        <option value="LightlyProtected">Lightly Protected</option>
+                    </select>
+                </div>
+                
                 <div class="card-body table-body">
                     @if (_loading)
                     {
@@ -193,7 +217,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var (mpa, index) in _mpas.OrderByDescending(m => m.AreaSquareKm).Select((m, i) => (m, i)))
+                                    @foreach (var (mpa, index) in _filteredMpas.Select((m, i) => (m, i)))
                                     {
                                         var staggerClass = $"table-row-animate stagger-{Math.Min(index + 1, 8)}";
                                         <tr @onclick="() => NavigateToMpa(mpa.Id)"
@@ -226,9 +250,15 @@
             <section class="card-data-sources" aria-label="Data sources">
                 <div class="card-header">
                     <h2><i class="bi bi-database" aria-hidden="true"></i> Data Sources</h2>
+                    <button class="btn-refresh" 
+                            @onclick="RefreshDataAsync" 
+                            disabled="@_isRefreshing"
+                            aria-label="Refresh data">
+                        <i class="bi bi-arrow-clockwise @(_isRefreshing ? "spin" : "")"></i>
+                    </button>
                 </div>
                 <div class="card-body">
-                    <DataFreshnessIndicator DataSource="NOAA Coral Reef Watch" LastUpdated="@DateTime.UtcNow.AddMinutes(-5)" StalenessThreshold="@TimeSpan.FromHours(2)" />
+                    <DataFreshnessIndicator DataSource="NOAA Coral Reef Watch" LastUpdated="@_lastBleachingUpdate" StalenessThreshold="@TimeSpan.FromHours(2)" />
                     <DataFreshnessIndicator DataSource="Global Fishing Watch" LastUpdated="@DateTime.UtcNow.AddMinutes(-15)" StalenessThreshold="@TimeSpan.FromHours(2)" />
                     <DataFreshnessIndicator DataSource="Protected Planet (WDPA)" LastUpdated="@DateTime.UtcNow.AddMinutes(-30)" StalenessThreshold="@TimeSpan.FromDays(30)" />
                 </div>
@@ -510,6 +540,91 @@
         color: var(--color-text-muted);
     }
 
+    /* Filter Bar */
+    .filter-bar {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.18));
+        flex-wrap: wrap;
+    }
+
+    .search-box {
+        position: relative;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--color-text-muted);
+        pointer-events: none;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+        background: var(--color-surface, #050C1A);
+        border: 1px solid var(--color-border, rgba(255,255,255,0.18));
+        border-radius: 6px;
+        color: var(--color-text, #F5FBFF);
+        font-size: 0.875rem;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--color-primary, #2EE3FF);
+        box-shadow: 0 0 0 3px rgba(46, 227, 255, 0.1);
+    }
+
+    .filter-select {
+        padding: 0.5rem 0.75rem;
+        background: var(--color-surface, #050C1A);
+        border: 1px solid var(--color-border, rgba(255,255,255,0.18));
+        border-radius: 6px;
+        color: var(--color-text, #F5FBFF);
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--color-primary, #2EE3FF);
+        box-shadow: 0 0 0 3px rgba(46, 227, 255, 0.1);
+    }
+
+    /* Refresh Button */
+    .btn-refresh {
+        background: transparent;
+        border: none;
+        color: var(--color-primary, #2EE3FF);
+        cursor: pointer;
+        padding: 0.25rem;
+        font-size: 1.25rem;
+        transition: transform 0.2s ease;
+    }
+
+    .btn-refresh:hover:not(:disabled) {
+        transform: scale(1.1);
+    }
+
+    .btn-refresh:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-refresh i.spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
     /* Map Preview */
     .map-preview-body {
         padding: 0;
@@ -732,6 +847,30 @@
     private double? _maxDhw;
     private double? _avgSst;
     private int? _maxAlertLevel;
+    private bool _isRefreshing = false;
+    private DateTime _lastBleachingUpdate = DateTime.UtcNow;
+    
+    // Filter state
+    private string _searchTerm = "";
+    private string _protectionFilter = "";
+    
+    private IEnumerable<MpaSummaryDto> _filteredMpas => 
+        _mpas?.Where(mpa => 
+        {
+            // Search filter
+            if (!string.IsNullOrWhiteSpace(_searchTerm) && 
+                !mpa.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) &&
+                !mpa.IslandGroup.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+                return false;
+            
+            // Protection level filter
+            if (!string.IsNullOrWhiteSpace(_protectionFilter) && 
+                !mpa.ProtectionLevel.Equals(_protectionFilter, StringComparison.OrdinalIgnoreCase))
+                return false;
+            
+            return true;
+        })
+        .OrderByDescending(m => m.AreaSquareKm) ?? Enumerable.Empty<MpaSummaryDto>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -743,6 +882,30 @@
 
         // Load bleaching data asynchronously
         await LoadBleachingDataAsync();
+    }
+    
+    private void ApplyFilters()
+    {
+        // Triggers re-render with filtered data
+        StateHasChanged();
+    }
+    
+    private async Task RefreshDataAsync()
+    {
+        if (_isRefreshing) return;
+        
+        _isRefreshing = true;
+        StateHasChanged();
+        
+        try
+        {
+            await LoadBleachingDataAsync();
+        }
+        finally
+        {
+            _isRefreshing = false;
+            StateHasChanged();
+        }
     }
 
     private async Task LoadBleachingDataAsync()
@@ -758,6 +921,7 @@
                 _avgSst = result.Value.SeaSurfaceTemperature;
                 _maxAlertLevel = result.Value.AlertLevel;
                 _bleachingError = false;
+                _lastBleachingUpdate = DateTime.UtcNow;
                 StateHasChanged();
             }
             else if (!result.Success)
