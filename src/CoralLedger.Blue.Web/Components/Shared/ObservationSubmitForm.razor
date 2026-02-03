@@ -129,8 +129,7 @@
                                             @onclick="() => _severity = severity"
                                             aria-label="@GetSeverityLabel(severity)"
                                             title="@GetSeverityLabel(severity)">
-                                        <span aria-hidden="true">@severity</span>
-                                        <span class="visually-hidden">@GetSeverityLabel(severity)</span>
+                                        @severity
                                     </button>
                                 }
                             </div>

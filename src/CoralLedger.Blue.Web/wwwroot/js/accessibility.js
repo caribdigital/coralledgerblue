@@ -9,7 +9,7 @@ window.accessibility = {
         const group = document.querySelector(selector);
         if (!group) return;
 
-        const options = group.querySelectorAll('[role="radio"], button');
+        const options = group.querySelectorAll('[role="radio"]');
         if (options.length === 0) return;
 
         options.forEach((option, index) => {
