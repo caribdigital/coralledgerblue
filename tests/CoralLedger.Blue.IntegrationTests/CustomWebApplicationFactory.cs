@@ -80,5 +80,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         // Seed the default tenant required for multi-tenant support
         DefaultTenantSeeder.SeedAsync(db).GetAwaiter().GetResult();
+        
+        // Seed test MPA data for integration tests
+        BahamasMpaSeeder.SeedAsync(db).GetAwaiter().GetResult();
     }
 }
