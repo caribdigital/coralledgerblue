@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace CoralLedger.Blue.Web.Theme;
@@ -20,6 +21,7 @@ public interface IThemeState
 public sealed class ThemeState : IThemeState
 {
     private readonly IJSRuntime _jsRuntime;
+    private readonly ILogger<ThemeState> _logger;
     private bool _initialized;
     private ThemeMode _currentMode = ThemeMode.Dark;
 
@@ -27,9 +29,10 @@ public sealed class ThemeState : IThemeState
 
     public event Action<ThemeMode>? ThemeChanged;
 
-    public ThemeState(IJSRuntime jsRuntime)
+    public ThemeState(IJSRuntime jsRuntime, ILogger<ThemeState> logger)
     {
         _jsRuntime = jsRuntime;
+        _logger = logger;
     }
 
     public async ValueTask InitializeAsync()
@@ -48,8 +51,9 @@ public sealed class ThemeState : IThemeState
                 ? parsed
                 : ThemeMode.Dark;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Failed to load theme preference from localStorage, defaulting to Dark mode");
             _currentMode = ThemeMode.Dark;
         }
 
@@ -83,8 +87,9 @@ public sealed class ThemeState : IThemeState
         {
             return _jsRuntime.InvokeVoidAsync("CoralLedgerThemeManager.setMode", scriptMode);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Failed to save theme preference to localStorage");
             return ValueTask.CompletedTask;
         }
     }

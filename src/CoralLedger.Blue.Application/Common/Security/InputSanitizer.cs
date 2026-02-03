@@ -140,8 +140,9 @@ public static partial class InputSanitizer
             var addr = new System.Net.Mail.MailAddress(input);
             return addr.Address == input;
         }
-        catch
+        catch (Exception)
         {
+            // Invalid email format - intentionally silent for security
             return false;
         }
     }
