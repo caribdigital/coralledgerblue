@@ -17,7 +17,7 @@
     <div class="container-fluid py-4">
         @* Summary Cards Row *@
         <div class="row g-4 mb-4">
-            <div class="col-md-6 col-lg-3">
+            <div class="col-12 col-sm-6 col-md-6 col-lg-3">
                 <div class="card stat-card h-100 @GetHighestRiskCardClass()">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
@@ -39,7 +39,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
+            <div class="col-12 col-sm-6 col-md-6 col-lg-3">
                 <div class="card stat-card bg-warning text-dark h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
@@ -53,7 +53,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
+            <div class="col-12 col-sm-6 col-md-6 col-lg-3">
                 <div class="card stat-card bg-info text-white h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
@@ -76,7 +76,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-3">
+            <div class="col-12 col-sm-6 col-md-6 col-lg-3">
                 <div class="card stat-card bg-secondary text-white h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
@@ -398,6 +398,78 @@
 
     .badge i {
         font-size: 0.875rem;
+    }
+
+    /* Mobile: Single column and stacked layout */
+    @@media (max-width: 576px) {
+        .page-header {
+            padding: 1rem;
+        }
+
+        .page-header h2 {
+            font-size: 1.25rem;
+        }
+
+        .card-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.75rem;
+        }
+
+        .card-header .d-flex {
+            width: 100%;
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+
+        .form-select {
+            width: 100% !important;
+        }
+
+        /* Make table scrollable on mobile */
+        .comparison-table {
+            font-size: 0.875rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.5rem;
+        }
+
+        /* Hide less important columns on mobile */
+        .comparison-table th:nth-child(2),
+        .comparison-table td:nth-child(2),
+        .comparison-table th:nth-child(6),
+        .comparison-table td:nth-child(6) {
+            display: none;
+        }
+
+        /* Stack legend items vertically */
+        .card-body .d-flex.flex-wrap {
+            flex-direction: column;
+        }
+    }
+
+    /* Tablet Portrait: Keep 2-column cards */
+    @@media (min-width: 577px) and (max-width: 768px) {
+        .page-header {
+            padding: 1.25rem;
+        }
+
+        .page-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .comparison-table {
+            font-size: 0.9rem;
+        }
+    }
+
+    /* Tablet Landscape: Optimize table display */
+    @@media (min-width: 769px) and (max-width: 991px) {
+        .card-header {
+            flex-wrap: wrap;
+        }
     }
 </style>
 
