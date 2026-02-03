@@ -64,8 +64,8 @@
     <!-- PDF Generation -->
     <PackageVersion Include="QuestPDF" Version="2024.12.3" />
     <!-- AI / Semantic Kernel -->
-    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.31.0" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.31.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.70.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.70.0" />
     <!-- Testing -->
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.0" />
