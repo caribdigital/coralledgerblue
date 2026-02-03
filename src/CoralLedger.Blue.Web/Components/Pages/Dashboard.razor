@@ -848,7 +848,7 @@
     private double? _avgSst;
     private int? _maxAlertLevel;
     private bool _isRefreshing = false;
-    private DateTime _lastBleachingUpdate = DateTime.UtcNow;
+    private DateTime _lastBleachingUpdate = DateTime.MinValue;
     
     // Filter state
     private string _searchTerm = "";
