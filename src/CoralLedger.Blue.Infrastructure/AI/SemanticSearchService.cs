@@ -2,15 +2,10 @@ using System.Collections.Concurrent;
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
-
-#pragma warning disable SKEXP0001 // Experimental APIs
-#pragma warning disable SKEXP0010 // Experimental APIs
-using Microsoft.SemanticKernel.Embeddings;
-#pragma warning restore SKEXP0010
-#pragma warning restore SKEXP0001
 
 namespace CoralLedger.Blue.Infrastructure.AI;
 
@@ -24,10 +19,7 @@ public class SemanticSearchService : ISemanticSearchService
     private readonly IMarineDbContext _context;
     private readonly ILogger<SemanticSearchService> _logger;
     private readonly Kernel? _kernel;
-
-#pragma warning disable SKEXP0001
-    private readonly ITextEmbeddingGenerationService? _embeddingService;
-#pragma warning restore SKEXP0001
+    private readonly IEmbeddingGenerator<string, Embedding<float>>? _embeddingService;
 
     // In-memory cache for embeddings (in production, use pgvector or dedicated vector DB)
     private static readonly ConcurrentDictionary<string, CachedEmbedding> _embeddingCache = new();
@@ -84,28 +76,26 @@ public class SemanticSearchService : ISemanticSearchService
             {
                 var builder = Kernel.CreateBuilder();
 
-#pragma warning disable SKEXP0010
+                // Using stable Microsoft.Extensions.AI abstractions (IEmbeddingGenerator)
+                // These are the recommended APIs as of Semantic Kernel 1.70.0
+#pragma warning disable SKEXP0010 // Extension methods are still experimental in SK 1.70.0
                 if (_options.UseAzureOpenAI && !string.IsNullOrEmpty(_options.AzureEndpoint))
                 {
-                    builder.AddAzureOpenAITextEmbeddingGeneration(
+                    builder.AddAzureOpenAIEmbeddingGenerator(
                         deploymentName: _options.EmbeddingModel,
                         endpoint: _options.AzureEndpoint,
                         apiKey: _options.ApiKey);
                 }
                 else
                 {
-                    builder.AddOpenAITextEmbeddingGeneration(
+                    builder.AddOpenAIEmbeddingGenerator(
                         modelId: _options.EmbeddingModel,
                         apiKey: _options.ApiKey);
                 }
 #pragma warning restore SKEXP0010
 
                 _kernel = builder.Build();
-
-#pragma warning disable SKEXP0001
-                _embeddingService = _kernel.GetRequiredService<ITextEmbeddingGenerationService>();
-#pragma warning restore SKEXP0001
-
+                _embeddingService = _kernel.GetRequiredService<IEmbeddingGenerator<string, Embedding<float>>>();
                 _logger.LogInformation(
                     "SemanticSearchService initialized with embedding model {Model}",
                     _options.EmbeddingModel);
@@ -136,13 +126,12 @@ public class SemanticSearchService : ISemanticSearchService
 
         try
         {
-#pragma warning disable SKEXP0001
-            var embeddings = await _embeddingService!.GenerateEmbeddingsAsync(
+            // Use stable GenerateAsync from Microsoft.Extensions.AI.IEmbeddingGenerator
+            var embeddings = await _embeddingService!.GenerateAsync(
                 new[] { text },
                 cancellationToken: cancellationToken).ConfigureAwait(false);
-#pragma warning restore SKEXP0001
 
-            var embedding = embeddings.First().ToArray();
+            var embedding = embeddings.First().Vector.ToArray();
 
             // Cache for 1 hour
             _embeddingCache[cacheKey] = new CachedEmbedding(embedding, DateTime.UtcNow.AddHours(1));
