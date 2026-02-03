@@ -1,9 +1,11 @@
 @page "/admin/alert-rules"
 @rendermode InteractiveServer
 @using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Web.Services
 @using System.Text.Json
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject IToastService ToastService
 
 <PageTitle>Alert Rules - Admin</PageTitle>
 
@@ -418,15 +420,20 @@
             {
                 CloseDialog();
                 await LoadRulesAsync();
+                
+                var action = _editingRule == null ? "created" : "updated";
+                ToastService.ShowSuccess($"Alert rule '{_formData.Name}' has been {action} successfully.", "Rule Saved");
             }
             else
             {
                 _formError = "Failed to save rule";
+                ToastService.ShowError("Failed to save alert rule. Please try again.", "Save Failed");
             }
         }
         catch (Exception ex)
         {
             _formError = $"Error: {ex.Message}";
+            ToastService.ShowError(ex.Message, "Error");
         }
         finally
         {
@@ -443,10 +450,19 @@
             if (response.IsSuccessStatusCode)
             {
                 rule.IsActive = !rule.IsActive;
+                var status = rule.IsActive ? "activated" : "deactivated";
+                ToastService.ShowSuccess($"Alert rule '{rule.Name}' has been {status}.", "Rule Updated");
                 StateHasChanged();
             }
+            else
+            {
+                ToastService.ShowError("Failed to update rule status.", "Update Failed");
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            ToastService.ShowError(ex.Message, "Error");
+        }
     }
 
     private void ConfirmDeleteRule(AlertRuleDto rule)
@@ -465,9 +481,17 @@
             if (response.IsSuccessStatusCode)
             {
                 _rules.Remove(_ruleToDelete);
+                ToastService.ShowSuccess($"Alert rule '{_ruleToDelete.Name}' has been deleted.", "Rule Deleted");
+            }
+            else
+            {
+                ToastService.ShowError("Failed to delete alert rule.", "Delete Failed");
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            ToastService.ShowError(ex.Message, "Error");
+        }
         finally
         {
             _showDeleteConfirm = false;
@@ -479,9 +503,22 @@
     {
         try
         {
-            await Http.PostAsync($"/api/alerts/rules/{rule.Id}/evaluate", null);
+            ToastService.ShowInfo($"Testing rule '{rule.Name}'...", "Test Started", 3000);
+            var response = await Http.PostAsync($"/api/alerts/rules/{rule.Id}/evaluate", null);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                ToastService.ShowSuccess($"Rule '{rule.Name}' evaluated successfully.", "Test Completed");
+            }
+            else
+            {
+                ToastService.ShowWarning($"Rule evaluation completed with warnings.", "Test Completed");
+            }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            ToastService.ShowError($"Failed to test rule: {ex.Message}", "Test Failed");
+        }
     }
 
     private string GetTypeIcon(AlertType type) => type switch

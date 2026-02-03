@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\src\CoralLedger.Blue.Infrastructure\CoralLedger.Blue.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\CoralLedger.Blue.Application\CoralLedger.Blue.Application.csproj" />
     <ProjectReference Include="..\..\src\CoralLedger.Blue.Domain\CoralLedger.Blue.Domain.csproj" />
+    <ProjectReference Include="..\..\src\CoralLedger.Blue.Web\CoralLedger.Blue.Web.csproj" />
   </ItemGroup>
 
 </Project>

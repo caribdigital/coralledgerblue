@@ -1,9 +1,11 @@
 @rendermode InteractiveServer
 @using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Web.Services
 @using System.Text.Json
 @inject HttpClient Http
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@inject IToastService ToastService
 
 <div class="observation-form-container">
     <div class="form-header">
@@ -218,6 +220,19 @@
                 }
             </div>
 
+            @if (_isUploadingPhotos)
+            {
+                <div class="upload-progress-container">
+                    <div class="upload-progress-header">
+                        <span class="material-icons">cloud_upload</span>
+                        <span>Uploading photos (@_uploadProgress / @_totalPhotosToUpload)</span>
+                    </div>
+                    <div class="upload-progress-bar">
+                        <div class="upload-progress-fill" style="width: @((_uploadProgress * 100) / Math.Max(_totalPhotosToUpload, 1))%"></div>
+                    </div>
+                </div>
+            }
+
             @if (_submitError != null)
             {
                 <div class="form-error">
@@ -249,6 +264,10 @@
     private string? _submitError;
     private bool _submitSuccess;
     private bool _mapInitialized;
+    private bool _hasUnsavedChanges;
+    private bool _isUploadingPhotos;
+    private int _uploadProgress;
+    private int _totalPhotosToUpload;
 
     private readonly List<ObservationTypeOption> _observationTypes = new()
     {
@@ -284,14 +303,15 @@
         }
     }
 
-    [JSInvokable]
     public void OnLocationSelected(double lat, double lng, string? mpaName)
     {
         _latitude = lat;
         _longitude = lng;
         _mpaName = mpaName;
         _locationError = null;
+        _hasUnsavedChanges = true;
         InvokeAsync(StateHasChanged);
+        _ = SetUnsavedChangesWarningAsync();
     }
 
     private async Task UseCurrentLocationAsync()
@@ -311,6 +331,8 @@
         if (CanProceed())
         {
             _currentStep++;
+            _hasUnsavedChanges = true;
+            _ = SetUnsavedChangesWarningAsync();
         }
     }
 
@@ -335,10 +357,12 @@
 
     private async Task HandlePhotoSelectAsync(InputFileChangeEventArgs e)
     {
+        var skippedFiles = 0;
         foreach (var file in e.GetMultipleFiles(5))
         {
             if (file.Size > 10 * 1024 * 1024)
             {
+                skippedFiles++;
                 continue; // Skip files over 10MB
             }
 
@@ -360,11 +384,21 @@
             }
             catch { }
         }
+        
+        // Show toast if files were skipped
+        if (skippedFiles > 0)
+        {
+            ToastService.ShowWarning(
+                $"{skippedFiles} file(s) skipped because they exceed the 10MB size limit.",
+                "File Size Limit"
+            );
+        }
     }
 
     private void RemovePhoto(PhotoPreview photo)
     {
         _photos.Remove(photo);
+        ToastService.ShowInfo("Photo removed", null, 3000);
     }
 
     private async Task SubmitAsync()
@@ -399,29 +433,59 @@
                 // Upload photos if any
                 if (_photos.Any() && result?.Id != null)
                 {
-                    foreach (var photo in _photos)
+                    _isUploadingPhotos = true;
+                    _totalPhotosToUpload = _photos.Count;
+                    _uploadProgress = 0;
+                    StateHasChanged();
+
+                    var uploadedCount = 0;
+                    for (var i = 0; i < _photos.Count; i++)
                     {
+                        var photo = _photos[i];
                         try
                         {
                             var content = new MultipartFormDataContent();
-                            content.Add(new ByteArrayContent(photo.Data), "file", photo.FileName);
-                            await Http.PostAsync($"/api/observations/{result.Id}/photos", content);
+                            content.Add(new System.Net.Http.ByteArrayContent(photo.Data), "file", photo.FileName);
+                            var uploadResponse = await Http.PostAsync($"/api/observations/{result.Id}/photos", content);
+                            if (uploadResponse.IsSuccessStatusCode)
+                            {
+                                uploadedCount++;
+                            }
                         }
                         catch { }
+
+                        _uploadProgress = i + 1;
+                        StateHasChanged();
+                    }
+
+                    _isUploadingPhotos = false;
+
+                    if (uploadedCount > 0)
+                    {
+                        ToastService.ShowSuccess($"{uploadedCount} photo(s) uploaded successfully", "Photos Uploaded");
+                    }
+                    else if (_photos.Count > 0)
+                    {
+                        ToastService.ShowWarning("Some photos could not be uploaded", "Upload Warning");
                     }
                 }
 
                 _submitSuccess = true;
+                _hasUnsavedChanges = false;
+                await ClearUnsavedChangesWarningAsync();
+                ToastService.ShowSuccess("Your observation has been submitted successfully!", "Observation Submitted");
                 await OnSubmitted.InvokeAsync(true);
             }
             else
             {
                 _submitError = "Failed to submit observation. Please try again.";
+                ToastService.ShowError("Failed to submit observation. Please try again.", "Submission Failed");
             }
         }
         catch (Exception ex)
         {
             _submitError = $"Error: {ex.Message}";
+            ToastService.ShowError(ex.Message, "Submission Error");
         }
         finally
         {
@@ -445,6 +509,26 @@
         _citizenEmail = "";
         _submitSuccess = false;
         _submitError = null;
+        _hasUnsavedChanges = false;
+        _ = ClearUnsavedChangesWarningAsync();
+    }
+
+    private async Task SetUnsavedChangesWarningAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("formUtils.setUnsavedChangesWarning", _hasUnsavedChanges);
+        }
+        catch { }
+    }
+
+    private async Task ClearUnsavedChangesWarningAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("formUtils.clearUnsavedChangesWarning");
+        }
+        catch { }
     }
 
     private string GetSeverityLabel(int severity) => severity switch

@@ -1,8 +1,10 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
 @using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Web.Services
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject IToastService ToastService
 @implements IAsyncDisposable
 
 <div class="notification-center" @onclick:stopPropagation="true">
@@ -84,18 +86,21 @@
     }
 </div>
 
-@* Toast container for real-time notifications *@
+@* Toast container for all toast notifications *@
 <div class="toast-container" aria-live="polite" aria-atomic="true">
     @foreach (var toast in _toasts)
     {
-        <div class="toast @(toast.IsVisible ? "show" : "hide") severity-@toast.Severity.ToString().ToLower()"
+        <div class="toast @(toast.IsVisible ? "show" : "hide") toast-@toast.Type.ToString().ToLower()"
              role="alert"
              aria-live="assertive">
             <div class="toast-icon">
-                <span class="material-icons">@GetAlertIcon(toast.Type)</span>
+                <span class="material-icons">@GetToastIcon(toast.Type)</span>
             </div>
             <div class="toast-content">
-                <div class="toast-title">@toast.Title</div>
+                @if (!string.IsNullOrEmpty(toast.Title))
+                {
+                    <div class="toast-title">@toast.Title</div>
+                }
                 <div class="toast-message">@toast.Message</div>
             </div>
             <button class="toast-close" @onclick="() => DismissToast(toast)" aria-label="Dismiss">
@@ -117,6 +122,9 @@
     {
         await ConnectToHub();
         await LoadRecentAlerts();
+        
+        // Subscribe to ToastService events
+        ToastService.OnToastShown += HandleToastShown;
     }
 
     private async Task ConnectToHub()
@@ -182,23 +190,76 @@
             Id = Guid.NewGuid(),
             Title = alert.Title,
             Message = alert.Message,
-            Type = alert.Type,
-            Severity = alert.Severity,
-            IsVisible = true
+            Type = MapAlertTypeToToastType(alert.Type),
+            IsVisible = true,
+            AutoCloseDuration = 5000
         };
 
         _toasts.Add(toast);
 
-        // Auto-dismiss after 5 seconds
+        // Auto-dismiss after specified duration
         _ = Task.Run(async () =>
         {
-            await Task.Delay(5000);
+            await Task.Delay(toast.AutoCloseDuration);
             toast.IsVisible = false;
             await InvokeAsync(StateHasChanged);
             await Task.Delay(300); // Animation duration
             _toasts.Remove(toast);
             await InvokeAsync(StateHasChanged);
         });
+    }
+
+    private const int MaxVisibleToasts = 5;
+
+    private void HandleToastShown(object? sender, ToastEventArgs e)
+    {
+        var toast = new ToastNotification
+        {
+            Id = e.Id,
+            Title = e.Title ?? "",
+            Message = e.Message,
+            Type = e.Type,
+            IsVisible = true,
+            AutoCloseDuration = e.AutoCloseDuration
+        };
+
+        _toasts.Add(toast);
+
+        // Remove oldest toasts if we exceed the limit
+        while (_toasts.Count > MaxVisibleToasts)
+        {
+            _toasts.RemoveAt(0);
+        }
+
+        InvokeAsync(StateHasChanged);
+
+        // Auto-dismiss after specified duration
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(toast.AutoCloseDuration);
+            toast.IsVisible = false;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(300); // Animation duration
+            _toasts.Remove(toast);
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private ToastType MapAlertTypeToToastType(AlertType alertType)
+    {
+        // Map alert types to toast types
+        return alertType switch
+        {
+            AlertType.System => ToastType.Info,
+            AlertType.Bleaching or 
+            AlertType.TemperatureAnomaly or 
+            AlertType.DegreeHeatingWeek => ToastType.Warning,
+            AlertType.FishingActivity or 
+            AlertType.VesselInMPA or 
+            AlertType.VesselDarkEvent => ToastType.Error,
+            AlertType.CitizenObservation => ToastType.Info,
+            _ => ToastType.Warning
+        };
     }
 
     private void DismissToast(ToastNotification toast)
@@ -261,6 +322,15 @@
         _unreadCount = 0;
     }
 
+    private string GetToastIcon(ToastType type) => type switch
+    {
+        ToastType.Success => "check_circle",
+        ToastType.Error => "error",
+        ToastType.Warning => "warning",
+        ToastType.Info => "info",
+        _ => "notifications"
+    };
+
     private string GetAlertIcon(AlertType type) => type switch
     {
         AlertType.Bleaching => "thermostat",
@@ -286,6 +356,9 @@
 
     public async ValueTask DisposeAsync()
     {
+        // Unsubscribe from ToastService events
+        ToastService.OnToastShown -= HandleToastShown;
+        
         if (_hubConnection is not null)
         {
             await _hubConnection.DisposeAsync();
@@ -311,8 +384,8 @@
         public Guid Id { get; set; }
         public string Title { get; set; } = "";
         public string Message { get; set; } = "";
-        public AlertType Type { get; set; }
-        public AlertSeverity Severity { get; set; }
+        public ToastType Type { get; set; }
         public bool IsVisible { get; set; }
+        public int AutoCloseDuration { get; set; } = 5000;
     }
 }
