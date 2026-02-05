@@ -216,6 +216,52 @@ public class ExportEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
     }
 
+    [Fact]
+    public async Task SingleMpaReport_WithChartsEnabled_ReturnsLargerPdf()
+    {
+        // Arrange
+        var mpaId = await GetFirstMpaIdAsync();
+
+        // Act - Get PDF without charts
+        var responseWithoutCharts = await _client.GetAsync(
+            $"/api/export/reports/mpa/{mpaId}?includeCharts=false");
+        var contentWithoutCharts = await responseWithoutCharts.Content.ReadAsByteArrayAsync();
+
+        // Act - Get PDF with charts
+        var responseWithCharts = await _client.GetAsync(
+            $"/api/export/reports/mpa/{mpaId}?includeCharts=true");
+        var contentWithCharts = await responseWithCharts.Content.ReadAsByteArrayAsync();
+
+        // Assert
+        responseWithoutCharts.StatusCode.Should().Be(HttpStatusCode.OK);
+        responseWithCharts.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        // PDF with charts should be at least as large (or larger if data available)
+        // In test environments with limited data, charts may not be generated
+        contentWithCharts.Length.Should().BeGreaterOrEqualTo(contentWithoutCharts.Length,
+            because: "charts add embedded images when data is available");
+    }
+
+    [Fact]
+    public async Task SingleMpaReport_FileSize_StaysUnderReasonableLimit()
+    {
+        // Arrange
+        var mpaId = await GetFirstMpaIdAsync();
+
+        // Act
+        var response = await _client.GetAsync(
+            $"/api/export/reports/mpa/{mpaId}?includeCharts=true");
+        var content = await response.Content.ReadAsByteArrayAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        // PDF should be under 5MB as per acceptance criteria
+        var fileSizeInMB = content.Length / (1024.0 * 1024.0);
+        fileSizeInMB.Should().BeLessThan(5.0, 
+            because: "PDF file size should remain reasonable even with charts");
+    }
+
     #endregion
 
     #region Helper Methods

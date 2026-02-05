@@ -18,6 +18,8 @@
     <PackageReference Include="Quartz" />
     <PackageReference Include="Quartz.Extensions.Hosting" />
     <PackageReference Include="QuestPDF" />
+    <PackageReference Include="ScottPlot" />
+    <PackageReference Include="SkiaSharp" />
   </ItemGroup>
 
   <ItemGroup>

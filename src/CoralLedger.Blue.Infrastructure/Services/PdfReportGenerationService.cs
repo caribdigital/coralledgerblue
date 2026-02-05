@@ -133,8 +133,8 @@ public class PdfReportGenerationService : IReportGenerationService
         {
             column.Spacing(15);
 
-            // MPA Overview Section
-            column.Item().Element(c => ComposeMpaOverview(c, data));
+            // MPA Overview Section (includes map if IncludeCharts is enabled)
+            column.Item().Element(c => ComposeMpaOverview(c, data, options));
 
             // Date range info
             column.Item()
@@ -145,19 +145,19 @@ public class PdfReportGenerationService : IReportGenerationService
             // Bleaching Data Section
             if (data.BleachingData.TotalAlerts > 0)
             {
-                column.Item().Element(c => ComposeBleachingSection(c, data.BleachingData));
+                column.Item().Element(c => ComposeBleachingSection(c, data.BleachingData, options));
             }
 
             // Fishing Activity Section
             if (data.FishingActivity.TotalVesselEvents > 0)
             {
-                column.Item().Element(c => ComposeFishingActivitySection(c, data.FishingActivity));
+                column.Item().Element(c => ComposeFishingActivitySection(c, data.FishingActivity, options));
             }
 
             // Observations Section
             if (data.Observations.TotalObservations > 0)
             {
-                column.Item().Element(c => ComposeObservationsSection(c, data.Observations));
+                column.Item().Element(c => ComposeObservationsSection(c, data.Observations, options));
             }
 
             // Summary footer
@@ -167,11 +167,36 @@ public class PdfReportGenerationService : IReportGenerationService
         });
     }
 
-    private void ComposeMpaOverview(IContainer container, MpaStatusReportDto data)
+    private void ComposeMpaOverview(IContainer container, MpaStatusReportDto data, ReportOptions options)
     {
         container.Column(column =>
         {
             column.Item().Text("MPA Overview").FontSize(14).Bold().FontColor(Colors.Blue.Darken2);
+            
+            // Add MPA location map if charts are enabled
+            if (options.IncludeCharts)
+            {
+                column.Item().PaddingVertical(10).Column(mapCol =>
+                {
+                    try
+                    {
+                        var mapBytes = ChartGenerationHelper.GenerateMpaMap(
+                            data.CentroidLatitude,
+                            data.CentroidLongitude,
+                            data.Name);
+                        
+                        if (mapBytes.Length > 0)
+                        {
+                            mapCol.Item().MaxWidth(400).Image(mapBytes);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to generate MPA map for {MpaName}", data.Name);
+                    }
+                });
+            }
+            
             column.Item().PaddingVertical(5).Table(table =>
             {
                 table.ColumnsDefinition(columns =>
@@ -220,7 +245,7 @@ public class PdfReportGenerationService : IReportGenerationService
         static IContainer CellStyle(IContainer c) => c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).PaddingVertical(3);
     }
 
-    private void ComposeBleachingSection(IContainer container, BleachingDataSummary bleaching)
+    private void ComposeBleachingSection(IContainer container, BleachingDataSummary bleaching, ReportOptions options)
     {
         container.Column(column =>
         {
@@ -247,6 +272,26 @@ public class PdfReportGenerationService : IReportGenerationService
                     }
                 });
             });
+
+            // Add bleaching trend chart if enabled and data is available
+            if (options.IncludeCharts && bleaching.RecentAlerts.Any())
+            {
+                column.Item().PaddingTop(10).Column(chartCol =>
+                {
+                    try
+                    {
+                        var chartBytes = ChartGenerationHelper.GenerateBleachingTrendChart(bleaching.RecentAlerts);
+                        if (chartBytes.Length > 0)
+                        {
+                            chartCol.Item().MaxWidth(500).Image(chartBytes);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to generate bleaching trend chart");
+                    }
+                });
+            }
 
             if (bleaching.RecentAlerts.Any())
             {
@@ -285,7 +330,7 @@ public class PdfReportGenerationService : IReportGenerationService
         static IContainer CellStyle(IContainer c) => c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).PaddingVertical(3).PaddingHorizontal(5);
     }
 
-    private void ComposeFishingActivitySection(IContainer container, FishingActivitySummary fishing)
+    private void ComposeFishingActivitySection(IContainer container, FishingActivitySummary fishing, ReportOptions options)
     {
         container.Column(column =>
         {
@@ -306,6 +351,26 @@ public class PdfReportGenerationService : IReportGenerationService
                     col.Item().Text($"Encounters: {fishing.Encounters}");
                 });
             });
+
+            // Add vessel activity chart if enabled and data is available
+            if (options.IncludeCharts && fishing.EventsByType.Any())
+            {
+                column.Item().PaddingTop(10).Column(chartCol =>
+                {
+                    try
+                    {
+                        var chartBytes = ChartGenerationHelper.GenerateVesselActivityChart(fishing.EventsByType);
+                        if (chartBytes.Length > 0)
+                        {
+                            chartCol.Item().MaxWidth(500).Image(chartBytes);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to generate vessel activity chart");
+                    }
+                });
+            }
 
             if (fishing.RecentEvents.Any())
             {
@@ -342,7 +407,7 @@ public class PdfReportGenerationService : IReportGenerationService
         static IContainer CellStyle(IContainer c) => c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).PaddingVertical(3).PaddingHorizontal(5);
     }
 
-    private void ComposeObservationsSection(IContainer container, ObservationsSummary observations)
+    private void ComposeObservationsSection(IContainer container, ObservationsSummary observations, ReportOptions options)
     {
         container.Column(column =>
         {
@@ -368,6 +433,30 @@ public class PdfReportGenerationService : IReportGenerationService
                     }
                 });
             });
+
+            // Add observations status chart if enabled
+            if (options.IncludeCharts && observations.TotalObservations > 0)
+            {
+                column.Item().PaddingTop(10).Column(chartCol =>
+                {
+                    try
+                    {
+                        var chartBytes = ChartGenerationHelper.GenerateObservationsStatusChart(
+                            observations.ApprovedObservations,
+                            observations.PendingObservations,
+                            observations.RejectedObservations);
+                        
+                        if (chartBytes.Length > 0)
+                        {
+                            chartCol.Item().MaxWidth(400).Image(chartBytes);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to generate observations status chart");
+                    }
+                });
+            }
 
             if (observations.RecentObservations.Any())
             {
