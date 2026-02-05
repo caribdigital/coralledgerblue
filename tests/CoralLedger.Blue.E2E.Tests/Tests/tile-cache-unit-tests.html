@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tile Cache Unit Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-suite {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .test-pass {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .test-fail {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .test-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .summary {
+            font-weight: bold;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .summary.pass {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .summary.fail {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .error-details {
+            margin-top: 5px;
+            padding: 5px;
+            background-color: #fff;
+            border-left: 3px solid #dc3545;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tile Cache Unit Tests</h1>
+    <div id="test-results"></div>
+    <div id="summary"></div>
+
+    <!-- Load the tile-cache.js file to test -->
+    <!-- Path is relative to this HTML file location -->
+    <script src="../../../../src/CoralLedger.Blue.Web/wwwroot/js/tile-cache.js"></script>
+
+    <script>
+        // Simple test framework
+        class TestRunner {
+            constructor() {
+                this.results = [];
+                this.currentSuite = null;
+            }
+
+            describe(name, fn) {
+                this.currentSuite = { name, tests: [] };
+                fn();
+                this.displaySuite(this.currentSuite);
+            }
+
+            it(description, fn) {
+                const test = { description, status: 'pending', error: null };
+                try {
+                    fn();
+                    test.status = 'pass';
+                } catch (error) {
+                    test.status = 'fail';
+                    test.error = error.message;
+                }
+                this.currentSuite.tests.push(test);
+                this.results.push(test);
+            }
+
+            displaySuite(suite) {
+                const container = document.getElementById('test-results');
+                const suiteDiv = document.createElement('div');
+                suiteDiv.className = 'test-suite';
+                
+                const suiteTitle = document.createElement('h2');
+                suiteTitle.textContent = suite.name;
+                suiteDiv.appendChild(suiteTitle);
+
+                suite.tests.forEach(test => {
+                    const testDiv = document.createElement('div');
+                    testDiv.className = `test-case test-${test.status}`;
+                    
+                    const icon = test.status === 'pass' ? '✓' : '✗';
+                    testDiv.innerHTML = `<strong>${icon} ${test.description}</strong>`;
+                    
+                    if (test.error) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-details';
+                        errorDiv.textContent = test.error;
+                        testDiv.appendChild(errorDiv);
+                    }
+                    
+                    suiteDiv.appendChild(testDiv);
+                });
+
+                container.appendChild(suiteDiv);
+            }
+
+            displaySummary() {
+                const total = this.results.length;
+                const passed = this.results.filter(t => t.status === 'pass').length;
+                const failed = this.results.filter(t => t.status === 'fail').length;
+
+                const summaryDiv = document.getElementById('summary');
+                summaryDiv.className = `summary ${failed === 0 ? 'pass' : 'fail'}`;
+                summaryDiv.innerHTML = `
+                    <div>Total Tests: ${total}</div>
+                    <div>Passed: ${passed}</div>
+                    <div>Failed: ${failed}</div>
+                `;
+
+                // Set test results on window for programmatic access
+                window.testResults = {
+                    total,
+                    passed,
+                    failed,
+                    allPassed: failed === 0
+                };
+            }
+
+            async runAll() {
+                await this.runTests();
+                this.displaySummary();
+            }
+
+            async runTests() {
+                // Tests will be defined below
+            }
+        }
+
+        // Assertion helpers
+        function expect(actual) {
+            return {
+                toBe(expected) {
+                    if (actual !== expected) {
+                        throw new Error(`Expected ${actual} to be ${expected}`);
+                    }
+                },
+                toEqual(expected) {
+                    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+                        throw new Error(`Expected ${JSON.stringify(actual)} to equal ${JSON.stringify(expected)}`);
+                    }
+                },
+                toBeGreaterThan(expected) {
+                    if (actual <= expected) {
+                        throw new Error(`Expected ${actual} to be greater than ${expected}`);
+                    }
+                },
+                toBeLessThan(expected) {
+                    if (actual >= expected) {
+                        throw new Error(`Expected ${actual} to be less than ${expected}`);
+                    }
+                },
+                toContain(expected) {
+                    if (typeof actual === 'string') {
+                        if (!actual.includes(expected)) {
+                            throw new Error(`Expected "${actual}" to contain "${expected}"`);
+                        }
+                    } else if (Array.isArray(actual)) {
+                        if (!actual.includes(expected)) {
+                            throw new Error(`Expected array to contain ${expected}`);
+                        }
+                    }
+                },
+                toHaveProperty(property) {
+                    if (!(property in actual)) {
+                        throw new Error(`Expected object to have property "${property}"`);
+                    }
+                },
+                toBeTruthy() {
+                    if (!actual) {
+                        throw new Error(`Expected ${actual} to be truthy`);
+                    }
+                },
+                toBeDefined() {
+                    if (actual === undefined) {
+                        throw new Error('Expected value to be defined');
+                    }
+                }
+            };
+        }
+
+        // Run tests
+        const runner = new TestRunner();
+
+        // Wait for tileCache to initialize before running tests
+        async function waitForTileCacheInit() {
+            let attempts = 0;
+            while (!window.tileCache && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            if (!window.tileCache) {
+                throw new Error('tileCache object not available');
+            }
+            // Give it a moment to fully initialize
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        runner.describe('getTileKey()', () => {
+            runner.it('should generate correct key format', () => {
+                const key = window.tileCache.getTileKey('dark', 10, 5, 7);
+                expect(key).toBe('dark_10_5_7');
+            });
+
+            runner.it('should handle different themes', () => {
+                const key1 = window.tileCache.getTileKey('light', 10, 5, 7);
+                const key2 = window.tileCache.getTileKey('satellite', 10, 5, 7);
+                expect(key1).toBe('light_10_5_7');
+                expect(key2).toBe('satellite_10_5_7');
+            });
+
+            runner.it('should handle large coordinate values', () => {
+                const key = window.tileCache.getTileKey('dark', 18, 1234, 5678);
+                expect(key).toBe('dark_18_1234_5678');
+            });
+
+            runner.it('should handle zero coordinates', () => {
+                const key = window.tileCache.getTileKey('dark', 0, 0, 0);
+                expect(key).toBe('dark_0_0_0');
+            });
+        });
+
+        runner.describe('latLngToTile()', () => {
+            runner.it('should convert coordinates at zoom 0', () => {
+                const tile = window.tileCache.latLngToTile(0, 0, 0);
+                expect(tile).toHaveProperty('x');
+                expect(tile).toHaveProperty('y');
+                expect(tile.x).toBe(0);
+                expect(tile.y).toBe(0);
+            });
+
+            runner.it('should convert Nassau coordinates correctly at zoom 10', () => {
+                // Nassau, Bahamas: 25.0443, -77.3504
+                const tile = window.tileCache.latLngToTile(25.0443, -77.3504, 10);
+                expect(tile).toHaveProperty('x');
+                expect(tile).toHaveProperty('y');
+                // At zoom 10, tiles range from 0 to 1023
+                expect(tile.x).toBeGreaterThan(0);
+                expect(tile.x).toBeLessThan(1024);
+                expect(tile.y).toBeGreaterThan(0);
+                expect(tile.y).toBeLessThan(1024);
+            });
+
+            runner.it('should handle negative longitude', () => {
+                const tile = window.tileCache.latLngToTile(40, -75, 5);
+                expect(tile).toHaveProperty('x');
+                expect(tile).toHaveProperty('y');
+            });
+
+            runner.it('should handle positive longitude', () => {
+                const tile = window.tileCache.latLngToTile(40, 75, 5);
+                expect(tile).toHaveProperty('x');
+                expect(tile).toHaveProperty('y');
+            });
+
+            runner.it('should produce different results for different zoom levels', () => {
+                const tile1 = window.tileCache.latLngToTile(25, -77, 5);
+                const tile2 = window.tileCache.latLngToTile(25, -77, 10);
+                expect(tile1.x).not.toBe(tile2.x);
+                expect(tile1.y).not.toBe(tile2.y);
+            });
+        });
+
+        runner.describe('buildTileUrl()', () => {
+            runner.it('should replace all placeholders', () => {
+                const url = window.tileCache.buildTileUrl(
+                    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    10, 5, 7
+                );
+                expect(url).toBe('https://a.tile.openstreetmap.org/10/5/7.png');
+            });
+
+            runner.it('should use "a" as default subdomain', () => {
+                const url = window.tileCache.buildTileUrl('https://{s}.example.com/{z}/{x}/{y}', 1, 2, 3);
+                expect(url).toContain('https://a.example.com/');
+            });
+
+            runner.it('should handle URL without subdomain', () => {
+                const url = window.tileCache.buildTileUrl('https://example.com/{z}/{x}/{y}.png', 10, 5, 7);
+                expect(url).toBe('https://example.com/10/5/7.png');
+            });
+
+            runner.it('should remove retina placeholder', () => {
+                const url = window.tileCache.buildTileUrl('https://example.com/{z}/{x}/{y}{r}.png', 10, 5, 7);
+                expect(url).toBe('https://example.com/10/5/7.png');
+            });
+        });
+
+        runner.describe('getTilesForRegion()', () => {
+            runner.it('should return array of tiles', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const tiles = window.tileCache.getTilesForRegion(bounds, 10, 10);
+                expect(Array.isArray(tiles)).toBeTruthy();
+            });
+
+            runner.it('should return tiles with correct structure', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const tiles = window.tileCache.getTilesForRegion(bounds, 10, 10);
+                expect(tiles.length).toBeGreaterThan(0);
+                expect(tiles[0]).toHaveProperty('z');
+                expect(tiles[0]).toHaveProperty('x');
+                expect(tiles[0]).toHaveProperty('y');
+            });
+
+            runner.it('should return more tiles for larger zoom range', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const tiles1 = window.tileCache.getTilesForRegion(bounds, 10, 10);
+                const tiles2 = window.tileCache.getTilesForRegion(bounds, 10, 12);
+                expect(tiles2.length).toBeGreaterThan(tiles1.length);
+            });
+
+            runner.it('should return exponentially more tiles at higher zooms', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const tiles1 = window.tileCache.getTilesForRegion(bounds, 8, 8);
+                const tiles2 = window.tileCache.getTilesForRegion(bounds, 10, 10);
+                expect(tiles2.length).toBeGreaterThan(tiles1.length);
+            });
+
+            runner.it('should handle single zoom level', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const tiles = window.tileCache.getTilesForRegion(bounds, 10, 10);
+                tiles.forEach(tile => {
+                    expect(tile.z).toBe(10);
+                });
+            });
+        });
+
+        runner.describe('estimateRegionSize()', () => {
+            runner.it('should return estimate with correct structure', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const estimate = window.tileCache.estimateRegionSize(bounds, 10, 10);
+                expect(estimate).toHaveProperty('tileCount');
+                expect(estimate).toHaveProperty('estimatedBytes');
+                expect(estimate).toHaveProperty('estimatedMB');
+            });
+
+            runner.it('should calculate tile count correctly', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const estimate = window.tileCache.estimateRegionSize(bounds, 10, 10);
+                expect(estimate.tileCount).toBeGreaterThan(0);
+            });
+
+            runner.it('should calculate bytes based on tile count', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const avgSize = 15000;
+                const estimate = window.tileCache.estimateRegionSize(bounds, 10, 10, avgSize);
+                expect(estimate.estimatedBytes).toBe(estimate.tileCount * avgSize);
+            });
+
+            runner.it('should use custom average tile size', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const estimate1 = window.tileCache.estimateRegionSize(bounds, 10, 10, 10000);
+                const estimate2 = window.tileCache.estimateRegionSize(bounds, 10, 10, 20000);
+                expect(estimate2.estimatedBytes).toBe(estimate1.estimatedBytes * 2);
+            });
+
+            runner.it('should convert bytes to MB correctly', () => {
+                const bounds = { north: 25.1, south: 25.0, east: -77.3, west: -77.4 };
+                const estimate = window.tileCache.estimateRegionSize(bounds, 10, 10);
+                const expectedMB = Math.round(estimate.estimatedBytes / 1024 / 1024 * 10) / 10;
+                expect(estimate.estimatedMB).toBe(expectedMB);
+            });
+        });
+
+        runner.describe('isOnline()', () => {
+            runner.it('should return boolean', () => {
+                const online = window.tileCache.isOnline();
+                expect(typeof online).toBe('boolean');
+            });
+
+            runner.it('should reflect navigator.onLine', () => {
+                const online = window.tileCache.isOnline();
+                expect(online).toBe(navigator.onLine);
+            });
+        });
+
+        runner.describe('initialization', () => {
+            runner.it('should have tileCache object defined', () => {
+                expect(window.tileCache).toBeDefined();
+            });
+
+            runner.it('should have required properties', () => {
+                expect(window.tileCache).toHaveProperty('dbName');
+                expect(window.tileCache).toHaveProperty('dbVersion');
+                expect(window.tileCache).toHaveProperty('storeName');
+            });
+
+            runner.it('should have stats object', () => {
+                expect(window.tileCache).toHaveProperty('stats');
+                expect(window.tileCache.stats).toHaveProperty('totalTiles');
+                expect(window.tileCache.stats).toHaveProperty('totalBytes');
+            });
+        });
+
+        // Run all tests after tileCache is initialized
+        waitForTileCacheInit().then(() => {
+            runner.runAll();
+        }).catch(error => {
+            document.getElementById('test-results').innerHTML = 
+                '<div class="test-fail" style="padding: 20px;">Failed to initialize: ' + error.message + '</div>';
+            window.testResults = { total: 0, passed: 0, failed: 1, allPassed: false };
+        });
+    </script>
+</body>
+</html>
