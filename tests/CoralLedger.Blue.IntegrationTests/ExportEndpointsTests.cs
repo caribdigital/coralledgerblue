@@ -1,15 +1,20 @@
 using System.Net;
+using CoralLedger.Blue.Infrastructure.Data;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CoralLedger.Blue.IntegrationTests;
 
 public class ExportEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
+    private readonly CustomWebApplicationFactory _factory;
 
     public ExportEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
+        _factory = factory;
     }
 
     [Fact]
@@ -103,4 +108,125 @@ public class ExportEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
+
+    #region PDF Report Tests
+
+    [Fact]
+    public async Task SingleMpaReport_ReturnsPdfWithCorrectContentType()
+    {
+        // Arrange - Get a valid MPA ID from the database
+        var mpaId = await GetFirstMpaIdAsync();
+
+        // Act
+        var response = await _client.GetAsync($"/api/export/reports/mpa/{mpaId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
+
+        var content = await response.Content.ReadAsByteArrayAsync();
+        content.Should().NotBeEmpty();
+        
+        // Verify it's a valid PDF by checking the PDF magic number
+        content.Take(4).Should().BeEquivalentTo(new byte[] { 0x25, 0x50, 0x44, 0x46 }); // "%PDF"
+    }
+
+    [Fact]
+    public async Task SingleMpaReport_WithDateRangeFiltering_ReturnsOk()
+    {
+        // Arrange
+        var mpaId = await GetFirstMpaIdAsync();
+        var fromDate = DateTime.UtcNow.AddDays(-30).ToString("o");
+        var toDate = DateTime.UtcNow.ToString("o");
+
+        // Act
+        var response = await _client.GetAsync(
+            $"/api/export/reports/mpa/{mpaId}?fromDate={fromDate}&toDate={toDate}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
+    }
+
+    [Fact]
+    public async Task SingleMpaReport_WithNonExistentMpa_ReturnsNotFound()
+    {
+        // Arrange
+        var nonExistentMpaId = Guid.NewGuid();
+
+        // Act
+        var response = await _client.GetAsync($"/api/export/reports/mpa/{nonExistentMpaId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task AllMpasReport_ReturnsPdfWithCorrectContentType()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/export/reports/all-mpas");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
+
+        var content = await response.Content.ReadAsByteArrayAsync();
+        content.Should().NotBeEmpty();
+        
+        // Verify it's a valid PDF by checking the PDF magic number
+        content.Take(4).Should().BeEquivalentTo(new byte[] { 0x25, 0x50, 0x44, 0x46 }); // "%PDF"
+    }
+
+    [Fact]
+    public async Task AllMpasReport_WithIslandGroupFilter_ReturnsOk()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/export/reports/all-mpas?islandGroup=Exumas");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
+    }
+
+    [Fact]
+    public async Task AllMpasReport_WithProtectionLevelFilter_ReturnsOk()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/export/reports/all-mpas?protectionLevel=NoTake");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
+    }
+
+    [Fact]
+    public async Task AllMpasReport_WithDateRangeFiltering_ReturnsOk()
+    {
+        // Arrange
+        var fromDate = DateTime.UtcNow.AddDays(-30).ToString("o");
+        var toDate = DateTime.UtcNow.ToString("o");
+
+        // Act
+        var response = await _client.GetAsync(
+            $"/api/export/reports/all-mpas?fromDate={fromDate}&toDate={toDate}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/pdf");
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private async Task<Guid> GetFirstMpaIdAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarineDbContext>();
+        var mpa = await db.MarineProtectedAreas.FirstAsync();
+        return mpa.Id;
+    }
+
+    #endregion
 }
