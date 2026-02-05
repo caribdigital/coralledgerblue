@@ -10,16 +10,29 @@ namespace CoralLedger.Blue.E2E.Tests.Tests;
 [TestFixture]
 public class OfflineMapTests : PlaywrightFixture
 {
+    /// <summary>
+    /// Helper method to wait for the tileCache JavaScript object to be initialized
+    /// </summary>
+    private async Task WaitForTileCacheAsync()
+    {
+        await Page.WaitForFunctionAsync(
+            "typeof window.tileCache !== 'undefined'",
+            new PageWaitForFunctionOptions { Timeout = 10000 }
+        );
+    }
+
     [Test]
     [Description("Verifies that the OfflineMapManager component is visible on the map page")]
     public async Task OfflineMapManager_IsVisible()
     {
         // Arrange & Act
         await NavigateToAsync("/map");
-        await Task.Delay(2000); // Wait for map to load
+        await WaitForTileCacheAsync();
 
-        // Assert - Check if offline map manager is present
+        // Wait for the offline map section to be available
         var offlineMapSection = Page.Locator(".offline-map-manager");
+        
+        // Assert - Check if offline map manager is present
         await Expect(offlineMapSection).ToBeVisibleAsync(new() { Timeout = 10000 });
     }
 
@@ -29,7 +42,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange & Act
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Assert - Check for cache statistics elements
         var totalTilesLabel = Page.GetByText("Total Tiles");
@@ -45,7 +57,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Act - Click the estimate button
         var estimateButton = Page.GetByRole(AriaRole.Button, new() { NameString = "Estimate Current View" });
@@ -53,7 +64,6 @@ public class OfflineMapTests : PlaywrightFixture
         await estimateButton.ClickAsync();
 
         // Wait for estimation to complete
-        await Task.Delay(2000);
 
         // Assert - Check if estimate result is displayed
         var estimateAlert = Page.Locator(".alert-info").Filter(new() { HasTextString = "Estimated:" });
@@ -66,7 +76,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange & Act
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Assert - Check for theme selector
         var themeLabel = Page.GetByText("Theme", new() { Exact = false });
@@ -82,7 +91,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange & Act
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Assert - Check for zoom inputs
         var minZoomLabel = Page.GetByText("Min Zoom");
@@ -106,7 +114,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange & Act
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Assert - Download button should be disabled initially
         var downloadButton = Page.GetByRole(AriaRole.Button, new() { NameString = "Download Current View" });
@@ -122,7 +129,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange & Act
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Assert - Check for clear cache button
         var clearButton = Page.GetByRole(AriaRole.Button, new() { NameString = "Clear All Cache" });
@@ -135,7 +141,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange & Act
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Assert - Check for clear old tiles button
         var clearOldButton = Page.GetByRole(AriaRole.Button, new() { NameString = "Clear Tiles Older Than 30 Days" });
@@ -148,7 +153,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange & Act
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Assert - Check for refresh button
         var refreshButton = Page.Locator("button").Filter(new() { HasTextString = "Refresh" });
@@ -161,7 +165,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange & Act
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Assert - Check if tileCache object exists in window
         var tileCacheExists = await Page.EvaluateAsync<bool>("typeof window.tileCache !== 'undefined'");
@@ -174,7 +177,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Act - Call getTileKey function
         var key1 = await Page.EvaluateAsync<string>("window.tileCache.getTileKey('dark', 10, 5, 7)");
@@ -191,7 +193,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Act - Test conversion for a known location (Nassau, Bahamas: 25.0443, -77.3504)
         var tile = await Page.EvaluateAsync<Dictionary<string, object>>(
@@ -215,7 +216,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Act
         var url = await Page.EvaluateAsync<string>(
@@ -232,7 +232,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Act - Calculate tiles for a small region at zoom 10
         var tiles = await Page.EvaluateAsync<object[]>(
@@ -254,7 +253,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Act
         var estimate = await Page.EvaluateAsync<Dictionary<string, object>>(
@@ -280,7 +278,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Act
         var stats = await Page.EvaluateAsync<Dictionary<string, object>>(
@@ -299,7 +296,6 @@ public class OfflineMapTests : PlaywrightFixture
     {
         // Arrange
         await NavigateToAsync("/map");
-        await Task.Delay(2000);
 
         // Act
         var isOnline = await Page.EvaluateAsync<bool>("window.tileCache.isOnline()");
