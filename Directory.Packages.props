@@ -63,6 +63,10 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.0" />
     <!-- PDF Generation -->
     <PackageVersion Include="QuestPDF" Version="2024.12.3" />
+    <!-- Charting -->
+    <PackageVersion Include="ScottPlot" Version="5.0.51" />
+    <!-- Graphics -->
+    <PackageVersion Include="SkiaSharp" Version="2.88.9" />
     <!-- AI / Semantic Kernel -->
     <PackageVersion Include="Microsoft.SemanticKernel" Version="1.70.0" />
     <PackageVersion Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.70.0" />
