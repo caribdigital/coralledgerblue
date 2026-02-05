@@ -122,7 +122,10 @@
                     {
                         <div class="alert alert-warning mt-3 py-2 small">
                             <i class="bi bi-exclamation-triangle"></i> <strong>Storage Quota Exceeded!</strong>
-                            <p class="mb-2">@(_quotaMessage ?? "Storage quota exceeded. Some tiles could not be cached.")</p>
+                            @if (!string.IsNullOrEmpty(_quotaMessage))
+                            {
+                                <p class="mb-2">@_quotaMessage</p>
+                            }
                             <p class="mb-0">
                                 Successfully downloaded @_lastResult?.downloaded tiles before quota was reached.
                                 Consider clearing old tiles to free space.

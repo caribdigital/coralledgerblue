@@ -202,8 +202,7 @@ window.tileCache = {
             
             // Stop if quota was exceeded
             if (quotaExceeded) {
-                failed++;
-                continue;
+                break;
             }
             
             try {
@@ -234,6 +233,9 @@ window.tileCache = {
                     quotaExceeded = true;
                     console.error('[tile-cache] Storage quota exceeded, stopping download');
                     
+                    // Count current tile + all remaining as failed
+                    failed += (total - i);
+                    
                     // Report quota error to caller
                     if (progressCallback) {
                         progressCallback({
@@ -241,7 +243,7 @@ window.tileCache = {
                             total: total,
                             downloaded: downloaded,
                             cached: cached,
-                            failed: failed + (total - i - 1), // Count remaining as failed
+                            failed: failed,
                             percentComplete: Math.round((i + 1) / total * 100),
                             totalBytes: totalBytes,
                             quotaExceeded: true,
@@ -249,8 +251,6 @@ window.tileCache = {
                         });
                     }
                     
-                    // Count remaining tiles as failed
-                    failed += (total - i);
                     break;
                 }
                 
