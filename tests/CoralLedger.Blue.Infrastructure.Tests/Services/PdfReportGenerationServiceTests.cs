@@ -330,9 +330,9 @@ public class PdfReportGenerationServiceTests
         // Arrange
         var mpaId = Guid.NewGuid();
         var testData = CreateTestMpaReportData();
-        var cts = new CancellationTokenSource();
+        using var cts = new CancellationTokenSource();
         var cancellationToken = cts.Token;
-        
+
         _mediatorMock
             .Setup(m => m.Send(It.IsAny<GetMpaStatusReportDataQuery>(), cancellationToken))
             .ReturnsAsync(testData);
@@ -345,6 +345,55 @@ public class PdfReportGenerationServiceTests
         _mediatorMock.Verify(m => m.Send(
             It.IsAny<GetMpaStatusReportDataQuery>(),
             cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task GenerateMpaReportAsync_WithIncludeChartsEnabled_GeneratesLargerPdf()
+    {
+        // Arrange
+        var mpaId = Guid.NewGuid();
+        var testData = CreateTestMpaReportData(
+            "Chart Test MPA",
+            bleachingAlerts: 5,
+            vesselEvents: 10,
+            observations: 8);
+
+        _mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetMpaStatusReportDataQuery>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(testData);
+
+        // Act - Generate PDF without charts
+        var optionsWithoutCharts = new ReportOptions { IncludeCharts = false };
+        var resultWithoutCharts = await _service.GenerateMpaReportAsync(mpaId, optionsWithoutCharts);
+
+        // Act - Generate PDF with charts
+        var optionsWithCharts = new ReportOptions { IncludeCharts = true };
+        var resultWithCharts = await _service.GenerateMpaReportAsync(mpaId, optionsWithCharts);
+
+        // Assert
+        resultWithoutCharts.Should().NotBeEmpty();
+        resultWithCharts.Should().NotBeEmpty();
+
+        // PDF with charts should be larger due to embedded images
+        resultWithCharts.Length.Should().BeGreaterThan(resultWithoutCharts.Length,
+            "PDF with charts should include embedded chart images making it larger");
+    }
+
+    [Fact]
+    public async Task GenerateMpaReportAsync_WhenMediatorThrowsException_PropagatesException()
+    {
+        // Arrange
+        var mpaId = Guid.NewGuid();
+        var expectedException = new InvalidOperationException("Database connection failed");
+
+        _mediatorMock
+            .Setup(m => m.Send(It.IsAny<GetMpaStatusReportDataQuery>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(expectedException);
+
+        // Act & Assert
+        await _service.Invoking(s => s.GenerateMpaReportAsync(mpaId))
+            .Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Database connection failed");
     }
 
     #endregion
@@ -408,14 +457,24 @@ public class PdfReportGenerationServiceTests
         pdfHeader.Should().Be("%PDF-", "should still generate valid PDF with no MPAs");
     }
 
-    [Fact]
-    public async Task GenerateAllMpasReportAsync_WithIslandGroupFilter_PassesCorrectFilter()
+    [Theory]
+    [InlineData("Exumas", null)]
+    [InlineData("Abaco", null)]
+    [InlineData(null, "NoTake")]
+    [InlineData(null, "HighlyProtected")]
+    [InlineData("Exumas", "NoTake")]
+    [InlineData("Abaco", "HighlyProtected")]
+    public async Task GenerateAllMpasReportAsync_WithFilters_PassesCorrectFilterCombination(
+        string? islandGroup, string? protectionLevel)
     {
         // Arrange
-        var islandGroup = "Exumas";
-        var options = new ReportOptions { IslandGroup = islandGroup };
+        var options = new ReportOptions
+        {
+            IslandGroup = islandGroup,
+            ProtectionLevel = protectionLevel
+        };
         var testData = CreateTestAllMpasReportData(2);
-        
+
         _mediatorMock
             .Setup(m => m.Send(It.IsAny<GetAllMpasSummaryReportDataQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(testData);
@@ -426,29 +485,9 @@ public class PdfReportGenerationServiceTests
         // Assert
         result.Should().NotBeEmpty();
         _mediatorMock.Verify(m => m.Send(
-            It.Is<GetAllMpasSummaryReportDataQuery>(q => q.IslandGroup == islandGroup),
-            It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Fact]
-    public async Task GenerateAllMpasReportAsync_WithProtectionLevelFilter_PassesCorrectFilter()
-    {
-        // Arrange
-        var protectionLevel = "NoTake";
-        var options = new ReportOptions { ProtectionLevel = protectionLevel };
-        var testData = CreateTestAllMpasReportData(2);
-        
-        _mediatorMock
-            .Setup(m => m.Send(It.IsAny<GetAllMpasSummaryReportDataQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(testData);
-
-        // Act
-        var result = await _service.GenerateAllMpasReportAsync(options);
-
-        // Assert
-        result.Should().NotBeEmpty();
-        _mediatorMock.Verify(m => m.Send(
-            It.Is<GetAllMpasSummaryReportDataQuery>(q => q.ProtectionLevel == protectionLevel),
+            It.Is<GetAllMpasSummaryReportDataQuery>(q =>
+                q.IslandGroup == islandGroup &&
+                q.ProtectionLevel == protectionLevel),
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
