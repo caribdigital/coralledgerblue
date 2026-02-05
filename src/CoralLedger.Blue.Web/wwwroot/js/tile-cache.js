@@ -77,7 +77,18 @@ window.tileCache = {
                 this.stats.totalBytes += blob.size;
                 resolve(true);
             };
-            request.onerror = () => reject(request.error);
+            request.onerror = (event) => {
+                const error = event.target.error;
+                if (error && error.name === 'QuotaExceededError') {
+                    reject({ 
+                        type: 'quota_exceeded', 
+                        message: 'Storage quota exceeded. Clear old tiles to free space.',
+                        error: error
+                    });
+                } else {
+                    reject(error);
+                }
+            };
         });
     },
 
@@ -126,6 +137,11 @@ window.tileCache = {
             
             return { cached: false, size: blob.size };
         } catch (error) {
+            // Check if this is a quota error
+            if (error.type === 'quota_exceeded') {
+                console.error(`[tile-cache] Storage quota exceeded at tile ${z}/${x}/${y}`);
+                throw error; // Propagate structured error
+            }
             console.error(`[tile-cache] Error downloading tile ${z}/${x}/${y}:`, error);
             throw error;
         }
@@ -177,11 +193,18 @@ window.tileCache = {
         let cached = 0;
         let failed = 0;
         let totalBytes = 0;
+        let quotaExceeded = false;
 
         console.log(`[tile-cache] Downloading ${total} tiles for region`);
 
         for (let i = 0; i < tiles.length; i++) {
             const { z, x, y } = tiles[i];
+            
+            // Stop if quota was exceeded
+            if (quotaExceeded) {
+                failed++;
+                continue;
+            }
             
             try {
                 const result = await this.downloadTile(theme, z, x, y, tileUrl);
@@ -202,10 +225,35 @@ window.tileCache = {
                         cached: cached,
                         failed: failed,
                         percentComplete: Math.round((i + 1) / total * 100),
-                        totalBytes: totalBytes
+                        totalBytes: totalBytes,
+                        quotaExceeded: quotaExceeded
                     });
                 }
             } catch (error) {
+                if (error.type === 'quota_exceeded') {
+                    quotaExceeded = true;
+                    console.error('[tile-cache] Storage quota exceeded, stopping download');
+                    
+                    // Report quota error to caller
+                    if (progressCallback) {
+                        progressCallback({
+                            current: i + 1,
+                            total: total,
+                            downloaded: downloaded,
+                            cached: cached,
+                            failed: failed + (total - i - 1), // Count remaining as failed
+                            percentComplete: Math.round((i + 1) / total * 100),
+                            totalBytes: totalBytes,
+                            quotaExceeded: true,
+                            quotaMessage: error.message
+                        });
+                    }
+                    
+                    // Count remaining tiles as failed
+                    failed += (total - i);
+                    break;
+                }
+                
                 failed++;
                 console.error(`[tile-cache] Failed to download tile ${z}/${x}/${y}:`, error);
             }
@@ -218,7 +266,8 @@ window.tileCache = {
             downloaded: downloaded,
             cached: cached,
             failed: failed,
-            totalBytes: totalBytes
+            totalBytes: totalBytes,
+            quotaExceeded: quotaExceeded
         };
     },
 
