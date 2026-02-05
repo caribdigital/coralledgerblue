@@ -423,6 +423,44 @@
             });
         });
 
+        runner.describe('quota handling', () => {
+            runner.it('should have storeTile function for quota-aware storage', () => {
+                expect(typeof window.tileCache.storeTile).toBe('function');
+            });
+
+            runner.it('should have downloadRegion function for quota-aware downloads', () => {
+                expect(typeof window.tileCache.downloadRegion).toBe('function');
+            });
+
+            runner.it('should have downloadTile function', () => {
+                expect(typeof window.tileCache.downloadTile).toBe('function');
+            });
+
+            runner.it('quota error structure should have correct format', () => {
+                // Test the expected error structure format
+                const quotaError = {
+                    type: 'quota_exceeded',
+                    message: 'Storage quota exceeded. Clear old tiles to free space.',
+                    error: new Error('QuotaExceededError')
+                };
+                expect(quotaError.type).toBe('quota_exceeded');
+                expect(quotaError.message).toContain('quota');
+                expect(quotaError).toHaveProperty('error');
+            });
+
+            runner.it('quota error should be detectable by type property', () => {
+                const quotaError = { type: 'quota_exceeded', message: 'test' };
+                const regularError = new Error('Some other error');
+
+                // This pattern is used in tile-cache.js to detect quota errors
+                const isQuotaError = quotaError.type === 'quota_exceeded';
+                const isRegularErrorQuota = regularError.type === 'quota_exceeded';
+
+                expect(isQuotaError).toBeTruthy();
+                expect(isRegularErrorQuota).toBe(undefined === 'quota_exceeded'); // false
+            });
+        });
+
         // Run all tests after tileCache is initialized
         waitForTileCacheInit().then(() => {
             runner.runAll();

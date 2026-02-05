@@ -118,10 +118,27 @@
 
                 @if (_downloadComplete)
                 {
-                    <div class="alert alert-success mt-3 py-2 small">
-                        <i class="bi bi-check-circle"></i> Download complete! 
-                        @_lastResult?.downloaded new tiles downloaded.
-                    </div>
+                    @if (_quotaExceeded)
+                    {
+                        <div class="alert alert-warning mt-3 py-2 small">
+                            <i class="bi bi-exclamation-triangle"></i> <strong>Storage Quota Exceeded!</strong>
+                            @if (!string.IsNullOrEmpty(_quotaMessage))
+                            {
+                                <p class="mb-2">@_quotaMessage</p>
+                            }
+                            <p class="mb-0">
+                                Successfully downloaded @_lastResult?.downloaded tiles before quota was reached.
+                                Consider clearing old tiles to free space.
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-success mt-3 py-2 small">
+                            <i class="bi bi-check-circle"></i> Download complete! 
+                            @_lastResult?.downloaded new tiles downloaded.
+                        </div>
+                    }
                 }
             </div>
 
@@ -177,6 +194,8 @@
     private bool _loading = true;
     private bool _downloading = false;
     private bool _downloadComplete = false;
+    private bool _quotaExceeded = false;
+    private string? _quotaMessage = null;
     
     private CacheStats? _stats;
     private DownloadProgress? _progress;
@@ -235,6 +254,8 @@
     {
         _downloading = true;
         _downloadComplete = false;
+        _quotaExceeded = false;
+        _quotaMessage = null;
         _progress = null;
         StateHasChanged();
 
@@ -249,6 +270,7 @@
             );
 
             _downloadComplete = true;
+            _quotaExceeded = _lastResult.quotaExceeded;
             await RefreshStats();
         }
         catch (Exception ex)
@@ -266,6 +288,10 @@
     public void OnDownloadProgress(DownloadProgress progress)
     {
         _progress = progress;
+        if (progress.quotaExceeded && !string.IsNullOrEmpty(progress.quotaMessage))
+        {
+            _quotaMessage = progress.quotaMessage;
+        }
         StateHasChanged();
     }
 
@@ -326,6 +352,8 @@
         public int failed { get; set; }
         public int percentComplete { get; set; }
         public long totalBytes { get; set; }
+        public bool quotaExceeded { get; set; }
+        public string? quotaMessage { get; set; }
     }
 
     public class DownloadResult
@@ -335,6 +363,7 @@
         public int cached { get; set; }
         public int failed { get; set; }
         public long totalBytes { get; set; }
+        public bool quotaExceeded { get; set; }
     }
 
     public class EstimateResult
