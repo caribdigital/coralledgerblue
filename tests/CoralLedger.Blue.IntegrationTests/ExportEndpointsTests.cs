@@ -236,9 +236,10 @@ public class ExportEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         responseWithoutCharts.StatusCode.Should().Be(HttpStatusCode.OK);
         responseWithCharts.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        // PDF with charts should be larger due to embedded images
-        // Note: This test may fail if there's no data for charts
-        contentWithCharts.Length.Should().BeGreaterOrEqualTo(contentWithoutCharts.Length);
+        // PDF with charts should be at least as large (or larger if data available)
+        // In test environments with limited data, charts may not be generated
+        contentWithCharts.Length.Should().BeGreaterOrEqualTo(contentWithoutCharts.Length,
+            because: "charts add embedded images when data is available");
     }
 
     [Fact]
