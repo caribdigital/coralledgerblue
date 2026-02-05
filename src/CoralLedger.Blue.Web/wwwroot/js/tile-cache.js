@@ -78,8 +78,8 @@ window.tileCache = {
                 resolve(true);
             };
             request.onerror = (event) => {
-                const error = event.target.error;
-                if (error && error.name === 'QuotaExceededError') {
+                const error = event.target?.error;
+                if (error?.name === 'QuotaExceededError') {
                     reject({ 
                         type: 'quota_exceeded', 
                         message: 'Storage quota exceeded. Clear old tiles to free space.',

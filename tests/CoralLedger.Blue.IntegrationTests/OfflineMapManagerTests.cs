@@ -117,4 +117,44 @@ public class OfflineMapManagerTests : IClassFixture<CustomWebApplicationFactory>
         content.Should().Contain("clearAll", "tile-cache.js should have clearAll function for cache management");
         content.Should().Contain("clearOldTiles", "tile-cache.js should have clearOldTiles function for cache cleanup");
     }
+
+    [Fact]
+    public async Task TileCacheScript_HasQuotaExceededErrorHandling()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/tile-cache.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
+        content.Should().Contain("QuotaExceededError", "tile-cache.js should handle QuotaExceededError for storage quota management");
+        content.Should().Contain("quota_exceeded", "tile-cache.js should use 'quota_exceeded' error type for structured error handling");
+    }
+
+    [Fact]
+    public async Task TileCacheScript_HasQuotaExceededFlagInDownloadRegion()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/tile-cache.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
+        content.Should().Contain("quotaExceeded", "tile-cache.js should track quotaExceeded state during region downloads");
+        content.Should().Contain("quotaMessage", "tile-cache.js should provide quotaMessage for user feedback");
+    }
+
+    [Fact]
+    public async Task TileCacheScript_StopsDownloadOnQuotaExceeded()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/tile-cache.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
+        // Verify the download loop checks quotaExceeded and breaks
+        content.Should().Contain("if (quotaExceeded)", "tile-cache.js should check quotaExceeded flag in download loop");
+        content.Should().Contain("Storage quota exceeded", "tile-cache.js should provide user-friendly quota exceeded message");
+    }
 }
