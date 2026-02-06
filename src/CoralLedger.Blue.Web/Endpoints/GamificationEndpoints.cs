@@ -10,6 +10,11 @@ namespace CoralLedger.Blue.Web.Endpoints;
 
 public static class GamificationEndpoints
 {
+    private const int DefaultPageSize = 50;
+    private const int DefaultPageNumber = 1;
+    private const int MaxObserverLeaderboardSize = 100;
+    private const int TopObserversLimit = 10;
+
     public static IEndpointRouteBuilder MapGamificationEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/gamification")
@@ -34,8 +39,8 @@ public static class GamificationEndpoints
             IMediator mediator,
             CancellationToken ct = default,
             string? period = null,
-            int pageSize = 50,
-            int pageNumber = 1) =>
+            int pageSize = DefaultPageSize,
+            int pageNumber = DefaultPageNumber) =>
         {
             // Parse period parameter
             LeaderboardPeriod periodEnum = LeaderboardPeriod.AllTime;
@@ -44,7 +49,7 @@ public static class GamificationEndpoints
                 periodEnum = parsed;
             }
 
-            var query = new GetLeaderboardQuery(periodEnum, pageSize > 0 ? pageSize : 50, pageNumber > 0 ? pageNumber : 1);
+            var query = new GetLeaderboardQuery(periodEnum, pageSize, pageNumber);
             var leaderboard = await mediator.Send(query, ct).ConfigureAwait(false);
             return Results.Ok(leaderboard);
         })
@@ -58,7 +63,7 @@ public static class GamificationEndpoints
             CancellationToken ct = default) =>
         {
             // Get all-time leaderboard filtered to Gold/Silver/Bronze observers
-            var query = new GetLeaderboardQuery(LeaderboardPeriod.AllTime, 100, 1);
+            var query = new GetLeaderboardQuery(LeaderboardPeriod.AllTime, MaxObserverLeaderboardSize, DefaultPageNumber);
             var leaderboard = await mediator.Send(query, ct).ConfigureAwait(false);
             
             // Filter to users with tiers and take top 10
@@ -66,7 +71,7 @@ public static class GamificationEndpoints
                 .Where(e => e.Tier != ObserverTier.None)
                 .OrderByDescending(e => e.Tier)
                 .ThenByDescending(e => e.VerifiedObservations)
-                .Take(10)
+                .Take(TopObserversLimit)
                 .ToList();
 
             return Results.Ok(new { entries = topObservers, count = topObservers.Count });
