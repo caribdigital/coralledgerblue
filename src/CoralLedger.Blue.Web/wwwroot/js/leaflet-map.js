@@ -857,6 +857,9 @@ window.leafletMap = {
         console.log(`[leaflet-map] Downloading tiles for view, zoom ${minZoom}-${maxZoom}`);
 
         try {
+            // Use the stored abort signal from the controller
+            const abortSignal = this.getAbortSignal();
+            
             const result = await window.tileCache.downloadRegion(
                 theme,
                 boundsObj,
@@ -867,7 +870,8 @@ window.leafletMap = {
                     if (dotNetHelper) {
                         dotNetHelper.invokeMethodAsync('OnDownloadProgress', progress);
                     }
-                }
+                },
+                abortSignal
             );
 
             console.log('[leaflet-map] Download complete:', result);
@@ -894,6 +898,9 @@ window.leafletMap = {
         console.log(`[leaflet-map] Downloading region tiles, zoom ${minZoom}-${maxZoom}`);
 
         try {
+            // Use the stored abort signal from the controller
+            const abortSignal = this.getAbortSignal();
+            
             const result = await window.tileCache.downloadRegion(
                 theme,
                 bounds,
@@ -904,7 +911,8 @@ window.leafletMap = {
                     if (dotNetHelper) {
                         dotNetHelper.invokeMethodAsync('OnDownloadProgress', progress);
                     }
-                }
+                },
+                abortSignal
             );
 
             console.log('[leaflet-map] Region download complete:', result);
@@ -1046,5 +1054,33 @@ window.leafletMap = {
         offlineControl.addTo(map);
         
         return true;
+    },
+
+    // Abort controller management for download cancellation
+    _downloadAbortController: null,
+
+    createAbortController: function() {
+        // Clean up any existing controller first
+        if (this._downloadAbortController) {
+            this.cleanupAbortController();
+        }
+        this._downloadAbortController = new AbortController();
+        console.log('[leaflet-map] AbortController created');
+    },
+
+    getAbortSignal: function() {
+        return this._downloadAbortController ? this._downloadAbortController.signal : null;
+    },
+
+    cancelDownload: function() {
+        if (this._downloadAbortController) {
+            console.log('[leaflet-map] Aborting download');
+            this._downloadAbortController.abort();
+        }
+    },
+
+    cleanupAbortController: function() {
+        this._downloadAbortController = null;
+        console.log('[leaflet-map] AbortController cleaned up');
     }
 };

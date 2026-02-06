@@ -157,4 +157,77 @@ public class OfflineMapManagerTests : IClassFixture<CustomWebApplicationFactory>
         content.Should().Contain("if (quotaExceeded)", "tile-cache.js should check quotaExceeded flag in download loop");
         content.Should().Contain("Storage quota exceeded", "tile-cache.js should provide user-friendly quota exceeded message");
     }
+
+    [Fact]
+    public async Task TileCacheScript_SupportsAbortSignal()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/tile-cache.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
+        content.Should().Contain("abortSignal", "tile-cache.js should accept abortSignal parameter");
+        content.Should().Contain("AbortError", "tile-cache.js should handle AbortError for cancellation");
+        content.Should().Contain("cancelled", "tile-cache.js should track cancelled state");
+    }
+
+    [Fact]
+    public async Task TileCacheScript_ChecksAbortSignalInDownloadLoop()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/tile-cache.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
+        content.Should().Contain("abortSignal?.aborted", "tile-cache.js should check if abort signal is aborted in download loop");
+        content.Should().Contain("cancelled = true", "tile-cache.js should set cancelled flag when aborted");
+    }
+
+    [Fact]
+    public async Task TileCacheScript_PassesAbortSignalToFetch()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/tile-cache.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
+        content.Should().Contain("fetch(url, { signal: abortSignal })", "tile-cache.js should pass abort signal to fetch calls");
+    }
+
+    [Fact]
+    public async Task LeafletMapScript_SupportsAbortSignalInDownloadMethods()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/leaflet-map.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "leaflet-map.js should be accessible");
+        // Both downloadCurrentView and downloadRegion should have abort signal support via getAbortSignal()
+        content.Should().Contain("downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper)",
+            "downloadCurrentView should accept required parameters without unused signal parameter");
+        content.Should().Contain("downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper)",
+            "downloadRegion should accept required parameters without unused signal parameter");
+        content.Should().Contain("getAbortSignal", "leaflet-map.js should have getAbortSignal method");
+        content.Should().Contain("createAbortController", "leaflet-map.js should have createAbortController method");
+        content.Should().Contain("cancelDownload", "leaflet-map.js should have cancelDownload method");
+        content.Should().Contain("cleanupAbortController", "leaflet-map.js should have cleanupAbortController method for proper cleanup");
+    }
+
+    [Fact]
+    public async Task LeafletMapScript_HasAbortControllerLifecycleMethods()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/leaflet-map.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "leaflet-map.js should be accessible");
+        content.Should().Contain("_downloadAbortController", "leaflet-map.js should have instance property for abort controller");
+        content.Should().Contain("new AbortController()", "leaflet-map.js should create AbortController instances");
+        content.Should().Contain(".abort()", "leaflet-map.js should call abort on the controller");
+    }
 }
