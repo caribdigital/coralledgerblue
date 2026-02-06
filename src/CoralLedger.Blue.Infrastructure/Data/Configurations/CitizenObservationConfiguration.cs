@@ -41,6 +41,13 @@ public class CitizenObservationConfiguration : IEntityTypeConfiguration<CitizenO
         builder.Property(x => x.CitizenName)
             .HasMaxLength(100);
 
+        builder.Property(x => x.ApiClientId)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.IsEmailVerified)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(x => x.Status)
             .HasConversion<string>()
             .HasMaxLength(20)
@@ -75,5 +82,7 @@ public class CitizenObservationConfiguration : IEntityTypeConfiguration<CitizenO
         builder.HasIndex(x => x.MarineProtectedAreaId);
         builder.HasIndex(x => x.ReefId);
         builder.HasIndex(x => x.CreatedAt);
+        builder.HasIndex(x => x.ApiClientId);
+        builder.HasIndex(x => x.IsEmailVerified);
     }
 }

@@ -66,7 +66,7 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
             }, CancellationToken.None);
 
             // Create claims
-            var claims = new[]
+            var claimsList = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, apiKey.ApiClientId.ToString()),
                 new Claim(ClaimTypes.Name, apiKey.ApiClient.Name),
@@ -76,8 +76,14 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
                 new Claim("Scopes", apiKey.Scopes),
                 new Claim("RateLimit", apiKey.ApiClient.RateLimitPerMinute.ToString())
             };
+            
+            // Add email claim if contact email is available
+            if (!string.IsNullOrWhiteSpace(apiKey.ApiClient.ContactEmail))
+            {
+                claimsList.Add(new Claim(ClaimTypes.Email, apiKey.ApiClient.ContactEmail));
+            }
 
-            var identity = new ClaimsIdentity(claims, Scheme.Name);
+            var identity = new ClaimsIdentity(claimsList, Scheme.Name);
             var principal = new ClaimsPrincipal(identity);
             var ticket = new AuthenticationTicket(principal, Scheme.Name);
 

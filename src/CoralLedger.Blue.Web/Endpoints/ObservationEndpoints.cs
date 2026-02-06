@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Application.Common.Models;
 using CoralLedger.Blue.Application.Features.Observations.Commands.CreateObservation;
@@ -6,6 +7,7 @@ using CoralLedger.Blue.Application.Features.Observations.Queries.GetObservations
 using CoralLedger.Blue.Domain.Entities;
 using CoralLedger.Blue.Domain.Enums;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoralLedger.Blue.Web.Endpoints;
@@ -53,9 +55,19 @@ public static class ObservationEndpoints
         // POST /api/observations - Create new observation
         group.MapPost("/", async (
             CreateObservationRequest request,
+            ClaimsPrincipal user,
             IMediator mediator,
             CancellationToken ct = default) =>
         {
+            // Extract authenticated user information from API key claims
+            var clientId = user.FindFirst("ClientId")?.Value;
+            var authenticatedEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+            
+            // Prefer authenticated email from API client's contact email
+            // Fall back to email from request for backwards compatibility
+            // Note: Observations with no email will be allowed but not ideal for gamification
+            var citizenEmail = authenticatedEmail ?? request.CitizenEmail;
+            
             var command = new CreateObservationCommand(
                 request.Longitude,
                 request.Latitude,
@@ -64,8 +76,9 @@ public static class ObservationEndpoints
                 request.Type,
                 request.Description,
                 request.Severity,
-                request.CitizenEmail,
-                request.CitizenName);
+                citizenEmail,
+                request.CitizenName,
+                clientId);
 
             var result = await mediator.Send(command, ct).ConfigureAwait(false);
 
@@ -77,15 +90,18 @@ public static class ObservationEndpoints
             return Results.Created($"/api/observations/{result.ObservationId}", result);
         })
         .WithName("CreateObservation")
-        .WithDescription("Submit a new citizen science observation")
+        .WithDescription("Submit a new citizen science observation. Requires API key authentication.")
+        .RequireAuthorization()
         .Produces<CreateObservationResult>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized);
 
         // POST /api/observations/{id}/photos - Upload photo for observation
         group.MapPost("/{id:guid}/photos", async (
             Guid id,
             IFormFile file,
             string? caption,
+            ClaimsPrincipal user,
             IMarineDbContext dbContext,
             IBlobStorageService blobStorage,
             CancellationToken ct = default) =>
@@ -98,6 +114,13 @@ public static class ObservationEndpoints
             if (observation is null)
             {
                 return Results.NotFound(new { error = "Observation not found" });
+            }
+
+            // Verify the observation belongs to the authenticated client
+            var clientId = user.FindFirst("ClientId")?.Value;
+            if (observation.ApiClientId != clientId)
+            {
+                return Results.Forbid();
             }
 
             // Validate file
@@ -150,16 +173,20 @@ public static class ObservationEndpoints
             });
         })
         .WithName("UploadObservationPhoto")
-        .WithDescription("Upload a photo for an observation")
+        .WithDescription("Upload a photo for an observation. Requires API key authentication.")
+        .RequireAuthorization()
         .Accepts<IFormFile>("multipart/form-data")
         .Produces(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized)
+        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .DisableAntiforgery();
 
         // POST /api/observations/{id}/classify-species - AI species classification
         group.MapPost("/{id:guid}/classify-species", async (
             Guid id,
+            ClaimsPrincipal user,
             IMarineDbContext dbContext,
             ISpeciesClassificationService classificationService,
             CancellationToken ct = default) =>
@@ -172,6 +199,13 @@ public static class ObservationEndpoints
             if (observation is null)
             {
                 return Results.NotFound(new { error = "Observation not found" });
+            }
+
+            // Verify the observation belongs to the authenticated client
+            var clientId = user.FindFirst("ClientId")?.Value;
+            if (observation.ApiClientId != clientId)
+            {
+                return Results.Forbid();
             }
 
             if (!observation.Photos.Any())
@@ -233,9 +267,12 @@ public static class ObservationEndpoints
             });
         })
         .WithName("ClassifyObservationSpecies")
-        .WithDescription("Use AI to identify marine species in observation photos")
+        .WithDescription("Use AI to identify marine species in observation photos. Requires API key authentication.")
+        .RequireAuthorization()
         .Produces<object>()
         .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized)
+        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status503ServiceUnavailable);
 

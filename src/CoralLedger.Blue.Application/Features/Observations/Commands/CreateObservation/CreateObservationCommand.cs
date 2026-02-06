@@ -17,7 +17,8 @@ public record CreateObservationCommand(
     string? Description = null,
     int Severity = 3,
     string? CitizenEmail = null,
-    string? CitizenName = null
+    string? CitizenName = null,
+    string? ApiClientId = null
 ) : IRequest<CreateObservationResult>;
 
 public record CreateObservationResult(
@@ -67,7 +68,9 @@ public class CreateObservationCommandHandler : IRequestHandler<CreateObservation
                 request.Description,
                 request.Severity,
                 request.CitizenEmail,
-                request.CitizenName);
+                request.CitizenName,
+                request.ApiClientId,
+                isEmailVerified: !string.IsNullOrEmpty(request.ApiClientId));
 
             // Check if observation is within any MPA
             var containingMpa = await _context.MarineProtectedAreas

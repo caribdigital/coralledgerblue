@@ -12,14 +12,34 @@ The CoralLedger Blue API provides RESTful endpoints for marine protected area mo
 
 ## Authentication
 
-Currently, the API is open for read operations. Write operations and admin endpoints may require authentication in future versions.
+The API uses API key authentication for write operations.
 
-## Rate Limiting
+### API Key Authentication
+
+To submit observations or modify data, you need an API key. Include it in the `X-API-Key` header:
+
+```
+X-API-Key: clb_your_api_key_here
+```
+
+**Getting an API Key:**
+1. Contact the CoralLedger Blue team to register your application
+2. You'll receive an API key that identifies your application
+3. Store this key securely - it will not be shown again
+
+**Authentication Requirements:**
+- ✅ **Read operations** (GET endpoints): No authentication required
+- 🔒 **Write operations** (POST/PUT/DELETE endpoints): API key required
+- 🔒 **Admin operations**: API key with admin privileges required
+
+**Rate Limits:**
+
+API keys have associated rate limits that vary based on your application's needs:
 
 | Policy | Limit | Window |
 |--------|-------|--------|
 | Default | 100 requests | 1 minute |
-| API | 60 requests | 1 minute |
+| API (authenticated) | 60 requests | 1 minute |
 | Strict (admin) | 10 requests | 1 minute |
 | Global | 500 requests | 1 minute |
 
@@ -134,6 +154,8 @@ Get historical track for a specific vessel.
 #### GET /api/observations
 Get approved citizen observations.
 
+**Authentication:** Not required
+
 **Query Parameters:**
 - `type`: `CoralBleaching`, `MarineDebris`, `WildlifeSighting`, `IllegalActivity`, `Other`
 - `status`: `Pending`, `Approved`, `Rejected`
@@ -142,23 +164,85 @@ Get approved citizen observations.
 #### POST /api/observations
 Submit a new citizen observation.
 
+**Authentication:** Required (API key)
+
 **Request Body:**
 ```json
 {
-  "type": "CoralBleaching",
-  "latitude": 25.05,
   "longitude": -77.35,
+  "latitude": 25.05,
+  "observationTime": "2024-01-15T10:30:00Z",
+  "title": "Coral bleaching observed",
+  "type": "CoralBleaching",
   "description": "Observed bleaching on patch reef",
-  "severity": "Moderate",
-  "imageUrl": "https://..."
+  "severity": 3,
+  "citizenEmail": "observer@example.com",
+  "citizenName": "Jane Observer"
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "observationId": "guid",
+  "mpaName": "Exuma Cays Land and Sea Park"
+}
+```
+
+**Security Notes:**
+- The `citizenEmail` provided in the request is for display purposes only
+- The observation is associated with your authenticated API client
+- If your API client has a contact email, that will be used for gamification
+- All observations are marked with `IsEmailVerified` to track authentication status
+
+#### POST /api/observations/{id}/photos
+Upload a photo for an observation.
+
+**Authentication:** Required (API key - must own the observation)
+
+**Request:** Multipart form data with:
+- `file`: Image file (JPEG, PNG, WebP, or HEIC, max 10MB)
+- `caption`: Optional photo caption
+
+**Response:** `201 Created`
+
+#### POST /api/observations/{id}/classify-species
+Use AI to identify marine species in observation photos.
+
+**Authentication:** Required (API key - must own the observation)
+
+**Response:** `200 OK`
+```json
+{
+  "observationId": "guid",
+  "species": [
+    {
+      "scientificName": "Acropora cervicornis",
+      "commonName": "Staghorn Coral",
+      "confidenceScore": 0.92,
+      "isInvasive": false,
+      "isConservationConcern": true
+    }
+  ],
+  "summary": {
+    "totalSpeciesIdentified": 3,
+    "hasInvasiveSpecies": false,
+    "hasConservationConcern": true,
+    "requiresExpertReview": false
+  }
 }
 ```
 
 #### GET /api/observations/{id}
 Get details of a specific observation.
 
+**Authentication:** Not required
+
 #### PUT /api/observations/{id}/moderate
 Approve or reject an observation (admin only).
+
+**Authentication:** Required (admin API key)
 
 ---
 
