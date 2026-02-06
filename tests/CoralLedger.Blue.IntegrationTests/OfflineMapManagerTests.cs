@@ -157,4 +157,59 @@ public class OfflineMapManagerTests : IClassFixture<CustomWebApplicationFactory>
         content.Should().Contain("if (quotaExceeded)", "tile-cache.js should check quotaExceeded flag in download loop");
         content.Should().Contain("Storage quota exceeded", "tile-cache.js should provide user-friendly quota exceeded message");
     }
+
+    [Fact]
+    public async Task TileCacheScript_SupportsAbortSignal()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/tile-cache.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
+        content.Should().Contain("abortSignal", "tile-cache.js should accept abortSignal parameter");
+        content.Should().Contain("AbortError", "tile-cache.js should handle AbortError for cancellation");
+        content.Should().Contain("cancelled", "tile-cache.js should track cancelled state");
+    }
+
+    [Fact]
+    public async Task TileCacheScript_ChecksAbortSignalInDownloadLoop()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/tile-cache.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
+        content.Should().Contain("abortSignal?.aborted", "tile-cache.js should check if abort signal is aborted in download loop");
+        content.Should().Contain("cancelled = true", "tile-cache.js should set cancelled flag when aborted");
+    }
+
+    [Fact]
+    public async Task TileCacheScript_PassesAbortSignalToFetch()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/tile-cache.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
+        content.Should().Contain("fetch(url, { signal: abortSignal }", "tile-cache.js should pass abort signal to fetch calls");
+    }
+
+    [Fact]
+    public async Task LeafletMapScript_SupportsAbortSignalInDownloadMethods()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/leaflet-map.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "leaflet-map.js should be accessible");
+        // Both downloadCurrentView and downloadRegion should accept abortSignal
+        content.Should().Contain("downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper, abortSignal)", 
+            "downloadCurrentView should accept abortSignal parameter");
+        content.Should().Contain("downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper, abortSignal)", 
+            "downloadRegion should accept abortSignal parameter");
+    }
 }
