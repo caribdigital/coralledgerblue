@@ -3,7 +3,10 @@
   <ItemGroup>
     <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="BCrypt.Net-Next" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
     <PackageReference Include="SendGrid" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="WebPush" />
     <PackageReference Include="MetadataExtractor" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
