@@ -5,6 +5,7 @@ using System.Text;
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Domain.Entities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace CoralLedger.Blue.Infrastructure.Services;
@@ -15,14 +16,16 @@ namespace CoralLedger.Blue.Infrastructure.Services;
 public class JwtTokenService : IJwtTokenService
 {
     private readonly IConfiguration _configuration;
+    private readonly ILogger<JwtTokenService> _logger;
     private readonly string _secret;
     private readonly string _issuer;
     private readonly string _audience;
     private readonly int _expirationMinutes;
 
-    public JwtTokenService(IConfiguration configuration)
+    public JwtTokenService(IConfiguration configuration, ILogger<JwtTokenService> logger)
     {
         _configuration = configuration;
+        _logger = logger;
         _secret = configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
         _issuer = configuration["Jwt:Issuer"] ?? "CoralLedger.Blue";
         _audience = configuration["Jwt:Audience"] ?? "CoralLedger.Blue.Web";
@@ -90,8 +93,9 @@ public class JwtTokenService : IJwtTokenService
 
             return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "JWT token validation failed");
             return null;
         }
     }

@@ -145,7 +145,7 @@ public static class AuthenticationEndpoints
             return Results.Problem(
                 statusCode: StatusCodes.Status403Forbidden,
                 title: "Account locked",
-                detail: $"Too many failed login attempts. Account is locked until {user.LockedOutUntil:u}");
+                detail: "Account is temporarily locked due to too many failed login attempts. Please try again later.");
         }
 
         // Check if user is active

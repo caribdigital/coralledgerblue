@@ -101,9 +101,9 @@ builder.Services.AddAuthentication(options =>
     var jwtSecret = builder.Configuration["Jwt:Secret"];
     if (string.IsNullOrEmpty(jwtSecret))
     {
-        // Generate a temporary secret for development if not configured
-        jwtSecret = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
-        builder.Configuration["Jwt:Secret"] = jwtSecret;
+        throw new InvalidOperationException(
+            "JWT Secret is not configured. Set the Jwt:Secret configuration value or JWT__SECRET environment variable. " +
+            "For development, generate a secure secret: openssl rand -base64 32");
     }
     
     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
