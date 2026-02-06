@@ -83,7 +83,6 @@ public class ObservationEndpointsTests : IClassFixture<CustomWebApplicationFacto
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         
-        var content = await response.Content.ReadAsStringAsync();
         using var resultDoc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
         
         Assert.True(resultDoc.RootElement.TryGetProperty("observationId", out var observationId));

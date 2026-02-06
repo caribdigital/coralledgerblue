@@ -63,8 +63,9 @@ public static class ObservationEndpoints
             var clientId = user.FindFirst("ClientId")?.Value;
             var authenticatedEmail = user.FindFirst(ClaimTypes.Email)?.Value;
             
-            // For citizen observations, use the contact email from API client if available
-            // Otherwise use the email from request (will be marked as unverified)
+            // Prefer authenticated email from API client's contact email
+            // Fall back to email from request for backwards compatibility
+            // Note: Observations with no email will be allowed but not ideal for gamification
             var citizenEmail = authenticatedEmail ?? request.CitizenEmail;
             
             var command = new CreateObservationCommand(
