@@ -219,8 +219,57 @@ Call log:
 
 1. **Close Issue #86**: All acceptance criteria are already met in the code
 2. **Run E2E Tests Properly**: Set up CI environment with Docker support
-3. **Alternative Verification**: Consider CSS-only unit tests that don't require a running server
+3. **Alternative Verification**: Use `verify-animations.sh` for CSS validation without a running server
 4. **Update Documentation**: Mark animations as implemented in project documentation
+
+## CI/CD Integration
+
+### For CI Without Docker
+
+If your CI environment doesn't have Docker support, use the verification script instead of E2E tests:
+
+```yaml
+# GitHub Actions example
+- name: Verify Animation CSS
+  run: |
+    chmod +x ./tests/CoralLedger.Blue.E2E.Tests/verify-animations.sh
+    ./tests/CoralLedger.Blue.E2E.Tests/verify-animations.sh
+```
+
+### For CI With Docker
+
+Run the full E2E test suite:
+
+```yaml
+- name: Start Aspire AppHost
+  run: dotnet run --project src/CoralLedger.Blue.AppHost &
+
+- name: Wait for server
+  run: |
+    for i in {1..30}; do
+      curl -s https://localhost:7232/health && break
+      sleep 2
+    done
+
+- name: Run Animation E2E Tests
+  run: dotnet test tests/CoralLedger.Blue.E2E.Tests --filter "Animation"
+```
+
+### Skipping Animation Tests in CI
+
+Alternatively, add a test category to skip animation tests when Docker isn't available:
+
+```csharp
+// In AnimationTests.cs
+[TestFixture]
+[Category("RequiresServer")]
+public class AnimationTests : PlaywrightFixture
+```
+
+Then exclude in CI:
+```bash
+dotnet test --filter "Category!=RequiresServer"
+```
 
 ## How to Verify Locally
 

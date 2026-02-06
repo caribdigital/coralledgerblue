@@ -3,9 +3,29 @@
 # Animation CSS Verification Script
 # Validates that all required CSS animations and classes are present
 # Can run without starting the application server
+#
+# Requirements: bash 4.0+, grep
+# Usage: ./verify-animations.sh
+# Run from repository root directory
+#
+# This script provides a lightweight alternative to E2E tests for verifying
+# CSS animations are implemented. Use this in CI environments without Docker.
+
+# Check bash version for arithmetic expansion support
+if [ -z "$BASH_VERSION" ]; then
+    echo "Error: This script requires bash. Please run with: bash $0"
+    exit 1
+fi
 
 # Don't exit on error - we want to count all failures
 set +e
+
+# Check we're in the right directory
+if [ ! -f "CoralLedger.Blue.sln" ]; then
+    echo "Error: Please run this script from the repository root directory"
+    echo "Usage: ./tests/CoralLedger.Blue.E2E.Tests/verify-animations.sh"
+    exit 1
+fi
 
 CSS_FILE="src/CoralLedger.Blue.Web/wwwroot/app.css"
 DATACARD_FILE="src/CoralLedger.Blue.Web/Components/Shared/DataCard.razor"
