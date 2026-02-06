@@ -16,6 +16,10 @@ public class CitizenObservation : BaseEntity, IAuditableEntity
     // Citizen attribution (no authentication required)
     public string? CitizenEmail { get; private set; }
     public string? CitizenName { get; private set; }
+    
+    // Authentication tracking - added for security
+    public string? ApiClientId { get; private set; }
+    public bool IsEmailVerified { get; private set; }
 
     // Spatial context
     public bool? IsInMpa { get; private set; }
@@ -52,7 +56,9 @@ public class CitizenObservation : BaseEntity, IAuditableEntity
         string? description = null,
         int severity = 3,
         string? citizenEmail = null,
-        string? citizenName = null)
+        string? citizenName = null,
+        string? apiClientId = null,
+        bool isEmailVerified = false)
     {
         if (severity < 1 || severity > 5)
             throw new ArgumentOutOfRangeException(nameof(severity), "Severity must be between 1 and 5");
@@ -68,6 +74,8 @@ public class CitizenObservation : BaseEntity, IAuditableEntity
             Severity = severity,
             CitizenEmail = citizenEmail,
             CitizenName = citizenName,
+            ApiClientId = apiClientId,
+            IsEmailVerified = isEmailVerified,
             Status = ObservationStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };

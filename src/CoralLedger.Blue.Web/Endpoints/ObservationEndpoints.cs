@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Application.Common.Models;
 using CoralLedger.Blue.Application.Features.Observations.Commands.CreateObservation;
@@ -6,6 +7,7 @@ using CoralLedger.Blue.Application.Features.Observations.Queries.GetObservations
 using CoralLedger.Blue.Domain.Entities;
 using CoralLedger.Blue.Domain.Enums;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoralLedger.Blue.Web.Endpoints;
@@ -53,9 +55,18 @@ public static class ObservationEndpoints
         // POST /api/observations - Create new observation
         group.MapPost("/", async (
             CreateObservationRequest request,
+            ClaimsPrincipal user,
             IMediator mediator,
             CancellationToken ct = default) =>
         {
+            // Extract authenticated user information from API key claims
+            var clientId = user.FindFirst("ClientId")?.Value;
+            var authenticatedEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+            
+            // For citizen observations, use the contact email from API client if available
+            // Otherwise use the email from request (will be marked as unverified)
+            var citizenEmail = authenticatedEmail ?? request.CitizenEmail;
+            
             var command = new CreateObservationCommand(
                 request.Longitude,
                 request.Latitude,
@@ -64,8 +75,9 @@ public static class ObservationEndpoints
                 request.Type,
                 request.Description,
                 request.Severity,
-                request.CitizenEmail,
-                request.CitizenName);
+                citizenEmail,
+                request.CitizenName,
+                clientId);
 
             var result = await mediator.Send(command, ct).ConfigureAwait(false);
 
@@ -77,9 +89,11 @@ public static class ObservationEndpoints
             return Results.Created($"/api/observations/{result.ObservationId}", result);
         })
         .WithName("CreateObservation")
-        .WithDescription("Submit a new citizen science observation")
+        .WithDescription("Submit a new citizen science observation. Requires API key authentication.")
+        .RequireAuthorization()
         .Produces<CreateObservationResult>(StatusCodes.Status201Created)
-        .Produces(StatusCodes.Status400BadRequest);
+        .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized);
 
         // POST /api/observations/{id}/photos - Upload photo for observation
         group.MapPost("/{id:guid}/photos", async (
