@@ -247,9 +247,25 @@ window.tileCache = {
                 if (error.name === 'AbortError') {
                     cancelled = true;
                     console.log('[tile-cache] Download cancelled by user');
+
+                    // Report cancellation to caller
+                    if (progressCallback) {
+                        progressCallback({
+                            current: i + 1,
+                            total: total,
+                            downloaded: downloaded,
+                            cached: cached,
+                            failed: failed,
+                            percentComplete: Math.round((i + 1) / total * 100),
+                            totalBytes: totalBytes,
+                            quotaExceeded: quotaExceeded,
+                            cancelled: true
+                        });
+                    }
+
                     break;
                 }
-                
+
                 if (error.type === 'quota_exceeded') {
                     quotaExceeded = true;
                     console.error('[tile-cache] Storage quota exceeded, stopping download');

@@ -207,12 +207,27 @@ public class OfflineMapManagerTests : IClassFixture<CustomWebApplicationFactory>
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK, "leaflet-map.js should be accessible");
         // Both downloadCurrentView and downloadRegion should have abort signal support via getAbortSignal()
-        content.Should().Contain("downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper", 
-            "downloadCurrentView should accept required parameters");
-        content.Should().Contain("downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper", 
-            "downloadRegion should accept required parameters");
+        content.Should().Contain("downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper)",
+            "downloadCurrentView should accept required parameters without unused signal parameter");
+        content.Should().Contain("downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper)",
+            "downloadRegion should accept required parameters without unused signal parameter");
         content.Should().Contain("getAbortSignal", "leaflet-map.js should have getAbortSignal method");
         content.Should().Contain("createAbortController", "leaflet-map.js should have createAbortController method");
         content.Should().Contain("cancelDownload", "leaflet-map.js should have cancelDownload method");
+        content.Should().Contain("cleanupAbortController", "leaflet-map.js should have cleanupAbortController method for proper cleanup");
+    }
+
+    [Fact]
+    public async Task LeafletMapScript_HasAbortControllerLifecycleMethods()
+    {
+        // Act
+        var response = await _client.GetAsync("/js/leaflet-map.js");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK, "leaflet-map.js should be accessible");
+        content.Should().Contain("_downloadAbortController", "leaflet-map.js should have instance property for abort controller");
+        content.Should().Contain("new AbortController()", "leaflet-map.js should create AbortController instances");
+        content.Should().Contain(".abort()", "leaflet-map.js should call abort on the controller");
     }
 }

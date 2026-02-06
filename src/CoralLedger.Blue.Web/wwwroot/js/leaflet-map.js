@@ -831,7 +831,7 @@ window.leafletMap = {
     // Offline tile caching methods
 
     // Download tiles for current map view
-    downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper, _unusedSignal) {
+    downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper) {
         const map = this.maps[mapId];
         if (!map) {
             console.error('[leaflet-map] Map not found:', mapId);
@@ -883,7 +883,7 @@ window.leafletMap = {
     },
 
     // Download tiles for a custom region
-    downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper, _unusedSignal) {
+    downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper) {
         if (!window.tileCache) {
             console.error('[leaflet-map] Tile cache not available');
             return null;
