@@ -206,10 +206,13 @@ public class OfflineMapManagerTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK, "leaflet-map.js should be accessible");
-        // Both downloadCurrentView and downloadRegion should accept abortSignal
-        content.Should().Contain("downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper, abortSignal)", 
-            "downloadCurrentView should accept abortSignal parameter");
-        content.Should().Contain("downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper, abortSignal)", 
-            "downloadRegion should accept abortSignal parameter");
+        // Both downloadCurrentView and downloadRegion should have abort signal support via getAbortSignal()
+        content.Should().Contain("downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper", 
+            "downloadCurrentView should accept required parameters");
+        content.Should().Contain("downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper", 
+            "downloadRegion should accept required parameters");
+        content.Should().Contain("getAbortSignal", "leaflet-map.js should have getAbortSignal method");
+        content.Should().Contain("createAbortController", "leaflet-map.js should have createAbortController method");
+        content.Should().Contain("cancelDownload", "leaflet-map.js should have cancelDownload method");
     }
 }

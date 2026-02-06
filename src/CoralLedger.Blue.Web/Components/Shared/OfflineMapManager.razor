@@ -278,8 +278,8 @@
         try
         {
             // Create AbortController and get its signal
-            var abortSignal = await JS.InvokeAsync<IJSObjectReference>(
-                "leafletMap.createAbortController");
+            // Note: The signal is stored in the JS leafletMap object and accessed internally
+            await JS.InvokeVoidAsync("leafletMap.createAbortController");
 
             _lastResult = await JS.InvokeAsync<DownloadResult>(
                 "leafletMap.downloadCurrentView",
@@ -287,7 +287,8 @@
                 _minZoom,
                 _maxZoom,
                 _dotNetRef,
-                abortSignal
+                // Pass null for abortSignal - the JS function will use the stored controller's signal
+                (object?)null
             );
 
             _downloadComplete = true;
@@ -306,7 +307,10 @@
             {
                 await JS.InvokeVoidAsync("leafletMap.cleanupAbortController");
             }
-            catch { /* ignore cleanup errors */ }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error cleaning up abort controller: {ex.Message}");
+            }
             StateHasChanged();
         }
     }
