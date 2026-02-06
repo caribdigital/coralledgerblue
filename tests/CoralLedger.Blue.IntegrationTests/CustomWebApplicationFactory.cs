@@ -13,14 +13,24 @@ namespace CoralLedger.Blue.IntegrationTests;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
+    /// <summary>
+    /// Gets the default tenant ID for tests that require tenant context
+    /// </summary>
+    public Guid? DefaultTenantId { get; private set; }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Add configuration with a dummy connection string to satisfy Aspire validation
+        // Add configuration with dummy connection string and JWT settings for testing
         builder.ConfigureAppConfiguration((context, config) =>
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:marinedb"] = "Host=localhost;Database=test;Username=test;Password=test"
+                ["ConnectionStrings:marinedb"] = "Host=localhost;Database=test;Username=test;Password=test",
+                // JWT configuration for authentication tests
+                ["Jwt:Secret"] = "IntegrationTestSecretKeyThatIsAtLeast32CharactersLong!",
+                ["Jwt:Issuer"] = "CoralLedger.Blue.IntegrationTests",
+                ["Jwt:Audience"] = "CoralLedger.Blue.IntegrationTests",
+                ["Jwt:ExpirationMinutes"] = "60"
             });
         });
 
@@ -71,17 +81,19 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         using var scope = host.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MarineDbContext>();
         db.Database.EnsureCreated();
-        SeedTestData(db);
+        DefaultTenantId = SeedTestData(db);
 
         return host;
     }
 
-    private static void SeedTestData(MarineDbContext db)
+    private Guid SeedTestData(MarineDbContext db)
     {
         // Seed the default tenant required for multi-tenant support
-        DefaultTenantSeeder.SeedAsync(db).GetAwaiter().GetResult();
-        
+        var tenant = DefaultTenantSeeder.SeedAsync(db).GetAwaiter().GetResult();
+
         // Seed test MPA data for integration tests
         BahamasMpaSeeder.SeedAsync(db).GetAwaiter().GetResult();
+
+        return tenant.Id;
     }
 }

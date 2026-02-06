@@ -124,9 +124,10 @@
                 _errorMessage = problemDetails?.Detail ?? "Registration failed. Please try again.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _errorMessage = $"An error occurred: {ex.Message}";
+            // Don't expose exception details to users for security
+            _errorMessage = "An unexpected error occurred. Please try again later.";
         }
         finally
         {
@@ -145,6 +146,8 @@
 
         [Required(ErrorMessage = "Password is required")]
         [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$",
+            ErrorMessage = "Password must contain uppercase, lowercase, and a number")]
         public string Password { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Confirm password is required")]

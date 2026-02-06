@@ -46,12 +46,13 @@ public static class AuthenticationEndpoints
         }
 
         // Validate password strength
-        if (request.Password.Length < 8)
+        var passwordValidation = ValidatePasswordStrength(request.Password);
+        if (!passwordValidation.IsValid)
         {
             return Results.BadRequest(new ProblemDetails
             {
                 Title = "Weak password",
-                Detail = "Password must be at least 8 characters long"
+                Detail = passwordValidation.ErrorMessage
             });
         }
 
@@ -181,5 +182,33 @@ public static class AuthenticationEndpoints
             user.FullName,
             user.Role,
             user.TenantId));
+    }
+
+    /// <summary>
+    /// Validates password meets complexity requirements
+    /// </summary>
+    private static (bool IsValid, string? ErrorMessage) ValidatePasswordStrength(string password)
+    {
+        if (password.Length < 8)
+        {
+            return (false, "Password must be at least 8 characters long");
+        }
+
+        if (!password.Any(char.IsUpper))
+        {
+            return (false, "Password must contain at least one uppercase letter");
+        }
+
+        if (!password.Any(char.IsLower))
+        {
+            return (false, "Password must contain at least one lowercase letter");
+        }
+
+        if (!password.Any(char.IsDigit))
+        {
+            return (false, "Password must contain at least one number");
+        }
+
+        return (true, null);
     }
 }

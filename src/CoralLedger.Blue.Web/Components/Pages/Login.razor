@@ -108,9 +108,10 @@
                 _errorMessage = "Invalid email or password. Please try again.";
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _errorMessage = $"An error occurred: {ex.Message}";
+            // Don't expose exception details to users for security
+            _errorMessage = "An unexpected error occurred. Please try again later.";
         }
         finally
         {
