@@ -117,7 +117,7 @@ window.tileCache = {
     },
 
     // Download a single tile from the server
-    async downloadTile(theme, z, x, y, tileUrl) {
+    async downloadTile(theme, z, x, y, tileUrl, abortSignal) {
         try {
             // Check if already cached
             if (await this.hasTile(theme, z, x, y)) {
@@ -126,7 +126,7 @@ window.tileCache = {
 
             // Download the tile
             const url = this.buildTileUrl(tileUrl, z, x, y);
-            const response = await fetch(url);
+            const response = await fetch(url, { signal: abortSignal });
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -137,6 +137,11 @@ window.tileCache = {
             
             return { cached: false, size: blob.size };
         } catch (error) {
+            // Check if this is an abort error
+            if (error.name === 'AbortError') {
+                console.log(`[tile-cache] Download aborted at tile ${z}/${x}/${y}`);
+                throw error; // Propagate abort error
+            }
             // Check if this is a quota error
             if (error.type === 'quota_exceeded') {
                 console.error(`[tile-cache] Storage quota exceeded at tile ${z}/${x}/${y}`);
@@ -186,7 +191,7 @@ window.tileCache = {
     },
 
     // Download tiles for a region
-    async downloadRegion(theme, bounds, minZoom, maxZoom, tileUrl, progressCallback) {
+    async downloadRegion(theme, bounds, minZoom, maxZoom, tileUrl, progressCallback, abortSignal) {
         const tiles = this.getTilesForRegion(bounds, minZoom, maxZoom);
         const total = tiles.length;
         let downloaded = 0;
@@ -194,11 +199,19 @@ window.tileCache = {
         let failed = 0;
         let totalBytes = 0;
         let quotaExceeded = false;
+        let cancelled = false;
 
         console.log(`[tile-cache] Downloading ${total} tiles for region`);
 
         for (let i = 0; i < tiles.length; i++) {
             const { z, x, y } = tiles[i];
+            
+            // Check if cancelled via abort signal
+            if (abortSignal?.aborted) {
+                cancelled = true;
+                console.log('[tile-cache] Download cancelled by user');
+                break;
+            }
             
             // Stop if quota was exceeded
             if (quotaExceeded) {
@@ -206,7 +219,7 @@ window.tileCache = {
             }
             
             try {
-                const result = await this.downloadTile(theme, z, x, y, tileUrl);
+                const result = await this.downloadTile(theme, z, x, y, tileUrl, abortSignal);
                 
                 if (result.cached) {
                     cached++;
@@ -225,10 +238,18 @@ window.tileCache = {
                         failed: failed,
                         percentComplete: Math.round((i + 1) / total * 100),
                         totalBytes: totalBytes,
-                        quotaExceeded: quotaExceeded
+                        quotaExceeded: quotaExceeded,
+                        cancelled: cancelled
                     });
                 }
             } catch (error) {
+                // Check if this is an abort error
+                if (error.name === 'AbortError') {
+                    cancelled = true;
+                    console.log('[tile-cache] Download cancelled by user');
+                    break;
+                }
+                
                 if (error.type === 'quota_exceeded') {
                     quotaExceeded = true;
                     console.error('[tile-cache] Storage quota exceeded, stopping download');
@@ -247,7 +268,8 @@ window.tileCache = {
                             percentComplete: Math.round((i + 1) / total * 100),
                             totalBytes: totalBytes,
                             quotaExceeded: true,
-                            quotaMessage: error.message
+                            quotaMessage: error.message,
+                            cancelled: cancelled
                         });
                     }
                     
@@ -267,7 +289,8 @@ window.tileCache = {
             cached: cached,
             failed: failed,
             totalBytes: totalBytes,
-            quotaExceeded: quotaExceeded
+            quotaExceeded: quotaExceeded,
+            cancelled: cancelled
         };
     },
 

@@ -831,7 +831,7 @@ window.leafletMap = {
     // Offline tile caching methods
 
     // Download tiles for current map view
-    downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper) {
+    downloadCurrentView: async function(mapId, minZoom, maxZoom, dotNetHelper, abortSignal) {
         const map = this.maps[mapId];
         if (!map) {
             console.error('[leaflet-map] Map not found:', mapId);
@@ -867,7 +867,8 @@ window.leafletMap = {
                     if (dotNetHelper) {
                         dotNetHelper.invokeMethodAsync('OnDownloadProgress', progress);
                     }
-                }
+                },
+                abortSignal
             );
 
             console.log('[leaflet-map] Download complete:', result);
@@ -879,7 +880,7 @@ window.leafletMap = {
     },
 
     // Download tiles for a custom region
-    downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper) {
+    downloadRegion: async function(bounds, minZoom, maxZoom, theme, dotNetHelper, abortSignal) {
         if (!window.tileCache) {
             console.error('[leaflet-map] Tile cache not available');
             return null;
@@ -904,7 +905,8 @@ window.leafletMap = {
                     if (dotNetHelper) {
                         dotNetHelper.invokeMethodAsync('OnDownloadProgress', progress);
                     }
-                }
+                },
+                abortSignal
             );
 
             console.log('[leaflet-map] Region download complete:', result);
