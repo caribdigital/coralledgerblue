@@ -283,6 +283,7 @@ app.MapAdminEndpoints();
 app.MapSpeciesEndpoints();
 app.MapDiagnosticsEndpoints();
 app.MapApiKeyManagementEndpoints();
+app.MapGamificationEndpoints();
 
 // 8. Map SignalR hub
 app.MapHub<AlertHub>("/hubs/alerts");
