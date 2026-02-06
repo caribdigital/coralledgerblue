@@ -6,6 +6,7 @@ using CoralLedger.Blue.Infrastructure.Data;
 using CoralLedger.Blue.Infrastructure.Data.Seeding;
 using CoralLedger.Blue.Web.Components;
 using CoralLedger.Blue.Web.Endpoints;
+using CoralLedger.Blue.Web.Endpoints.Auth;
 using CoralLedger.Blue.Web.Hubs;
 using CoralLedger.Blue.Web.Security;
 using CoralLedger.Blue.Web.Services;
@@ -83,14 +84,56 @@ builder.Services.AddScoped<IToastService, ToastService>();
 builder.Services.AddSecurityRateLimiting();
 builder.Services.AddSecurityCors(builder.Configuration);
 
-// Add API Key Authentication
+// Add HttpContextAccessor for CurrentUserService
+builder.Services.AddHttpContextAccessor();
+
+// Add Authentication (API Key + JWT Bearer)
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions.DefaultScheme;
+    options.DefaultScheme = "MultiScheme";
+    options.DefaultChallengeScheme = "MultiScheme";
 })
 .AddScheme<CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions, CoralLedger.Blue.Web.Security.ApiKeyAuthenticationHandler>(
     CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions.DefaultScheme,
-    options => { });
+    options => { })
+.AddJwtBearer("Bearer", options =>
+{
+    var jwtSecret = builder.Configuration["Jwt:Secret"];
+    if (string.IsNullOrEmpty(jwtSecret))
+    {
+        throw new InvalidOperationException(
+            "JWT Secret is not configured. Set the Jwt:Secret configuration value or JWT__SECRET environment variable. " +
+            "For development, generate a secure secret: openssl rand -base64 32");
+    }
+    
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+            System.Text.Encoding.UTF8.GetBytes(jwtSecret)),
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "CoralLedger.Blue",
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["Jwt:Audience"] ?? "CoralLedger.Blue.Web",
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+})
+.AddPolicyScheme("MultiScheme", "API Key or JWT", options =>
+{
+    options.ForwardDefaultSelector = context =>
+    {
+        // Check if Authorization header contains Bearer token
+        var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+        if (authHeader?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return "Bearer";
+        }
+        
+        // Otherwise use API Key authentication
+        return CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions.DefaultScheme;
+    };
+});
 
 builder.Services.AddAuthorization();
 
@@ -224,6 +267,7 @@ app.MapRazorComponents<App>()
     .AddAdditionalAssemblies(typeof(CoralLedger.Blue.Web.Client._Imports).Assembly);
 
 // 7. Map API endpoints
+app.MapAuthenticationEndpoints();
 app.MapTenantManagementEndpoints();
 app.MapMpaEndpoints();
 app.MapVesselEndpoints();

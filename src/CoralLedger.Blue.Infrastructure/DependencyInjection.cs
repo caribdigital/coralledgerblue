@@ -24,6 +24,11 @@ public static class DependencyInjection
         services.AddSingleton<ISpatialValidationService, SpatialValidationService>();
         services.AddSingleton<ISpatialCalculator, SpatialCalculator>();
 
+        // Register authentication services
+        services.AddScoped<ICurrentUser, CurrentUserService>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+
         // Register Global Fishing Watch client
         services.Configure<GlobalFishingWatchOptions>(
             configuration.GetSection(GlobalFishingWatchOptions.SectionName));

@@ -3,6 +3,7 @@ using System;
 using CoralLedger.Blue.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CoralLedger.Blue.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(MarineDbContext))]
-    partial class MarineDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260206112016_AddPasswordAuthenticationToTenantUser")]
+    partial class AddPasswordAuthenticationToTenantUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1539,9 +1542,6 @@ namespace CoralLedger.Blue.Infrastructure.Data.Migrations
                     b.Property<int>("TargetProgress")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("TenantUserId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -1554,8 +1554,6 @@ namespace CoralLedger.Blue.Infrastructure.Data.Migrations
                     b.HasIndex("CitizenEmail");
 
                     b.HasIndex("IsCompleted");
-
-                    b.HasIndex("TenantUserId");
 
                     b.HasIndex("CitizenEmail", "AchievementKey")
                         .IsUnique();
@@ -1598,9 +1596,6 @@ namespace CoralLedger.Blue.Infrastructure.Data.Migrations
                     b.Property<string>("ModifiedBy")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("TenantUserId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("BadgeType");
@@ -1608,8 +1603,6 @@ namespace CoralLedger.Blue.Infrastructure.Data.Migrations
                     b.HasIndex("CitizenEmail");
 
                     b.HasIndex("EarnedAt");
-
-                    b.HasIndex("TenantUserId");
 
                     b.HasIndex("CitizenEmail", "BadgeType")
                         .IsUnique();
@@ -1649,9 +1642,6 @@ namespace CoralLedger.Blue.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("MonthlyResetAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("TenantUserId")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("TotalPoints")
                         .HasColumnType("integer");
 
@@ -1667,8 +1657,6 @@ namespace CoralLedger.Blue.Infrastructure.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("MonthlyPoints");
-
-                    b.HasIndex("TenantUserId");
 
                     b.HasIndex("TotalPoints");
 
@@ -1713,9 +1701,6 @@ namespace CoralLedger.Blue.Infrastructure.Data.Migrations
                     b.Property<int>("RejectedObservations")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("TenantUserId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Tier")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1731,8 +1716,6 @@ namespace CoralLedger.Blue.Infrastructure.Data.Migrations
 
                     b.HasIndex("CitizenEmail")
                         .IsUnique();
-
-                    b.HasIndex("TenantUserId");
 
                     b.HasIndex("Tier");
 
@@ -2226,42 +2209,6 @@ namespace CoralLedger.Blue.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("CoralLedger.Blue.Domain.Entities.UserAchievement", b =>
-                {
-                    b.HasOne("CoralLedger.Blue.Domain.Entities.TenantUser", "TenantUser")
-                        .WithMany()
-                        .HasForeignKey("TenantUserId");
-
-                    b.Navigation("TenantUser");
-                });
-
-            modelBuilder.Entity("CoralLedger.Blue.Domain.Entities.UserBadge", b =>
-                {
-                    b.HasOne("CoralLedger.Blue.Domain.Entities.TenantUser", "TenantUser")
-                        .WithMany()
-                        .HasForeignKey("TenantUserId");
-
-                    b.Navigation("TenantUser");
-                });
-
-            modelBuilder.Entity("CoralLedger.Blue.Domain.Entities.UserPoints", b =>
-                {
-                    b.HasOne("CoralLedger.Blue.Domain.Entities.TenantUser", "TenantUser")
-                        .WithMany()
-                        .HasForeignKey("TenantUserId");
-
-                    b.Navigation("TenantUser");
-                });
-
-            modelBuilder.Entity("CoralLedger.Blue.Domain.Entities.UserProfile", b =>
-                {
-                    b.HasOne("CoralLedger.Blue.Domain.Entities.TenantUser", "TenantUser")
-                        .WithMany()
-                        .HasForeignKey("TenantUserId");
-
-                    b.Navigation("TenantUser");
                 });
 
             modelBuilder.Entity("CoralLedger.Blue.Domain.Entities.VesselEvent", b =>

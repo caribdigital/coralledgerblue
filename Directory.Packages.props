@@ -8,6 +8,9 @@
     <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.1.0" />
     <PackageVersion Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.1.0" />
     <!-- Service Defaults (OpenTelemetry, Resilience) -->
+    <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.0.0" />
@@ -56,6 +59,7 @@
     <!-- Email (SendGrid) -->
     <PackageVersion Include="SendGrid" Version="9.29.3" />
     <!-- Web Push Notifications -->
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
     <PackageVersion Include="WebPush" Version="1.0.12" />
     <!-- Image Metadata / EXIF Extraction -->
     <PackageVersion Include="MetadataExtractor" Version="2.8.1" />

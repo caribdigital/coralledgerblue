@@ -10,9 +10,13 @@ public class TenantUser : BaseEntity, IAuditableEntity
     public Guid TenantId { get; private set; }
     public string Email { get; private set; } = string.Empty;
     public string? FullName { get; private set; }
+    public string? PasswordHash { get; private set; }
     public string Role { get; private set; } = "User"; // Admin, Manager, User, Viewer
     public bool IsActive { get; private set; } = true;
     public DateTime? LastLoginAt { get; private set; }
+    public bool EmailConfirmed { get; private set; }
+    public int FailedLoginAttempts { get; private set; }
+    public DateTime? LockedOutUntil { get; private set; }
     
     // Audit fields
     public DateTime CreatedAt { get; set; }
@@ -42,10 +46,49 @@ public class TenantUser : BaseEntity, IAuditableEntity
             FullName = fullName,
             Role = role,
             IsActive = true,
+            EmailConfirmed = false,
+            FailedLoginAttempts = 0,
             CreatedAt = DateTime.UtcNow
         };
         
         return user;
+    }
+    
+    public void SetPassword(string passwordHash)
+    {
+        PasswordHash = passwordHash;
+        ModifiedAt = DateTime.UtcNow;
+    }
+    
+    public void ConfirmEmail()
+    {
+        EmailConfirmed = true;
+        ModifiedAt = DateTime.UtcNow;
+    }
+    
+    public void RecordFailedLogin()
+    {
+        FailedLoginAttempts++;
+        
+        // Lock account after 5 failed attempts for 15 minutes
+        if (FailedLoginAttempts >= 5)
+        {
+            LockedOutUntil = DateTime.UtcNow.AddMinutes(15);
+        }
+        
+        ModifiedAt = DateTime.UtcNow;
+    }
+    
+    public void ResetFailedLoginAttempts()
+    {
+        FailedLoginAttempts = 0;
+        LockedOutUntil = null;
+        ModifiedAt = DateTime.UtcNow;
+    }
+    
+    public bool IsLockedOut()
+    {
+        return LockedOutUntil.HasValue && LockedOutUntil.Value > DateTime.UtcNow;
     }
     
     public void UpdateRole(string role)
@@ -69,5 +112,6 @@ public class TenantUser : BaseEntity, IAuditableEntity
     public void RecordLogin()
     {
         LastLoginAt = DateTime.UtcNow;
+        ResetFailedLoginAttempts();
     }
 }
