@@ -100,6 +100,7 @@ public static class ObservationEndpoints
             Guid id,
             IFormFile file,
             string? caption,
+            ClaimsPrincipal user,
             IMarineDbContext dbContext,
             IBlobStorageService blobStorage,
             CancellationToken ct = default) =>
@@ -112,6 +113,13 @@ public static class ObservationEndpoints
             if (observation is null)
             {
                 return Results.NotFound(new { error = "Observation not found" });
+            }
+
+            // Verify the observation belongs to the authenticated client
+            var clientId = user.FindFirst("ClientId")?.Value;
+            if (observation.ApiClientId != clientId)
+            {
+                return Results.Forbid();
             }
 
             // Validate file
@@ -164,16 +172,20 @@ public static class ObservationEndpoints
             });
         })
         .WithName("UploadObservationPhoto")
-        .WithDescription("Upload a photo for an observation")
+        .WithDescription("Upload a photo for an observation. Requires API key authentication.")
+        .RequireAuthorization()
         .Accepts<IFormFile>("multipart/form-data")
         .Produces(StatusCodes.Status201Created)
         .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized)
+        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .DisableAntiforgery();
 
         // POST /api/observations/{id}/classify-species - AI species classification
         group.MapPost("/{id:guid}/classify-species", async (
             Guid id,
+            ClaimsPrincipal user,
             IMarineDbContext dbContext,
             ISpeciesClassificationService classificationService,
             CancellationToken ct = default) =>
@@ -186,6 +198,13 @@ public static class ObservationEndpoints
             if (observation is null)
             {
                 return Results.NotFound(new { error = "Observation not found" });
+            }
+
+            // Verify the observation belongs to the authenticated client
+            var clientId = user.FindFirst("ClientId")?.Value;
+            if (observation.ApiClientId != clientId)
+            {
+                return Results.Forbid();
             }
 
             if (!observation.Photos.Any())
@@ -247,9 +266,12 @@ public static class ObservationEndpoints
             });
         })
         .WithName("ClassifyObservationSpecies")
-        .WithDescription("Use AI to identify marine species in observation photos")
+        .WithDescription("Use AI to identify marine species in observation photos. Requires API key authentication.")
+        .RequireAuthorization()
         .Produces<object>()
         .Produces(StatusCodes.Status400BadRequest)
+        .Produces(StatusCodes.Status401Unauthorized)
+        .Produces(StatusCodes.Status403Forbidden)
         .Produces(StatusCodes.Status404NotFound)
         .Produces(StatusCodes.Status503ServiceUnavailable);
 
