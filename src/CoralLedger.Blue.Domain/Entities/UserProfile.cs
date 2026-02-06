@@ -7,6 +7,7 @@ public class UserProfile : BaseEntity, IAuditableEntity
 {
     public string CitizenEmail { get; private set; } = string.Empty;
     public string? CitizenName { get; private set; }
+    public Guid? TenantUserId { get; private set; } // Link to authenticated user
     public ObserverTier Tier { get; private set; } = ObserverTier.None;
     public int TotalObservations { get; private set; }
     public int VerifiedObservations { get; private set; }
@@ -19,10 +20,13 @@ public class UserProfile : BaseEntity, IAuditableEntity
     public string? CreatedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
     public string? ModifiedBy { get; set; }
+    
+    // Navigation property
+    public TenantUser? TenantUser { get; private set; }
 
     private UserProfile() { }
 
-    public static UserProfile Create(string citizenEmail, string? citizenName = null)
+    public static UserProfile Create(string citizenEmail, string? citizenName = null, Guid? tenantUserId = null)
     {
         if (string.IsNullOrWhiteSpace(citizenEmail))
             throw new ArgumentException("Citizen email is required", nameof(citizenEmail));
@@ -32,6 +36,7 @@ public class UserProfile : BaseEntity, IAuditableEntity
             Id = Guid.NewGuid(),
             CitizenEmail = citizenEmail,
             CitizenName = citizenName,
+            TenantUserId = tenantUserId,
             Tier = ObserverTier.None,
             TotalObservations = 0,
             VerifiedObservations = 0,
@@ -39,6 +44,12 @@ public class UserProfile : BaseEntity, IAuditableEntity
             AccuracyRate = 0,
             CreatedAt = DateTime.UtcNow
         };
+    }
+    
+    public void LinkToUser(Guid tenantUserId)
+    {
+        TenantUserId = tenantUserId;
+        ModifiedAt = DateTime.UtcNow;
     }
 
     public void IncrementObservations()

@@ -5,6 +5,7 @@ namespace CoralLedger.Blue.Domain.Entities;
 public class UserPoints : BaseEntity, IAuditableEntity
 {
     public string CitizenEmail { get; private set; } = string.Empty;
+    public Guid? TenantUserId { get; private set; } // Link to authenticated user
     public int TotalPoints { get; private set; }
     public int WeeklyPoints { get; private set; }
     public int MonthlyPoints { get; private set; }
@@ -17,10 +18,13 @@ public class UserPoints : BaseEntity, IAuditableEntity
     public string? CreatedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
     public string? ModifiedBy { get; set; }
+    
+    // Navigation property
+    public TenantUser? TenantUser { get; private set; }
 
     private UserPoints() { }
 
-    public static UserPoints Create(string citizenEmail)
+    public static UserPoints Create(string citizenEmail, Guid? tenantUserId = null)
     {
         if (string.IsNullOrWhiteSpace(citizenEmail))
             throw new ArgumentException("Citizen email is required", nameof(citizenEmail));
@@ -29,12 +33,19 @@ public class UserPoints : BaseEntity, IAuditableEntity
         {
             Id = Guid.NewGuid(),
             CitizenEmail = citizenEmail,
+            TenantUserId = tenantUserId,
             TotalPoints = 0,
             WeeklyPoints = 0,
             MonthlyPoints = 0,
             LastPointsEarned = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow
         };
+    }
+    
+    public void LinkToUser(Guid tenantUserId)
+    {
+        TenantUserId = tenantUserId;
+        ModifiedAt = DateTime.UtcNow;
     }
 
     public void AddPoints(int points, DateTime? effectiveDate = null)

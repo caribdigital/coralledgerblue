@@ -5,6 +5,7 @@ namespace CoralLedger.Blue.Domain.Entities;
 public class UserAchievement : BaseEntity, IAuditableEntity
 {
     public string CitizenEmail { get; private set; } = string.Empty;
+    public Guid? TenantUserId { get; private set; } // Link to authenticated user
     public string AchievementKey { get; private set; } = string.Empty;
     public string Title { get; private set; } = string.Empty;
     public string? Description { get; private set; }
@@ -19,6 +20,9 @@ public class UserAchievement : BaseEntity, IAuditableEntity
     public string? CreatedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
     public string? ModifiedBy { get; set; }
+    
+    // Navigation property
+    public TenantUser? TenantUser { get; private set; }
 
     private UserAchievement() { }
 
@@ -28,7 +32,8 @@ public class UserAchievement : BaseEntity, IAuditableEntity
         string title,
         int targetProgress,
         string? description = null,
-        int pointsAwarded = 0)
+        int pointsAwarded = 0,
+        Guid? tenantUserId = null)
     {
         if (string.IsNullOrWhiteSpace(citizenEmail))
             throw new ArgumentException("Citizen email is required", nameof(citizenEmail));
@@ -41,6 +46,7 @@ public class UserAchievement : BaseEntity, IAuditableEntity
         {
             Id = Guid.NewGuid(),
             CitizenEmail = citizenEmail,
+            TenantUserId = tenantUserId,
             AchievementKey = achievementKey,
             Title = title,
             Description = description,
@@ -50,6 +56,12 @@ public class UserAchievement : BaseEntity, IAuditableEntity
             PointsAwarded = pointsAwarded,
             CreatedAt = DateTime.UtcNow
         };
+    }
+    
+    public void LinkToUser(Guid tenantUserId)
+    {
+        TenantUserId = tenantUserId;
+        ModifiedAt = DateTime.UtcNow;
     }
 
     public bool UpdateProgress(int progress)
