@@ -194,7 +194,7 @@ public class OfflineMapManagerTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK, "tile-cache.js should be accessible");
-        content.Should().Contain("fetch(url, { signal: abortSignal }", "tile-cache.js should pass abort signal to fetch calls");
+        content.Should().Contain("fetch(url, { signal: abortSignal })", "tile-cache.js should pass abort signal to fetch calls");
     }
 
     [Fact]

@@ -1048,5 +1048,22 @@ window.leafletMap = {
         offlineControl.addTo(map);
         
         return true;
+    },
+
+    // Abort controller management for download cancellation
+    createAbortController: function() {
+        const controller = new AbortController();
+        window._downloadAbortController = controller;
+        return controller.signal;
+    },
+
+    cancelDownload: function() {
+        if (window._downloadAbortController) {
+            window._downloadAbortController.abort();
+        }
+    },
+
+    cleanupAbortController: function() {
+        delete window._downloadAbortController;
     }
 };
