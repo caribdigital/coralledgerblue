@@ -89,18 +89,18 @@ public class ObservationVerifiedEventHandler : INotificationHandler<ObservationV
         }
 
         // Check for species-specific expert badges
-        var coralObservations = observations.Count(o =>
+        var verifiedBleachingCount = observations.Count(o =>
             o.Type == ObservationType.CoralBleaching && o.Status == ObservationStatus.Approved);
-        if (coralObservations >= 25)
+        if (verifiedBleachingCount >= 25)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.CoralExpert,
                 "Submitted 25+ verified coral observations", cancellationToken);
         }
 
-        // Check for BleachingDetector badge
-        var bleachingObservations = observations
+        // Check for BleachingDetector badge (awarded for first verified bleaching report)
+        var firstBleachingObservation = observations
             .FirstOrDefault(o => o.Type == ObservationType.CoralBleaching && o.Status == ObservationStatus.Approved);
-        if (bleachingObservations != null)
+        if (firstBleachingObservation != null)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.BleachingDetector,
                 "First verified bleaching report", cancellationToken);
