@@ -102,6 +102,22 @@ Authenticate with email and password.
 - Account lockout after 5 failed attempts (15 minutes)
 - Failed login counter reset on successful login
 - Generic error messages to prevent user enumeration
+- Sets HttpOnly authentication cookie for Blazor
+
+#### POST /api/auth/logout
+Logout and clear authentication cookie.
+
+**Request:** No body required
+
+**Response:**
+```json
+200 OK
+```
+
+**Behavior:**
+- Clears the authentication cookie
+- Terminates the user's session
+- Requires no authentication to call
 
 ### Blazor UI
 
@@ -110,17 +126,25 @@ Authenticate with email and password.
 - DataAnnotations-based validation
 - Error handling and loading states
 - Link to registration page
+- Sets authentication cookie on successful login
 
 #### Register.razor (`/register`)
 - Registration form with email, password, and full name
 - Password confirmation validation
 - Email format validation
 - Minimum password length enforcement
+- Sets authentication cookie on successful registration
+
+#### Logout.razor (`/logout`)
+- Automatically calls logout endpoint
+- Clears authentication cookie
+- Redirects to login page
 
 #### LoginDisplay.razor
+- Uses `<AuthorizeView>` component for authentication state
 - Shows user name/email when authenticated
 - Login/Register links when not authenticated
-- Logout functionality
+- Logout link for authenticated users
 
 ## Configuration
 
@@ -262,15 +286,60 @@ public class MyService
 2. **No Password Reset**: Forgot password flow not implemented
 3. **No Refresh Token Storage**: Refresh tokens generated but not persisted
 4. **No OAuth2 External Providers**: Google, Microsoft, GitHub login not implemented
-5. **No Blazor Auth State**: Token storage and AuthenticationStateProvider not implemented
+
+## Blazor Authentication State
+
+### Implementation (✅ Completed)
+
+The application now includes a complete Blazor authentication state implementation with the following features:
+
+#### Cookie-Based Authentication
+- **JwtAuthenticationStateProvider**: Custom authentication state provider that bridges HttpContext authentication to Blazor components
+- **HttpOnly Cookies**: Secure cookie storage prevents XSS attacks
+- **SameSite=Lax**: CSRF protection enabled
+- **Persistent Sessions**: Cookies survive browser restarts
+- **1-hour Expiration**: Matches JWT token lifetime
+
+#### Multi-Scheme Authentication
+The application supports three authentication schemes simultaneously:
+1. **Cookie Authentication** - Default for Blazor pages
+2. **JWT Bearer** - For API calls with Authorization header
+3. **API Key** - For external integrations with X-API-Key header
+
+#### Protected Pages
+The following pages are protected with `[Authorize]` attribute:
+- `/profile` - User profile page
+- `/settings` - Application settings
+- `/admin/alert-rules` - Admin-only page (requires Admin role)
+
+#### Login Flow
+1. User submits login credentials via `/login` page
+2. Server validates credentials and generates JWT token
+3. Server sets HttpOnly cookie with user claims
+4. User is redirected to dashboard or return URL
+5. `LoginDisplay` component shows user name and logout link
+
+#### Logout Flow
+1. User clicks logout link in `LoginDisplay` component
+2. Browser navigates to `/logout` page
+3. Page calls `/api/auth/logout` endpoint
+4. Server clears authentication cookie
+5. User is redirected to login page
+
+### Testing
+All 11 authentication integration tests pass:
+- ✅ User registration with validation
+- ✅ User login with credential verification
+- ✅ Account lockout after failed attempts
+- ✅ JWT token generation and validation
+- ✅ Logout clears authentication cookie
 
 ## Future Enhancements
 
 ### Priority 1
-- [ ] Implement token storage in Blazor (HttpOnly cookies or secure storage)
-- [ ] Add AuthenticationStateProvider for Blazor
 - [ ] Email verification flow
 - [ ] Password reset flow
+- [ ] Token expiration handling with automatic logout
 
 ### Priority 2
 - [ ] OAuth2 external providers (Google, Microsoft, GitHub)

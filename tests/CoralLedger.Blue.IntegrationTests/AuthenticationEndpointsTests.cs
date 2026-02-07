@@ -247,4 +247,42 @@ public class AuthenticationEndpointsTests : IClassFixture<CustomWebApplicationFa
         authResponse.AccessToken.Should().Contain(".");  // JWT has 3 parts separated by dots
         authResponse.AccessToken.Split('.').Should().HaveCount(3);
     }
+
+    [Fact]
+    public async Task Logout_ClearsAuthenticationCookie()
+    {
+        // Arrange - Register and login to get a cookie
+        var email = $"logouttest_{Guid.NewGuid():N}@example.com";
+        var password = "SecurePassword123!";
+
+        var registerRequest = new RegisterRequest(
+            Email: email,
+            Password: password,
+            FullName: "Logout Test User",
+            TenantId: _factory.DefaultTenantId);
+
+        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        // Act - Logout
+        var response = await _client.PostAsync("/api/auth/logout", null);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        // Verify cookie is cleared by checking for Set-Cookie header with the auth cookie name
+        if (response.Headers.TryGetValues("Set-Cookie", out var setCookieHeaders))
+        {
+            var cookieHeaders = setCookieHeaders.ToList();
+            cookieHeaders.Should().NotBeEmpty("Logout should set a cookie header to clear the authentication cookie");
+            
+            // Check that the auth cookie is being cleared (contains the cookie name and has expiry/max-age set)
+            var authCookieHeader = cookieHeaders.FirstOrDefault(h => h.Contains("CoralLedger.Auth"));
+            authCookieHeader.Should().NotBeNull("Response should contain Set-Cookie header for CoralLedger.Auth");
+        }
+        else
+        {
+            // If no Set-Cookie header, the test should fail as logout must clear the cookie
+            Assert.Fail("Expected Set-Cookie header to be present in logout response");
+        }
+    }
 }

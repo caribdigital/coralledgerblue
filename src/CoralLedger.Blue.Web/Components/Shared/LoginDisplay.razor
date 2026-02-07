@@ -1,33 +1,31 @@
-@using CoralLedger.Blue.Application.Common.Interfaces
-@inject ICurrentUser CurrentUser
 @inject NavigationManager NavigationManager
 
-@if (CurrentUser.IsAuthenticated)
-{
-    <div class="login-display">
-        <span class="user-name">
-            <i class="bi bi-person-circle"></i>
-            @CurrentUser.Name ?? CurrentUser.Email
-        </span>
-        <a href="/logout" class="btn-link">
-            <i class="bi bi-box-arrow-right"></i>
-            Logout
-        </a>
-    </div>
-}
-else
-{
-    <div class="login-display">
-        <a href="/login" class="btn-link">
-            <i class="bi bi-box-arrow-in-right"></i>
-            Login
-        </a>
-        <a href="/register" class="btn-link">
-            <i class="bi bi-person-plus"></i>
-            Register
-        </a>
-    </div>
-}
+<AuthorizeView>
+    <Authorized>
+        <nav class="login-display" aria-label="User menu">
+            <span class="user-name">
+                <i class="bi bi-person-circle" aria-hidden="true"></i>
+                @context.User.Identity?.Name ?? context.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+            </span>
+            <a href="/logout" class="btn-link" aria-label="Log out of your account">
+                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                Logout
+            </a>
+        </nav>
+    </Authorized>
+    <NotAuthorized>
+        <nav class="login-display" aria-label="Authentication">
+            <a href="/login" class="btn-link" aria-label="Log in to your account">
+                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                Login
+            </a>
+            <a href="/register" class="btn-link" aria-label="Create a new account">
+                <i class="bi bi-person-plus" aria-hidden="true"></i>
+                Register
+            </a>
+        </nav>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     // This component displays login/logout links based on authentication state

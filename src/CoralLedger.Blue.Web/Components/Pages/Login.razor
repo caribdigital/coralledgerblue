@@ -95,9 +95,7 @@
                 
                 if (authResponse != null)
                 {
-                    // Store the token in session storage
-                    // TODO: Use Blazor's AuthenticationStateProvider to manage authentication
-                    
+                    // Authentication cookie is set by the server
                     // Redirect to return URL or dashboard
                     var redirectUrl = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
                     NavigationManager.NavigateTo(redirectUrl, forceLoad: true);

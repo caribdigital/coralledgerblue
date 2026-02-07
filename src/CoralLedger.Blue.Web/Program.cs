@@ -90,11 +90,22 @@ builder.Services.AddSecurityCors(builder.Configuration);
 // Add HttpContextAccessor for CurrentUserService
 builder.Services.AddHttpContextAccessor();
 
-// Add Authentication (API Key + JWT Bearer)
+// Add Authentication (Cookie for Blazor + API Key + JWT Bearer)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = "MultiScheme";
     options.DefaultChallengeScheme = "MultiScheme";
+})
+.AddCookie(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.Cookie.Name = "CoralLedger.Auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Secure in production (HTTPS)
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.ExpireTimeSpan = TimeSpan.FromHours(1); // Match JWT expiration
+    options.SlidingExpiration = true;
+    options.LoginPath = "/login";
+    options.LogoutPath = "/logout";
 })
 .AddScheme<CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions, CoralLedger.Blue.Web.Security.ApiKeyAuthenticationHandler>(
     CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions.DefaultScheme,
@@ -122,23 +133,36 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 })
-.AddPolicyScheme("MultiScheme", "API Key or JWT", options =>
+.AddPolicyScheme("MultiScheme", "Cookie or API Key or JWT", options =>
 {
     options.ForwardDefaultSelector = context =>
     {
-        // Check if Authorization header contains Bearer token
+        // Check if Authorization header contains Bearer token (for API calls)
         var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
         if (authHeader?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) == true)
         {
             return "Bearer";
         }
         
-        // Otherwise use API Key authentication
-        return CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions.DefaultScheme;
+        // Check for API Key header (for external API integrations)
+        if (context.Request.Headers.ContainsKey("X-API-Key"))
+        {
+            return CoralLedger.Blue.Web.Security.ApiKeyAuthenticationOptions.DefaultScheme;
+        }
+        
+        // Otherwise use Cookie authentication (for Blazor pages)
+        return Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme;
     };
 });
 
 builder.Services.AddAuthorization();
+
+// Add Blazor AuthenticationStateProvider
+builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, 
+    CoralLedger.Blue.Web.Security.JwtAuthenticationStateProvider>();
+
+// Add Cascading Authentication State for Blazor components
+builder.Services.AddCascadingAuthenticationState();
 
 // Add Performance: Response compression and caching
 builder.Services.AddPerformanceCompression();

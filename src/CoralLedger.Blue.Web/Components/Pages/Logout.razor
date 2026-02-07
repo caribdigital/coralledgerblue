@@ -1,0 +1,42 @@
+@page "/logout"
+@using System.Net.Http.Json
+@inject NavigationManager NavigationManager
+@inject IHttpClientFactory HttpClientFactory
+@rendermode InteractiveServer
+
+<PageTitle>Logging out - CoralLedger Blue</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>
+                    <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                    Logging out...
+                </h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Create HttpClient with proper base address for server-side Blazor
+            var httpClient = HttpClientFactory.CreateClient();
+            httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+            // Call logout endpoint to clear authentication cookie
+            await httpClient.PostAsync("/api/auth/logout", null);
+        }
+        catch
+        {
+            // Ignore errors - still redirect to login
+        }
+
+        // Redirect to login page with full page reload to clear state
+        NavigationManager.NavigateTo("/login", forceLoad: true);
+    }
+}
