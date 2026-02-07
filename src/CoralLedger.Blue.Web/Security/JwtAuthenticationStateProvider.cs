@@ -24,12 +24,4 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
         
         return Task.FromResult(new AuthenticationState(user));
     }
-
-    /// <summary>
-    /// Notifies the authentication state has changed (e.g., user logged in or out)
-    /// </summary>
-    public void NotifyAuthenticationStateChanged()
-    {
-        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-    }
 }

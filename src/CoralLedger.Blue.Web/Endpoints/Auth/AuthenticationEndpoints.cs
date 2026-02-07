@@ -243,8 +243,7 @@ public static class AuthenticationEndpoints
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Role, user.Role),
-            new("TenantId", user.TenantId.ToString()),
-            new("AccessToken", accessToken) // Store JWT for API calls
+            new("TenantId", user.TenantId.ToString())
         };
 
         if (!string.IsNullOrEmpty(user.FullName))
