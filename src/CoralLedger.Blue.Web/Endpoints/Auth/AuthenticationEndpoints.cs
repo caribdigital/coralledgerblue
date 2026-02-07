@@ -1,6 +1,9 @@
+using System.Security.Claims;
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Domain.Entities;
 using CoralLedger.Blue.Infrastructure.Data;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,6 +28,15 @@ public static class AuthenticationEndpoints
             .Produces<AuthResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
 
+        group.MapPost("/logout", async (HttpContext httpContext) =>
+            {
+                await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                return Results.Ok();
+            })
+            .WithName("Logout")
+            .WithSummary("Logout and clear authentication cookie")
+            .Produces(StatusCodes.Status200OK);
+
         return app;
     }
 
@@ -33,7 +45,8 @@ public static class AuthenticationEndpoints
         MarineDbContext context,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
-        ITenantContext tenantContext)
+        ITenantContext tenantContext,
+        HttpContext httpContext)
     {
         // Validate input
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
@@ -97,6 +110,9 @@ public static class AuthenticationEndpoints
         var accessToken = jwtTokenService.GenerateAccessToken(user);
         var refreshToken = jwtTokenService.GenerateRefreshToken();
 
+        // Sign in with cookie authentication for Blazor
+        await SignInWithCookie(httpContext, user, accessToken);
+
         return Results.Ok(new AuthResponse(
             accessToken,
             refreshToken,
@@ -112,7 +128,8 @@ public static class AuthenticationEndpoints
         MarineDbContext context,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
-        ITenantContext tenantContext)
+        ITenantContext tenantContext,
+        HttpContext httpContext)
     {
         // Validate input
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
@@ -174,6 +191,9 @@ public static class AuthenticationEndpoints
         var accessToken = jwtTokenService.GenerateAccessToken(user);
         var refreshToken = jwtTokenService.GenerateRefreshToken();
 
+        // Sign in with cookie authentication for Blazor
+        await SignInWithCookie(httpContext, user, accessToken);
+
         return Results.Ok(new AuthResponse(
             accessToken,
             refreshToken,
@@ -210,5 +230,39 @@ public static class AuthenticationEndpoints
         }
 
         return (true, null);
+    }
+
+    /// <summary>
+    /// Signs in the user with cookie authentication
+    /// </summary>
+    private static async Task SignInWithCookie(HttpContext httpContext, TenantUser user, string accessToken)
+    {
+        // Create claims principal from user
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.Role, user.Role),
+            new("TenantId", user.TenantId.ToString()),
+            new("AccessToken", accessToken) // Store JWT for API calls
+        };
+
+        if (!string.IsNullOrEmpty(user.FullName))
+        {
+            claims.Add(new Claim(ClaimTypes.Name, user.FullName));
+        }
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+
+        // Sign in with cookie (HttpOnly, Secure in production)
+        await httpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal,
+            new AuthenticationProperties
+            {
+                IsPersistent = true, // Cookie persists across browser sessions
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1) // Match JWT expiration
+            });
     }
 }
