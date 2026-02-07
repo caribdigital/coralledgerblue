@@ -5,6 +5,7 @@
 @using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserAchievements
 @using CoralLedger.Blue.Domain.Enums
 @using CoralLedger.Blue.Web.Components.Shared
+@using CoralLedger.Blue.Web.Services
 @using MediatR
 
 @inject ICurrentUser CurrentUser
@@ -35,7 +36,7 @@
     {
         <div class="profile-header">
             <div class="profile-avatar-large">
-                @GetInitials()
+                @UserDisplayHelper.GetUserInitials(_profile.CitizenName ?? _profile.CitizenEmail)
             </div>
             <div class="profile-header-info">
                 <h1 class="profile-display-name">@(_profile.CitizenName ?? _profile.CitizenEmail)</h1>
@@ -211,23 +212,6 @@
         {
             _isLoading = false;
         }
-    }
-
-    private string GetInitials()
-    {
-        if (_profile == null) return "?";
-        
-        if (!string.IsNullOrEmpty(_profile.CitizenName))
-        {
-            var parts = _profile.CitizenName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2)
-            {
-                return $"{parts[0][0]}{parts[1][0]}".ToUpper();
-            }
-            return _profile.CitizenName[0].ToString().ToUpper();
-        }
-
-        return _profile.CitizenEmail[0].ToString().ToUpper();
     }
 
     private ObserverTier? GetNextTier(ObserverTier current) => current switch

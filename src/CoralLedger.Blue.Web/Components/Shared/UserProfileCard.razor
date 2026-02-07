@@ -2,6 +2,7 @@
 @using CoralLedger.Blue.Application.Common.Interfaces
 @using CoralLedger.Blue.Domain.Enums
 @using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserProfile
+@using CoralLedger.Blue.Web.Services
 @using MediatR
 
 @inject ICurrentUser CurrentUser
@@ -12,7 +13,7 @@
 {
     <div class="user-profile-card" @onclick="NavigateToProfile">
         <div class="profile-avatar">
-            @GetInitials()
+            @UserDisplayHelper.GetUserInitials(_profile.CitizenName ?? _profile.CitizenEmail)
         </div>
         <div class="profile-info">
             <div class="profile-name">@(_profile.CitizenName ?? _profile.CitizenEmail)</div>
@@ -43,23 +44,6 @@
                 // Silently fail if profile doesn't exist yet
             }
         }
-    }
-
-    private string GetInitials()
-    {
-        if (_profile == null) return "?";
-        
-        if (!string.IsNullOrEmpty(_profile.CitizenName))
-        {
-            var parts = _profile.CitizenName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2)
-            {
-                return $"{parts[0][0]}{parts[1][0]}".ToUpper();
-            }
-            return _profile.CitizenName[0].ToString().ToUpper();
-        }
-
-        return _profile.CitizenEmail[0].ToString().ToUpper();
     }
 
     private void NavigateToProfile()

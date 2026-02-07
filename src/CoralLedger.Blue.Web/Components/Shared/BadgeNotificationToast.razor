@@ -12,11 +12,11 @@
         <div class="badge-toast @(_isVisible ? "show" : "")">
             <div class="toast-glow"></div>
             <div class="badge-toast-icon">
-                @GetBadgeIcon(_currentBadge)
+                @BadgeDisplayHelper.GetBadgeIcon(_currentBadge)
             </div>
             <div class="badge-toast-content">
                 <div class="toast-title">Badge Earned! 🎉</div>
-                <div class="toast-badge-name">@GetBadgeName(_currentBadge)</div>
+                <div class="toast-badge-name">@BadgeDisplayHelper.GetBadgeName(_currentBadge)</div>
                 @if (!string.IsNullOrEmpty(_currentDescription))
                 {
                     <div class="toast-description">@_currentDescription</div>
@@ -94,50 +94,4 @@
         BadgeNotificationService.OnBadgeEarned -= HandleBadgeEarned;
         _dismissTimer?.Dispose();
     }
-
-    private string GetBadgeIcon(BadgeType badge) => badge switch
-    {
-        BadgeType.FirstObservation => "🌊",
-        BadgeType.FirstVerifiedObservation => "✅",
-        BadgeType.TenObservations => "🔟",
-        BadgeType.FiftyObservations => "5️⃣0️⃣",
-        BadgeType.HundredObservations => "💯",
-        BadgeType.SpeciesExpert => "🐠",
-        BadgeType.CoralExpert => "🪸",
-        BadgeType.FishExpert => "🐟",
-        BadgeType.PhotoPro => "📷",
-        BadgeType.AccurateObserver => "🎯",
-        BadgeType.WeeklyContributor => "📅",
-        BadgeType.MonthlyContributor => "🗓️",
-        BadgeType.YearlyContributor => "📆",
-        BadgeType.MPAGuardian => "🛡️",
-        BadgeType.BleachingDetector => "🌡️",
-        BadgeType.DebrisWarrior => "♻️",
-        BadgeType.Helpful => "🤝",
-        BadgeType.Educator => "🎓",
-        _ => "⭐"
-    };
-
-    private string GetBadgeName(BadgeType badge) => badge switch
-    {
-        BadgeType.FirstObservation => "First Observation",
-        BadgeType.FirstVerifiedObservation => "First Verified",
-        BadgeType.TenObservations => "10 Observations",
-        BadgeType.FiftyObservations => "50 Observations",
-        BadgeType.HundredObservations => "100 Observations",
-        BadgeType.SpeciesExpert => "Species Expert",
-        BadgeType.CoralExpert => "Coral Expert",
-        BadgeType.FishExpert => "Fish Expert",
-        BadgeType.PhotoPro => "Photo Pro",
-        BadgeType.AccurateObserver => "Accurate Observer",
-        BadgeType.WeeklyContributor => "Weekly Contributor",
-        BadgeType.MonthlyContributor => "Monthly Contributor",
-        BadgeType.YearlyContributor => "Yearly Contributor",
-        BadgeType.MPAGuardian => "MPA Guardian",
-        BadgeType.BleachingDetector => "Bleaching Detector",
-        BadgeType.DebrisWarrior => "Debris Warrior",
-        BadgeType.Helpful => "Helpful",
-        BadgeType.Educator => "Educator",
-        _ => badge.ToString()
-    };
 }

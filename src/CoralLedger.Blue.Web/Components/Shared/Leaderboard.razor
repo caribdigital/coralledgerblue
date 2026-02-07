@@ -2,6 +2,7 @@
 @using CoralLedger.Blue.Application.Features.Gamification.Queries.GetLeaderboard
 @using CoralLedger.Blue.Application.Common.Interfaces
 @using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Web.Services
 @using MediatR
 
 @inject IMediator Mediator
@@ -50,7 +51,7 @@
                         </div>
                         
                         <div class="entry-avatar">
-                            @GetUserInitials(entry.CitizenName ?? entry.CitizenEmail)
+                            @UserDisplayHelper.GetUserInitials(entry.CitizenName ?? entry.CitizenEmail)
                         </div>
                         
                         <div class="entry-info">
@@ -144,16 +145,4 @@
         3 => "🥉",
         _ => ""
     };
-
-    private string GetUserInitials(string nameOrEmail)
-    {
-        if (string.IsNullOrEmpty(nameOrEmail)) return "?";
-        
-        var parts = nameOrEmail.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length >= 2)
-        {
-            return $"{parts[0][0]}{parts[1][0]}".ToUpper();
-        }
-        return nameOrEmail[0].ToString().ToUpper();
-    }
 }
