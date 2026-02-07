@@ -1,0 +1,67 @@
+@using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserAchievements
+
+<div class="achievement-list" role="list" aria-label="Achievements">
+    @if (Achievements != null && Achievements.Any())
+    {
+        @foreach (var achievement in Achievements)
+        {
+            <div class="achievement-card @(achievement.IsCompleted ? "completed" : "")"
+                 role="listitem"
+                 aria-label="@achievement.Title, @(achievement.IsCompleted ? "completed" : $"{achievement.ProgressPercentage}% complete")">
+                <div class="achievement-header">
+                    <div class="achievement-info">
+                        <div class="achievement-title">
+                            @achievement.Title
+                            @if (achievement.IsCompleted)
+                            {
+                                <i class="bi bi-check-circle-fill text-success" aria-label="Completed"></i>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(achievement.Description))
+                        {
+                            <div class="achievement-description">@achievement.Description</div>
+                        }
+                    </div>
+                    <div class="achievement-points">
+                        <span class="points-value">+@achievement.PointsAwarded</span>
+                        <span class="points-label">pts</span>
+                    </div>
+                </div>
+
+                <div class="achievement-progress">
+                    <div class="progress-bar-container"
+                         role="progressbar"
+                         aria-valuenow="@achievement.CurrentProgress"
+                         aria-valuemin="0"
+                         aria-valuemax="@achievement.TargetProgress"
+                         aria-label="@achievement.Title progress">
+                        <div class="progress-bar" style="width: @(achievement.ProgressPercentage)%"></div>
+                    </div>
+                    <div class="progress-text">
+                        @achievement.CurrentProgress / @achievement.TargetProgress
+                        (@achievement.ProgressPercentage%)
+                    </div>
+                </div>
+
+                @if (achievement.IsCompleted && achievement.CompletedAt != null)
+                {
+                    <div class="achievement-completed-date">
+                        Completed @achievement.CompletedAt.Value.ToString("MMMM dd, yyyy")
+                    </div>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <div class="no-achievements">
+            <i class="bi bi-trophy" aria-hidden="true"></i>
+            <p>No achievements yet. Start observing to earn achievements!</p>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<AchievementDto>? Achievements { get; set; }
+}

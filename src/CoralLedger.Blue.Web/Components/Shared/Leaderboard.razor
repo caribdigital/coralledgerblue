@@ -1,0 +1,160 @@
+@rendermode InteractiveServer
+@using CoralLedger.Blue.Application.Features.Gamification.Queries.GetLeaderboard
+@using CoralLedger.Blue.Application.Common.Interfaces
+@using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Web.Services
+@using MediatR
+
+@inject IMediator Mediator
+@inject ICurrentUser CurrentUser
+
+<div class="leaderboard-component" aria-label="Leaderboard">
+    <div class="leaderboard-tabs" role="tablist" aria-label="Leaderboard time periods">
+        <button class="tab-button @(GetTabClass(LeaderboardPeriod.Weekly))"
+                role="tab"
+                aria-selected="@(_selectedPeriod == LeaderboardPeriod.Weekly)"
+                aria-controls="leaderboard-panel"
+                @onclick="() => SelectPeriod(LeaderboardPeriod.Weekly)">
+            Weekly
+        </button>
+        <button class="tab-button @(GetTabClass(LeaderboardPeriod.Monthly))"
+                role="tab"
+                aria-selected="@(_selectedPeriod == LeaderboardPeriod.Monthly)"
+                aria-controls="leaderboard-panel"
+                @onclick="() => SelectPeriod(LeaderboardPeriod.Monthly)">
+            Monthly
+        </button>
+        <button class="tab-button @(GetTabClass(LeaderboardPeriod.AllTime))"
+                role="tab"
+                aria-selected="@(_selectedPeriod == LeaderboardPeriod.AllTime)"
+                aria-controls="leaderboard-panel"
+                @onclick="() => SelectPeriod(LeaderboardPeriod.AllTime)">
+            All Time
+        </button>
+    </div>
+
+    <div class="leaderboard-content" id="leaderboard-panel" role="tabpanel" aria-label="@_selectedPeriod leaderboard rankings">
+        @if (_isLoading)
+        {
+            <div class="loading-state" aria-busy="true" aria-live="polite">
+                <div class="spinner" aria-hidden="true"></div>
+                <span>Loading leaderboard...</span>
+            </div>
+        }
+        else if (_leaderboard?.Entries != null && _leaderboard.Entries.Any())
+        {
+            <div class="leaderboard-entries" role="list" aria-label="Top 10 rankings">
+                @foreach (var entry in _leaderboard.Entries.Take(10))
+                {
+                    var isCurrentUser = CurrentUser.Email == entry.CitizenEmail;
+                    <div class="leaderboard-entry @(isCurrentUser ? "current-user" : "") @GetRankClass(entry.Rank)"
+                         role="listitem"
+                         aria-current="@(isCurrentUser ? "true" : null)"
+                         aria-label="Rank @entry.Rank: @(entry.CitizenName ?? entry.CitizenEmail), @entry.Points points">
+                        <div class="entry-rank">
+                            @if (entry.Rank <= 3)
+                            {
+                                <span class="rank-medal" aria-label="Rank @entry.Rank">@GetRankMedal(entry.Rank)</span>
+                            }
+                            else
+                            {
+                                <span class="rank-number">@entry.Rank</span>
+                            }
+                        </div>
+
+                        <div class="entry-avatar" aria-hidden="true">
+                            @UserDisplayHelper.GetUserInitials(entry.CitizenName ?? entry.CitizenEmail)
+                        </div>
+
+                        <div class="entry-info">
+                            <div class="entry-name">
+                                @(entry.CitizenName ?? entry.CitizenEmail)
+                                @if (isCurrentUser)
+                                {
+                                    <span class="you-badge" aria-label="This is you">You</span>
+                                }
+                            </div>
+                            <div class="entry-stats">
+                                <span class="tier-badge tier-@(entry.Tier.ToString().ToLower())">
+                                    @entry.Tier
+                                </span>
+                                <span class="verified-count">@entry.VerifiedObservations verified</span>
+                            </div>
+                        </div>
+
+                        <div class="entry-points">
+                            <span class="points-value">@entry.Points</span>
+                            <span class="points-label">pts</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-trophy" aria-hidden="true"></i>
+                <p>No leaderboard data available yet.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public LeaderboardPeriod InitialPeriod { get; set; } = LeaderboardPeriod.Weekly;
+
+    private LeaderboardPeriod _selectedPeriod;
+    private LeaderboardDto? _leaderboard;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _selectedPeriod = InitialPeriod;
+        await LoadLeaderboardAsync();
+    }
+
+    private async Task SelectPeriod(LeaderboardPeriod period)
+    {
+        if (_selectedPeriod == period) return;
+        
+        _selectedPeriod = period;
+        await LoadLeaderboardAsync();
+    }
+
+    private async Task LoadLeaderboardAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            _leaderboard = await Mediator.Send(new GetLeaderboardQuery(_selectedPeriod, PageSize: 10, PageNumber: 1));
+        }
+        catch
+        {
+            _leaderboard = null;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetTabClass(LeaderboardPeriod period) => 
+        _selectedPeriod == period ? "active" : "";
+
+    private string GetRankClass(int rank) => rank switch
+    {
+        1 => "rank-1",
+        2 => "rank-2",
+        3 => "rank-3",
+        _ => ""
+    };
+
+    private string GetRankMedal(int rank) => rank switch
+    {
+        1 => "🥇",
+        2 => "🥈",
+        3 => "🥉",
+        _ => ""
+    };
+}

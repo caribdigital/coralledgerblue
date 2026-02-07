@@ -1,0 +1,253 @@
+@page "/profile"
+@rendermode InteractiveServer
+@using CoralLedger.Blue.Application.Common.Interfaces
+@using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserProfile
+@using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserAchievements
+@using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Web.Components.Shared
+@using CoralLedger.Blue.Web.Services
+@using MediatR
+
+@inject ICurrentUser CurrentUser
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResources> Localizer
+
+<PageTitle>My Profile - CoralLedger Blue</PageTitle>
+
+<div class="profile-page">
+    @if (!CurrentUser.IsAuthenticated)
+    {
+        <div class="auth-required">
+            <i class="bi bi-shield-lock"></i>
+            <h3>Authentication Required</h3>
+            <p>Please log in to view your profile.</p>
+            <a href="/login" class="btn btn-primary">Log In</a>
+        </div>
+    }
+    else if (_isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Loading your profile...</p>
+        </div>
+    }
+    else if (_profile != null)
+    {
+        <div class="profile-header">
+            <div class="profile-avatar-large">
+                @UserDisplayHelper.GetUserInitials(_profile.CitizenName ?? _profile.CitizenEmail)
+            </div>
+            <div class="profile-header-info">
+                <h1 class="profile-display-name">@(_profile.CitizenName ?? _profile.CitizenEmail)</h1>
+                <div class="profile-email">@_profile.CitizenEmail</div>
+                <div class="profile-tier-display">
+                    <span class="tier-badge-large tier-@(_profile.Tier.ToString().ToLower())">
+                        @_profile.Tier Observer
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-binoculars-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">@_profile.TotalObservations</div>
+                    <div class="stat-label">Total Observations</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">@_profile.VerifiedObservations</div>
+                    <div class="stat-label">Verified</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-bullseye"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">@_profile.AccuracyRate.ToString("F1")%</div>
+                    <div class="stat-label">Accuracy Rate</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="bi bi-star-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">@_profile.TotalPoints</div>
+                    <div class="stat-label">Total Points</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2 class="section-title">
+                <i class="bi bi-graph-up"></i>
+                Points Breakdown
+            </h2>
+            <div class="points-breakdown">
+                <div class="points-card">
+                    <div class="points-period">Weekly</div>
+                    <div class="points-amount">@_profile.WeeklyPoints</div>
+                </div>
+                <div class="points-card">
+                    <div class="points-period">Monthly</div>
+                    <div class="points-amount">@_profile.MonthlyPoints</div>
+                </div>
+                <div class="points-card primary">
+                    <div class="points-period">All Time</div>
+                    <div class="points-amount">@_profile.TotalPoints</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2 class="section-title">
+                <i class="bi bi-trophy-fill"></i>
+                Observer Tier Progress
+            </h2>
+            <div class="tier-progress-card">
+                @{
+                    var nextTier = GetNextTier(_profile.Tier);
+                    var (current, target) = GetTierProgress(_profile);
+                }
+                @if (nextTier != null)
+                {
+                    <div class="tier-current">
+                        Current: <strong>@_profile.Tier</strong>
+                    </div>
+                    <div class="tier-progress">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" style="width: @GetProgressPercentage(current, target)%"></div>
+                        </div>
+                        <div class="progress-text">
+                            @current / @target verified observations to @nextTier
+                        </div>
+                    </div>
+                    <div class="tier-requirements">
+                        Next: <strong>@nextTier</strong> - @GetTierRequirements(nextTier.Value)
+                    </div>
+                }
+                else
+                {
+                    <div class="tier-maxed">
+                        🌟 You've reached the highest observer tier! 🌟
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2 class="section-title">
+                <i class="bi bi-award-fill"></i>
+                Earned Badges (@_profile.Badges.Count)
+            </h2>
+            <BadgeGrid Badges="@_profile.Badges" ShowLockedBadges="true" />
+        </div>
+
+        <div class="profile-section">
+            <h2 class="section-title">
+                <i class="bi bi-list-check"></i>
+                Achievements
+            </h2>
+            @if (_achievements != null && _achievements.Any())
+            {
+                <AchievementList Achievements="@_achievements" />
+            }
+            else
+            {
+                <div class="no-achievements">
+                    <p>Loading achievements...</p>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="error-state">
+            <i class="bi bi-exclamation-triangle"></i>
+            <h3>Profile Not Found</h3>
+            <p>Unable to load your profile. Please try again later.</p>
+        </div>
+    }
+</div>
+
+@code {
+    private UserProfileDto? _profile;
+    private List<AchievementDto>? _achievements;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsAuthenticated || string.IsNullOrEmpty(CurrentUser.Email))
+        {
+            _isLoading = false;
+            return;
+        }
+
+        try
+        {
+            var profileTask = Mediator.Send(new GetUserProfileQuery(CurrentUser.Email));
+            var achievementsTask = Mediator.Send(new GetUserAchievementsQuery(CurrentUser.Email, CompletedOnly: false));
+
+            await Task.WhenAll(profileTask, achievementsTask);
+
+            _profile = await profileTask;
+            _achievements = await achievementsTask;
+        }
+        catch
+        {
+            _profile = null;
+            _achievements = null;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private ObserverTier? GetNextTier(ObserverTier current) => current switch
+    {
+        ObserverTier.None => ObserverTier.Bronze,
+        ObserverTier.Bronze => ObserverTier.Silver,
+        ObserverTier.Silver => ObserverTier.Gold,
+        ObserverTier.Gold => null,
+        _ => null
+    };
+
+    private (int current, int target) GetTierProgress(UserProfileDto profile)
+    {
+        var nextTier = GetNextTier(profile.Tier);
+        if (nextTier == null) return (profile.VerifiedObservations, profile.VerifiedObservations);
+
+        return nextTier switch
+        {
+            ObserverTier.Bronze => (profile.VerifiedObservations, 10),
+            ObserverTier.Silver => (profile.VerifiedObservations, 50),
+            ObserverTier.Gold => (profile.VerifiedObservations, 100),
+            _ => (0, 1)
+        };
+    }
+
+    private double GetProgressPercentage(int current, int target)
+    {
+        if (target == 0) return 100;
+        return Math.Min(100, (double)current / target * 100);
+    }
+
+    private string GetTierRequirements(ObserverTier tier) => tier switch
+    {
+        ObserverTier.Bronze => "10+ verified, 70%+ accuracy",
+        ObserverTier.Silver => "50+ verified, 80%+ accuracy",
+        ObserverTier.Gold => "100+ verified, 90%+ accuracy",
+        _ => ""
+    };
+}

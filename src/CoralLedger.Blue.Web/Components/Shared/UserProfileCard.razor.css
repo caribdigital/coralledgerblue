@@ -1,0 +1,116 @@
+.user-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Reset button styles */
+    font-family: inherit;
+    font-size: inherit;
+    text-align: left;
+    color: inherit;
+}
+
+.user-profile-card:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.profile-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.profile-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-tier {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 12px;
+}
+
+.tier-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tier-badge.tier-bronze {
+    background: rgba(205, 127, 50, 0.2);
+    color: #cd7f32;
+}
+
+.tier-badge.tier-silver {
+    background: rgba(192, 192, 192, 0.2);
+    color: #c0c0c0;
+}
+
+.tier-badge.tier-gold {
+    background: rgba(255, 215, 0, 0.2);
+    color: #ffd700;
+}
+
+.tier-badge.tier-none {
+    background: rgba(128, 128, 128, 0.2);
+    color: #808080;
+}
+
+.profile-points {
+    color: var(--color-text-muted);
+}
+
+.user-profile-card i {
+    color: var(--color-text-muted);
+    font-size: 14px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .user-profile-card {
+        padding: 0.4rem 0.6rem;
+    }
+
+    .profile-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .profile-name {
+        font-size: 13px;
+    }
+
+    .profile-tier {
+        font-size: 11px;
+    }
+}

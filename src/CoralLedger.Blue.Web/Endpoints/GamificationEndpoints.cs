@@ -4,6 +4,7 @@ using CoralLedger.Blue.Application.Features.Gamification.Queries.GetLeaderboard;
 using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserAchievements;
 using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserProfile;
 using CoralLedger.Blue.Domain.Enums;
+using CoralLedger.Blue.Web.Services;
 using MediatR;
 
 namespace CoralLedger.Blue.Web.Endpoints;
@@ -86,9 +87,9 @@ public static class GamificationEndpoints
             var badges = Enum.GetValues<BadgeType>()
                 .Select(b => new BadgeDefinitionDto(
                     b,
-                    b.ToString(),
-                    GetBadgeDescription(b),
-                    GetBadgeRequirement(b)))
+                    BadgeDisplayHelper.GetBadgeName(b),
+                    BadgeDisplayHelper.GetBadgeDescription(b),
+                    BadgeDisplayHelper.GetBadgeRequirement(b)))
                 .ToList();
 
             return Results.Ok(badges);
@@ -173,52 +174,6 @@ public static class GamificationEndpoints
 
         return endpoints;
     }
-
-    private static string GetBadgeDescription(BadgeType badge) => badge switch
-    {
-        BadgeType.FirstObservation => "Submitted your first marine observation",
-        BadgeType.FirstVerifiedObservation => "Had your first observation verified by moderators",
-        BadgeType.TenObservations => "Submitted 10 marine observations",
-        BadgeType.FiftyObservations => "Submitted 50 marine observations",
-        BadgeType.HundredObservations => "Submitted 100 marine observations",
-        BadgeType.SpeciesExpert => "Identified multiple species with high accuracy",
-        BadgeType.CoralExpert => "Specialized knowledge in coral identification",
-        BadgeType.FishExpert => "Specialized knowledge in fish identification",
-        BadgeType.PhotoPro => "Submitted high-quality photos consistently",
-        BadgeType.AccurateObserver => "Maintained 90%+ observation accuracy",
-        BadgeType.WeeklyContributor => "Contributed observations every week for a month",
-        BadgeType.MonthlyContributor => "Contributed observations every month for a year",
-        BadgeType.YearlyContributor => "Active contributor for over a year",
-        BadgeType.MPAGuardian => "Frequent contributor to MPA monitoring",
-        BadgeType.BleachingDetector => "Reported coral bleaching events",
-        BadgeType.DebrisWarrior => "Reported marine debris consistently",
-        BadgeType.Helpful => "Helped other users with feedback and guidance",
-        BadgeType.Educator => "Contributed educational content or outreach",
-        _ => "Special achievement badge"
-    };
-
-    private static string GetBadgeRequirement(BadgeType badge) => badge switch
-    {
-        BadgeType.FirstObservation => "Submit 1 observation",
-        BadgeType.FirstVerifiedObservation => "Get 1 observation verified",
-        BadgeType.TenObservations => "Submit 10 observations",
-        BadgeType.FiftyObservations => "Submit 50 observations",
-        BadgeType.HundredObservations => "Submit 100 observations",
-        BadgeType.SpeciesExpert => "Identify 20+ unique species correctly",
-        BadgeType.CoralExpert => "Submit 25+ verified coral observations",
-        BadgeType.FishExpert => "Submit 25+ verified fish observations",
-        BadgeType.PhotoPro => "Upload 50+ high-quality photos",
-        BadgeType.AccurateObserver => "Maintain 90%+ accuracy with 20+ observations",
-        BadgeType.WeeklyContributor => "Submit observations for 4 consecutive weeks",
-        BadgeType.MonthlyContributor => "Submit observations for 12 consecutive months",
-        BadgeType.YearlyContributor => "Stay active for 365+ days",
-        BadgeType.MPAGuardian => "Submit 50+ observations in MPAs",
-        BadgeType.BleachingDetector => "Report 5+ bleaching events",
-        BadgeType.DebrisWarrior => "Report 10+ debris incidents",
-        BadgeType.Helpful => "Awarded by moderators for community support",
-        BadgeType.Educator => "Awarded by moderators for educational contributions",
-        _ => "Special requirement"
-    };
 }
 
 /// <summary>

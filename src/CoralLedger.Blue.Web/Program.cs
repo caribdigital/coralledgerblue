@@ -80,6 +80,9 @@ builder.Services.AddScoped<IAlertHubContext, AlertHubContext>();
 // Add Toast notification service
 builder.Services.AddScoped<IToastService, ToastService>();
 
+// Add Badge notification service
+builder.Services.AddScoped<IBadgeNotificationService, BadgeNotificationService>();
+
 // Add Security: Rate limiting and CORS
 builder.Services.AddSecurityRateLimiting();
 builder.Services.AddSecurityCors(builder.Configuration);

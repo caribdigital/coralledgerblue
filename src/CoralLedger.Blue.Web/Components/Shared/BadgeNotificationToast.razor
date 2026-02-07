@@ -1,0 +1,103 @@
+@rendermode InteractiveServer
+@using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Web.Services
+
+@inject IBadgeNotificationService BadgeNotificationService
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<div class="badge-toast-container" aria-live="polite" aria-atomic="true">
+    @if (_showToast)
+    {
+        <div class="badge-toast @(_isVisible ? "show" : "")"
+             role="alert"
+             aria-label="Badge earned notification">
+            <div class="toast-glow" aria-hidden="true"></div>
+            <div class="badge-toast-icon" aria-hidden="true">
+                @BadgeDisplayHelper.GetBadgeIcon(_currentBadge)
+            </div>
+            <div class="badge-toast-content">
+                <div class="toast-title">Badge Earned! 🎉</div>
+                <div class="toast-badge-name">@BadgeDisplayHelper.GetBadgeName(_currentBadge)</div>
+                @if (!string.IsNullOrEmpty(_currentDescription))
+                {
+                    <div class="toast-description">@_currentDescription</div>
+                }
+            </div>
+            <div class="badge-toast-actions">
+                <button class="toast-action-btn"
+                        @onclick="ViewProfile"
+                        aria-label="View your profile to see this badge">
+                    View Profile
+                </button>
+                <button class="toast-close-btn"
+                        @onclick="DismissToast"
+                        aria-label="Dismiss notification">
+                    <i class="bi bi-x" aria-hidden="true"></i>
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _showToast;
+    private bool _isVisible;
+    private BadgeType _currentBadge;
+    private string? _currentDescription;
+    private Timer? _dismissTimer;
+
+    protected override void OnInitialized()
+    {
+        BadgeNotificationService.OnBadgeEarned += HandleBadgeEarned;
+    }
+
+    private async void HandleBadgeEarned(BadgeType badgeType, string description)
+    {
+        _currentBadge = badgeType;
+        _currentDescription = description;
+        _showToast = true;
+        
+        await InvokeAsync(StateHasChanged);
+        
+        // Trigger animation
+        await Task.Delay(50);
+        _isVisible = true;
+        await InvokeAsync(StateHasChanged);
+
+        // Auto-dismiss after 8 seconds
+        _dismissTimer?.Dispose();
+        _dismissTimer = new Timer(_ =>
+        {
+            _ = DismissToastAsync();
+        }, null, 8000, Timeout.Infinite);
+    }
+
+    private async Task DismissToastAsync()
+    {
+        _isVisible = false;
+        await InvokeAsync(StateHasChanged);
+        
+        await Task.Delay(300); // Wait for animation
+        
+        _showToast = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void DismissToast()
+    {
+        _ = DismissToastAsync();
+    }
+
+    private void ViewProfile()
+    {
+        DismissToast();
+        Navigation.NavigateTo("/profile");
+    }
+
+    public void Dispose()
+    {
+        BadgeNotificationService.OnBadgeEarned -= HandleBadgeEarned;
+        _dismissTimer?.Dispose();
+    }
+}
