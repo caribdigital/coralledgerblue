@@ -6,12 +6,14 @@
 @inject NavigationManager Navigation
 @implements IDisposable
 
-<div class="badge-toast-container">
+<div class="badge-toast-container" aria-live="polite" aria-atomic="true">
     @if (_showToast)
     {
-        <div class="badge-toast @(_isVisible ? "show" : "")">
-            <div class="toast-glow"></div>
-            <div class="badge-toast-icon">
+        <div class="badge-toast @(_isVisible ? "show" : "")"
+             role="alert"
+             aria-label="Badge earned notification">
+            <div class="toast-glow" aria-hidden="true"></div>
+            <div class="badge-toast-icon" aria-hidden="true">
                 @BadgeDisplayHelper.GetBadgeIcon(_currentBadge)
             </div>
             <div class="badge-toast-content">
@@ -23,11 +25,15 @@
                 }
             </div>
             <div class="badge-toast-actions">
-                <button class="toast-action-btn" @onclick="ViewProfile">
+                <button class="toast-action-btn"
+                        @onclick="ViewProfile"
+                        aria-label="View your profile to see this badge">
                     View Profile
                 </button>
-                <button class="toast-close-btn" @onclick="DismissToast">
-                    <i class="bi bi-x"></i>
+                <button class="toast-close-btn"
+                        @onclick="DismissToast"
+                        aria-label="Dismiss notification">
+                    <i class="bi bi-x" aria-hidden="true"></i>
                 </button>
             </div>
         </div>

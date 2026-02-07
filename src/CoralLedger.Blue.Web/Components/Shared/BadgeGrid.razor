@@ -2,32 +2,52 @@
 @using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserProfile
 @using CoralLedger.Blue.Web.Services
 
-<div class="badge-grid">
-    @if (Badges != null && Badges.Any())
+<div class="badge-grid" role="list" aria-label="Badges">
+    @if (Badges == null)
+    {
+        <div class="loading-state" aria-busy="true">
+            <div class="spinner"></div>
+            <span>Loading badges...</span>
+        </div>
+    }
+    else
     {
         @foreach (var badge in Badges)
         {
-            <div class="badge-card earned @(IsNewlyEarned(badge) ? "newly-earned" : "")" 
+            <div class="badge-card earned @(IsNewlyEarned(badge) ? "newly-earned" : "")"
+                 role="listitem"
+                 aria-label="@BadgeDisplayHelper.GetBadgeName(badge.BadgeType) badge, earned @badge.EarnedAt.ToString("MMMM dd, yyyy")"
                  title="@BadgeDisplayHelper.GetBadgeDescription(badge.BadgeType)">
-                <div class="badge-icon">
+                <div class="badge-icon" aria-hidden="true">
                     @BadgeDisplayHelper.GetBadgeIcon(badge.BadgeType)
                 </div>
                 <div class="badge-name">@BadgeDisplayHelper.GetBadgeName(badge.BadgeType)</div>
                 <div class="badge-earned-date">@badge.EarnedAt.ToString("MMM dd, yyyy")</div>
             </div>
         }
-    }
-    
-    @if (ShowLockedBadges)
-    {
-        @foreach (var badgeType in GetLockedBadges())
+
+        @if (ShowLockedBadges)
         {
-            <div class="badge-card locked" title="@BadgeDisplayHelper.GetBadgeRequirement(badgeType)">
-                <div class="badge-icon">
-                    <i class="bi bi-lock-fill"></i>
+            @foreach (var badgeType in GetLockedBadges())
+            {
+                <div class="badge-card locked"
+                     role="listitem"
+                     aria-label="@BadgeDisplayHelper.GetBadgeName(badgeType) badge, locked"
+                     title="@BadgeDisplayHelper.GetBadgeRequirement(badgeType)">
+                    <div class="badge-icon" aria-hidden="true">
+                        <i class="bi bi-lock-fill"></i>
+                    </div>
+                    <div class="badge-name">@BadgeDisplayHelper.GetBadgeName(badgeType)</div>
+                    <div class="badge-requirement">@BadgeDisplayHelper.GetBadgeRequirement(badgeType)</div>
                 </div>
-                <div class="badge-name">@BadgeDisplayHelper.GetBadgeName(badgeType)</div>
-                <div class="badge-requirement">@BadgeDisplayHelper.GetBadgeRequirement(badgeType)</div>
+            }
+        }
+
+        @if (!Badges.Any() && !ShowLockedBadges)
+        {
+            <div class="empty-state">
+                <i class="bi bi-award" aria-hidden="true"></i>
+                <p>No badges earned yet. Start observing to earn badges!</p>
             </div>
         }
     }

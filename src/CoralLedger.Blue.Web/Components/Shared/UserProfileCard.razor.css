@@ -8,6 +8,11 @@
     cursor: pointer;
     transition: all 0.2s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Reset button styles */
+    font-family: inherit;
+    font-size: inherit;
+    text-align: left;
+    color: inherit;
 }
 
 .user-profile-card:hover {

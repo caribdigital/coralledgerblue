@@ -8,58 +8,70 @@
 @inject IMediator Mediator
 @inject ICurrentUser CurrentUser
 
-<div class="leaderboard-component">
-    <div class="leaderboard-tabs">
-        <button class="tab-button @(GetTabClass(LeaderboardPeriod.Weekly))" 
+<div class="leaderboard-component" aria-label="Leaderboard">
+    <div class="leaderboard-tabs" role="tablist" aria-label="Leaderboard time periods">
+        <button class="tab-button @(GetTabClass(LeaderboardPeriod.Weekly))"
+                role="tab"
+                aria-selected="@(_selectedPeriod == LeaderboardPeriod.Weekly)"
+                aria-controls="leaderboard-panel"
                 @onclick="() => SelectPeriod(LeaderboardPeriod.Weekly)">
             Weekly
         </button>
-        <button class="tab-button @(GetTabClass(LeaderboardPeriod.Monthly))" 
+        <button class="tab-button @(GetTabClass(LeaderboardPeriod.Monthly))"
+                role="tab"
+                aria-selected="@(_selectedPeriod == LeaderboardPeriod.Monthly)"
+                aria-controls="leaderboard-panel"
                 @onclick="() => SelectPeriod(LeaderboardPeriod.Monthly)">
             Monthly
         </button>
-        <button class="tab-button @(GetTabClass(LeaderboardPeriod.AllTime))" 
+        <button class="tab-button @(GetTabClass(LeaderboardPeriod.AllTime))"
+                role="tab"
+                aria-selected="@(_selectedPeriod == LeaderboardPeriod.AllTime)"
+                aria-controls="leaderboard-panel"
                 @onclick="() => SelectPeriod(LeaderboardPeriod.AllTime)">
             All Time
         </button>
     </div>
 
-    <div class="leaderboard-content">
+    <div class="leaderboard-content" id="leaderboard-panel" role="tabpanel" aria-label="@_selectedPeriod leaderboard rankings">
         @if (_isLoading)
         {
-            <div class="loading-state">
-                <div class="spinner"></div>
+            <div class="loading-state" aria-busy="true" aria-live="polite">
+                <div class="spinner" aria-hidden="true"></div>
                 <span>Loading leaderboard...</span>
             </div>
         }
         else if (_leaderboard?.Entries != null && _leaderboard.Entries.Any())
         {
-            <div class="leaderboard-entries">
+            <div class="leaderboard-entries" role="list" aria-label="Top 10 rankings">
                 @foreach (var entry in _leaderboard.Entries.Take(10))
                 {
                     var isCurrentUser = CurrentUser.Email == entry.CitizenEmail;
-                    <div class="leaderboard-entry @(isCurrentUser ? "current-user" : "") @GetRankClass(entry.Rank)">
+                    <div class="leaderboard-entry @(isCurrentUser ? "current-user" : "") @GetRankClass(entry.Rank)"
+                         role="listitem"
+                         aria-current="@(isCurrentUser ? "true" : null)"
+                         aria-label="Rank @entry.Rank: @(entry.CitizenName ?? entry.CitizenEmail), @entry.Points points">
                         <div class="entry-rank">
                             @if (entry.Rank <= 3)
                             {
-                                <span class="rank-medal">@GetRankMedal(entry.Rank)</span>
+                                <span class="rank-medal" aria-label="Rank @entry.Rank">@GetRankMedal(entry.Rank)</span>
                             }
                             else
                             {
                                 <span class="rank-number">@entry.Rank</span>
                             }
                         </div>
-                        
-                        <div class="entry-avatar">
+
+                        <div class="entry-avatar" aria-hidden="true">
                             @UserDisplayHelper.GetUserInitials(entry.CitizenName ?? entry.CitizenEmail)
                         </div>
-                        
+
                         <div class="entry-info">
                             <div class="entry-name">
                                 @(entry.CitizenName ?? entry.CitizenEmail)
                                 @if (isCurrentUser)
                                 {
-                                    <span class="you-badge">You</span>
+                                    <span class="you-badge" aria-label="This is you">You</span>
                                 }
                             </div>
                             <div class="entry-stats">
@@ -69,7 +81,7 @@
                                 <span class="verified-count">@entry.VerifiedObservations verified</span>
                             </div>
                         </div>
-                        
+
                         <div class="entry-points">
                             <span class="points-value">@entry.Points</span>
                             <span class="points-label">pts</span>
@@ -81,7 +93,7 @@
         else
         {
             <div class="empty-state">
-                <i class="bi bi-trophy"></i>
+                <i class="bi bi-trophy" aria-hidden="true"></i>
                 <p>No leaderboard data available yet.</p>
             </div>
         }

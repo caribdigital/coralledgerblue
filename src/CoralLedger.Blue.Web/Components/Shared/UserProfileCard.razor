@@ -11,8 +11,10 @@
 
 @if (CurrentUser.IsAuthenticated && _profile != null)
 {
-    <div class="user-profile-card" @onclick="NavigateToProfile">
-        <div class="profile-avatar">
+    <button class="user-profile-card"
+            @onclick="NavigateToProfile"
+            aria-label="View your profile: @(_profile.CitizenName ?? _profile.CitizenEmail), @_profile.Tier tier, @_profile.TotalPoints points">
+        <div class="profile-avatar" aria-hidden="true">
             @UserDisplayHelper.GetUserInitials(_profile.CitizenName ?? _profile.CitizenEmail)
         </div>
         <div class="profile-info">
@@ -24,8 +26,8 @@
                 <span class="profile-points">@_profile.TotalPoints pts</span>
             </div>
         </div>
-        <i class="bi bi-chevron-down"></i>
-    </div>
+        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </button>
 }
 
 @code {
