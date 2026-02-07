@@ -40,9 +40,11 @@ public static class AuthenticationEndpoints
         group.MapPost("/send-verification-email", SendVerificationEmail)
             .WithName("SendVerificationEmail")
             .WithSummary("Send or resend email verification link")
+            .RequireRateLimiting(CoralLedger.Blue.Web.Security.SecurityConfiguration.EmailRateLimiterPolicy)
             .Produces(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-            .Produces<ProblemDetails>(StatusCodes.Status404NotFound);
+            .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status429TooManyRequests);
 
         group.MapPost("/verify-email", VerifyEmail)
             .WithName("VerifyEmail")

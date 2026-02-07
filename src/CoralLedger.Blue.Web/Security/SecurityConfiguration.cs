@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.Extensions.Hosting;
 
 namespace CoralLedger.Blue.Web.Security;
 
@@ -13,12 +14,16 @@ public static class SecurityConfiguration
     public const string DefaultRateLimiterPolicy = "default";
     public const string ApiRateLimiterPolicy = "api";
     public const string StrictRateLimiterPolicy = "strict";
+    public const string EmailRateLimiterPolicy = "email";
 
     /// <summary>
     /// Configure rate limiting policies
     /// </summary>
-    public static IServiceCollection AddSecurityRateLimiting(this IServiceCollection services)
+    public static IServiceCollection AddSecurityRateLimiting(this IServiceCollection services, IHostEnvironment? environment = null)
     {
+        // Use relaxed limits in Testing environment to avoid test interference
+        var isTesting = environment?.EnvironmentName == "Testing";
+
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -58,6 +63,19 @@ public static class SecurityConfiguration
                         Window = TimeSpan.FromMinutes(1),
                         QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         QueueLimit = 2
+                    }));
+
+            // Email policy: 3 requests per 15 minutes per IP (for email sending endpoints)
+            // Relaxed to 100 in Testing environment to avoid test interference
+            options.AddPolicy(EmailRateLimiterPolicy, context =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: GetClientIp(context),
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = isTesting ? 100 : 3,
+                        Window = TimeSpan.FromMinutes(isTesting ? 1 : 15),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0
                     }));
 
             // Global limiter as fallback

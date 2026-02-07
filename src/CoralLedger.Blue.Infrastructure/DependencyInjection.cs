@@ -328,6 +328,17 @@ public static class DependencyInjection
                 .WithIdentity("MonthlyReportJob-Trigger")
                 .WithDescription("Runs on the 1st of each month at 8 AM UTC to generate monthly MPA summary report")
                 .WithCronSchedule("0 0 8 1 * ?")); // 1st of every month at 8:00 AM UTC
+
+            // ExpiredTokenCleanupJob - cleans up expired email verification tokens
+            q.AddJob<ExpiredTokenCleanupJob>(opts => opts
+                .WithIdentity(ExpiredTokenCleanupJob.Key)
+                .StoreDurably());
+
+            q.AddTrigger(opts => opts
+                .ForJob(ExpiredTokenCleanupJob.Key)
+                .WithIdentity("ExpiredTokenCleanupJob-DailyTrigger")
+                .WithDescription("Runs daily at 3 AM UTC to clean up expired verification tokens")
+                .WithCronSchedule("0 0 3 * * ?")); // 3:00 AM UTC daily
         });
 
         // Add Quartz as a hosted service
