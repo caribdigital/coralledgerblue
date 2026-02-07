@@ -1,0 +1,143 @@
+@rendermode InteractiveServer
+@using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Web.Services
+
+@inject IBadgeNotificationService BadgeNotificationService
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<div class="badge-toast-container">
+    @if (_showToast)
+    {
+        <div class="badge-toast @(_isVisible ? "show" : "")">
+            <div class="toast-glow"></div>
+            <div class="badge-toast-icon">
+                @GetBadgeIcon(_currentBadge)
+            </div>
+            <div class="badge-toast-content">
+                <div class="toast-title">Badge Earned! 🎉</div>
+                <div class="toast-badge-name">@GetBadgeName(_currentBadge)</div>
+                @if (!string.IsNullOrEmpty(_currentDescription))
+                {
+                    <div class="toast-description">@_currentDescription</div>
+                }
+            </div>
+            <div class="badge-toast-actions">
+                <button class="toast-action-btn" @onclick="ViewProfile">
+                    View Profile
+                </button>
+                <button class="toast-close-btn" @onclick="DismissToast">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _showToast;
+    private bool _isVisible;
+    private BadgeType _currentBadge;
+    private string? _currentDescription;
+    private Timer? _dismissTimer;
+
+    protected override void OnInitialized()
+    {
+        BadgeNotificationService.OnBadgeEarned += HandleBadgeEarned;
+    }
+
+    private async void HandleBadgeEarned(BadgeType badgeType, string description)
+    {
+        _currentBadge = badgeType;
+        _currentDescription = description;
+        _showToast = true;
+        
+        await InvokeAsync(StateHasChanged);
+        
+        // Trigger animation
+        await Task.Delay(50);
+        _isVisible = true;
+        await InvokeAsync(StateHasChanged);
+
+        // Auto-dismiss after 8 seconds
+        _dismissTimer?.Dispose();
+        _dismissTimer = new Timer(_ =>
+        {
+            _ = DismissToastAsync();
+        }, null, 8000, Timeout.Infinite);
+    }
+
+    private async Task DismissToastAsync()
+    {
+        _isVisible = false;
+        await InvokeAsync(StateHasChanged);
+        
+        await Task.Delay(300); // Wait for animation
+        
+        _showToast = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void DismissToast()
+    {
+        _ = DismissToastAsync();
+    }
+
+    private void ViewProfile()
+    {
+        DismissToast();
+        Navigation.NavigateTo("/profile");
+    }
+
+    public void Dispose()
+    {
+        BadgeNotificationService.OnBadgeEarned -= HandleBadgeEarned;
+        _dismissTimer?.Dispose();
+    }
+
+    private string GetBadgeIcon(BadgeType badge) => badge switch
+    {
+        BadgeType.FirstObservation => "🌊",
+        BadgeType.FirstVerifiedObservation => "✅",
+        BadgeType.TenObservations => "🔟",
+        BadgeType.FiftyObservations => "5️⃣0️⃣",
+        BadgeType.HundredObservations => "💯",
+        BadgeType.SpeciesExpert => "🐠",
+        BadgeType.CoralExpert => "🪸",
+        BadgeType.FishExpert => "🐟",
+        BadgeType.PhotoPro => "📷",
+        BadgeType.AccurateObserver => "🎯",
+        BadgeType.WeeklyContributor => "📅",
+        BadgeType.MonthlyContributor => "🗓️",
+        BadgeType.YearlyContributor => "📆",
+        BadgeType.MPAGuardian => "🛡️",
+        BadgeType.BleachingDetector => "🌡️",
+        BadgeType.DebrisWarrior => "♻️",
+        BadgeType.Helpful => "🤝",
+        BadgeType.Educator => "🎓",
+        _ => "⭐"
+    };
+
+    private string GetBadgeName(BadgeType badge) => badge switch
+    {
+        BadgeType.FirstObservation => "First Observation",
+        BadgeType.FirstVerifiedObservation => "First Verified",
+        BadgeType.TenObservations => "10 Observations",
+        BadgeType.FiftyObservations => "50 Observations",
+        BadgeType.HundredObservations => "100 Observations",
+        BadgeType.SpeciesExpert => "Species Expert",
+        BadgeType.CoralExpert => "Coral Expert",
+        BadgeType.FishExpert => "Fish Expert",
+        BadgeType.PhotoPro => "Photo Pro",
+        BadgeType.AccurateObserver => "Accurate Observer",
+        BadgeType.WeeklyContributor => "Weekly Contributor",
+        BadgeType.MonthlyContributor => "Monthly Contributor",
+        BadgeType.YearlyContributor => "Yearly Contributor",
+        BadgeType.MPAGuardian => "MPA Guardian",
+        BadgeType.BleachingDetector => "Bleaching Detector",
+        BadgeType.DebrisWarrior => "Debris Warrior",
+        BadgeType.Helpful => "Helpful",
+        BadgeType.Educator => "Educator",
+        _ => badge.ToString()
+    };
+}

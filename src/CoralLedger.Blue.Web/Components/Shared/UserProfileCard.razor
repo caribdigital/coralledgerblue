@@ -1,0 +1,74 @@
+@rendermode InteractiveServer
+@using CoralLedger.Blue.Application.Common.Interfaces
+@using CoralLedger.Blue.Domain.Enums
+@using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserProfile
+@using MediatR
+
+@inject ICurrentUser CurrentUser
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+@if (CurrentUser.IsAuthenticated && _profile != null)
+{
+    <div class="user-profile-card" @onclick="NavigateToProfile">
+        <div class="profile-avatar">
+            @GetInitials()
+        </div>
+        <div class="profile-info">
+            <div class="profile-name">@(_profile.CitizenName ?? _profile.CitizenEmail)</div>
+            <div class="profile-tier">
+                <span class="tier-badge tier-@(_profile.Tier.ToString().ToLower())">
+                    @_profile.Tier
+                </span>
+                <span class="profile-points">@_profile.TotalPoints pts</span>
+            </div>
+        </div>
+        <i class="bi bi-chevron-down"></i>
+    </div>
+}
+
+@code {
+    private UserProfileDto? _profile;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CurrentUser.IsAuthenticated && !string.IsNullOrEmpty(CurrentUser.Email))
+        {
+            try
+            {
+                _profile = await Mediator.Send(new GetUserProfileQuery(CurrentUser.Email));
+            }
+            catch
+            {
+                // Silently fail if profile doesn't exist yet
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+    }
+
+    private string GetInitials()
+    {
+        if (_profile == null) return "?";
+        
+        if (!string.IsNullOrEmpty(_profile.CitizenName))
+        {
+            var parts = _profile.CitizenName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2)
+            {
+                return $"{parts[0][0]}{parts[1][0]}".ToUpper();
+            }
+            return _profile.CitizenName[0].ToString().ToUpper();
+        }
+
+        return _profile.CitizenEmail[0].ToString().ToUpper();
+    }
+
+    private void NavigateToProfile()
+    {
+        Navigation.NavigateTo("/profile");
+    }
+}
