@@ -1,0 +1,67 @@
+using CoralLedger.Blue.Domain.Common;
+
+namespace CoralLedger.Blue.Domain.Entities;
+
+/// <summary>
+/// Represents an email verification token for confirming user email addresses
+/// </summary>
+public class EmailVerificationToken : BaseEntity
+{
+    public Guid UserId { get; private set; }
+    public string Token { get; private set; } = string.Empty;
+    public DateTime ExpiresAt { get; private set; }
+    public bool IsUsed { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public DateTime? UsedAt { get; private set; }
+    
+    // Navigation property
+    public TenantUser User { get; private set; } = null!;
+    
+    private EmailVerificationToken() { }
+    
+    public static EmailVerificationToken Create(Guid userId, int expirationHours = 48)
+    {
+        var token = new EmailVerificationToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Token = GenerateSecureToken(),
+            ExpiresAt = DateTime.UtcNow.AddHours(expirationHours),
+            IsUsed = false,
+            CreatedAt = DateTime.UtcNow
+        };
+        
+        return token;
+    }
+    
+    public bool IsValid()
+    {
+        return !IsUsed && DateTime.UtcNow < ExpiresAt;
+    }
+    
+    public void MarkAsUsed()
+    {
+        if (IsUsed)
+            throw new InvalidOperationException("Token has already been used");
+            
+        if (DateTime.UtcNow >= ExpiresAt)
+            throw new InvalidOperationException("Token has expired");
+            
+        IsUsed = true;
+        UsedAt = DateTime.UtcNow;
+    }
+    
+    private static string GenerateSecureToken()
+    {
+        // Generate a 32-byte random token and convert to Base64 URL-safe string
+        var bytes = new byte[32];
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        rng.GetBytes(bytes);
+        
+        // Convert to Base64 URL-safe format (replace +/= with -_)
+        return Convert.ToBase64String(bytes)
+            .Replace("+", "-")
+            .Replace("/", "_")
+            .Replace("=", "");
+    }
+}
