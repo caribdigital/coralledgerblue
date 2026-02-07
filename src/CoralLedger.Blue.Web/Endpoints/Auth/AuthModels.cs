@@ -22,3 +22,10 @@ public record AuthResponse(
 
 public record RefreshTokenRequest(
     string RefreshToken);
+
+public record SendVerificationEmailRequest(
+    string Email,
+    Guid? TenantId);
+
+public record VerifyEmailRequest(
+    string Token);

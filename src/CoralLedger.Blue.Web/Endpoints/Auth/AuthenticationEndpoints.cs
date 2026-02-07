@@ -37,6 +37,21 @@ public static class AuthenticationEndpoints
             .WithSummary("Logout and clear authentication cookie")
             .Produces(StatusCodes.Status200OK);
 
+        group.MapPost("/send-verification-email", SendVerificationEmail)
+            .WithName("SendVerificationEmail")
+            .WithSummary("Send or resend email verification link")
+            .RequireRateLimiting(CoralLedger.Blue.Web.Security.SecurityConfiguration.EmailRateLimiterPolicy)
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<ProblemDetails>(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status429TooManyRequests);
+
+        group.MapPost("/verify-email", VerifyEmail)
+            .WithName("VerifyEmail")
+            .WithSummary("Verify email address with token")
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+
         return app;
     }
 
@@ -46,6 +61,7 @@ public static class AuthenticationEndpoints
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
         ITenantContext tenantContext,
+        IEmailService emailService,
         HttpContext httpContext)
     {
         // Validate input
@@ -105,6 +121,9 @@ public static class AuthenticationEndpoints
 
         context.TenantUsers.Add(user);
         await context.SaveChangesAsync();
+
+        // Generate and send verification email
+        await SendVerificationEmailToUser(user, context, emailService, httpContext);
 
         // Generate tokens
         var accessToken = jwtTokenService.GenerateAccessToken(user);
@@ -263,5 +282,200 @@ public static class AuthenticationEndpoints
                 IsPersistent = true, // Cookie persists across browser sessions
                 ExpiresUtc = DateTimeOffset.UtcNow.AddHours(1) // Match JWT expiration
             });
+    }
+
+    private static async Task<IResult> SendVerificationEmail(
+        SendVerificationEmailRequest request,
+        MarineDbContext context,
+        ITenantContext tenantContext,
+        IEmailService emailService,
+        HttpContext httpContext)
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid request",
+                Detail = "Email is required"
+            });
+        }
+
+        // Determine tenant
+        var tenantId = request.TenantId ?? tenantContext.TenantId;
+        if (!tenantId.HasValue)
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Tenant required",
+                Detail = "Tenant ID is required"
+            });
+        }
+
+        // Find user
+        var user = await context.TenantUsers
+            .FirstOrDefaultAsync(u => u.Email == request.Email.ToLowerInvariant() && u.TenantId == tenantId.Value);
+
+        if (user == null)
+        {
+            // Return generic message to prevent email enumeration
+            return Results.Ok(new { message = "If the email exists, a verification link has been sent." });
+        }
+
+        // Check if email is already verified
+        if (user.EmailConfirmed)
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Email already verified",
+                Detail = "This email address is already verified"
+            });
+        }
+
+        // Send verification email
+        await SendVerificationEmailToUser(user, context, emailService, httpContext);
+
+        return Results.Ok(new { message = "Verification email sent successfully" });
+    }
+
+    private static async Task<IResult> VerifyEmail(
+        VerifyEmailRequest request,
+        MarineDbContext context)
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(request.Token))
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid request",
+                Detail = "Token is required"
+            });
+        }
+
+        // Find token
+        var verificationToken = await context.EmailVerificationTokens
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Token == request.Token);
+
+        if (verificationToken == null)
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid token",
+                Detail = "The verification token is invalid"
+            });
+        }
+
+        // Check if token is valid (not used and not expired)
+        if (!verificationToken.IsValid())
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid or expired token",
+                Detail = verificationToken.IsUsed
+                    ? "This verification token has already been used"
+                    : "This verification token has expired. Please request a new one."
+            });
+        }
+
+        // Mark token as used
+        verificationToken.MarkAsUsed();
+
+        // Confirm user email
+        verificationToken.User.ConfirmEmail();
+
+        await context.SaveChangesAsync();
+
+        return Results.Ok(new { message = "Email verified successfully" });
+    }
+
+    /// <summary>
+    /// Helper method to create and send verification email for a user
+    /// </summary>
+    private static async Task SendVerificationEmailToUser(
+        TenantUser user,
+        MarineDbContext context,
+        IEmailService emailService,
+        HttpContext httpContext)
+    {
+        // Invalidate any existing unused tokens for this user
+        var existingTokens = await context.EmailVerificationTokens
+            .Where(t => t.UserId == user.Id && !t.IsUsed)
+            .ToListAsync();
+
+        foreach (var token in existingTokens)
+        {
+            context.EmailVerificationTokens.Remove(token);
+        }
+
+        // Create new verification token
+        var verificationToken = EmailVerificationToken.Create(user.Id, expirationHours: 48);
+        context.EmailVerificationTokens.Add(verificationToken);
+        await context.SaveChangesAsync();
+
+        // Build verification URL
+        var scheme = httpContext.Request.Scheme;
+        var host = httpContext.Request.Host.Value;
+        var verificationUrl = $"{scheme}://{host}/verify-email?token={Uri.EscapeDataString(verificationToken.Token)}";
+
+        // Send email
+        var subject = "Verify your email address - CoralLedger Blue";
+        var htmlContent = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #0066cc 0%, #004499 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }}
+        .button {{ display: inline-block; background: #0066cc; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+        .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <div class=""header"">
+            <h1>🌊 CoralLedger Blue</h1>
+            <p>Marine Intelligence Platform</p>
+        </div>
+        <div class=""content"">
+            <h2>Verify Your Email Address</h2>
+            <p>Hello{(string.IsNullOrEmpty(user.FullName) ? "" : $" {user.FullName}")},</p>
+            <p>Thank you for registering with CoralLedger Blue! Please verify your email address by clicking the button below:</p>
+            <p style=""text-align: center;"">
+                <a href=""{verificationUrl}"" class=""button"">Verify Email Address</a>
+            </p>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style=""word-break: break-all; color: #0066cc;"">{verificationUrl}</p>
+            <p><strong>This link will expire in 48 hours.</strong></p>
+            <p>If you didn't create an account with CoralLedger Blue, please ignore this email.</p>
+        </div>
+        <div class=""footer"">
+            <p>CoralLedger Blue - Protecting Marine Ecosystems</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        var plainTextContent = $@"
+CoralLedger Blue - Email Verification
+
+Hello{(string.IsNullOrEmpty(user.FullName) ? "" : $" {user.FullName}")},
+
+Thank you for registering with CoralLedger Blue! Please verify your email address by visiting this link:
+
+{verificationUrl}
+
+This link will expire in 48 hours.
+
+If you didn't create an account with CoralLedger Blue, please ignore this email.
+
+--
+CoralLedger Blue
+Marine Intelligence Platform
+";
+
+        await emailService.SendEmailAsync(user.Email, subject, htmlContent, plainTextContent);
     }
 }

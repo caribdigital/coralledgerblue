@@ -84,7 +84,7 @@ builder.Services.AddScoped<IToastService, ToastService>();
 builder.Services.AddScoped<IBadgeNotificationService, BadgeNotificationService>();
 
 // Add Security: Rate limiting and CORS
-builder.Services.AddSecurityRateLimiting();
+builder.Services.AddSecurityRateLimiting(builder.Environment);
 builder.Services.AddSecurityCors(builder.Configuration);
 
 // Add HttpContextAccessor for CurrentUserService
