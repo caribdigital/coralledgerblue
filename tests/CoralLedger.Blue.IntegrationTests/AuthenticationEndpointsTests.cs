@@ -247,4 +247,31 @@ public class AuthenticationEndpointsTests : IClassFixture<CustomWebApplicationFa
         authResponse.AccessToken.Should().Contain(".");  // JWT has 3 parts separated by dots
         authResponse.AccessToken.Split('.').Should().HaveCount(3);
     }
+
+    [Fact]
+    public async Task Logout_ClearsAuthenticationCookie()
+    {
+        // Arrange - Register and login to get a cookie
+        var email = $"logouttest_{Guid.NewGuid():N}@example.com";
+        var password = "SecurePassword123!";
+
+        var registerRequest = new RegisterRequest(
+            Email: email,
+            Password: password,
+            FullName: "Logout Test User",
+            TenantId: _factory.DefaultTenantId);
+
+        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        // Act - Logout
+        var response = await _client.PostAsync("/api/auth/logout", null);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        // Verify cookie is cleared (Set-Cookie header should be present with expiry in the past or empty value)
+        var setCookieHeaders = response.Headers.GetValues("Set-Cookie").ToList();
+        setCookieHeaders.Should().NotBeEmpty();
+        setCookieHeaders.Any(h => h.Contains("CoralLedger.Auth") && (h.Contains("expires") || h.Contains("max-age=0"))).Should().BeTrue();
+    }
 }
