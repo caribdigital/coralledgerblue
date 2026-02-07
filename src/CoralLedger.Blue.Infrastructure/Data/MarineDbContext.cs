@@ -37,6 +37,7 @@ public class MarineDbContext : DbContext, IMarineDbContext
     public DbSet<TenantBranding> TenantBrandings => Set<TenantBranding>();
     public DbSet<TenantUser> TenantUsers => Set<TenantUser>();
     public DbSet<EmailVerificationToken> EmailVerificationTokens => Set<EmailVerificationToken>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     
     // Gamification
     public DbSet<UserProfile> UserProfiles => Set<UserProfile>();
