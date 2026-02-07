@@ -29,3 +29,11 @@ public record SendVerificationEmailRequest(
 
 public record VerifyEmailRequest(
     string Token);
+
+public record ForgotPasswordRequest(
+    string Email,
+    Guid? TenantId);
+
+public record ResetPasswordRequest(
+    string Token,
+    string NewPassword);

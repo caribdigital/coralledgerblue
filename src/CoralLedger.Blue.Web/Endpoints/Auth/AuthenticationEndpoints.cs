@@ -52,6 +52,20 @@ public static class AuthenticationEndpoints
             .Produces(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
 
+        group.MapPost("/forgot-password", ForgotPassword)
+            .WithName("ForgotPassword")
+            .WithSummary("Request password reset link")
+            .RequireRateLimiting(CoralLedger.Blue.Web.Security.SecurityConfiguration.EmailRateLimiterPolicy)
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status429TooManyRequests);
+
+        group.MapPost("/reset-password", ResetPassword)
+            .WithName("ResetPassword")
+            .WithSummary("Reset password with token")
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
+
         return app;
     }
 
@@ -477,5 +491,202 @@ Marine Intelligence Platform
 ";
 
         await emailService.SendEmailAsync(user.Email, subject, htmlContent, plainTextContent);
+    }
+
+    private static async Task<IResult> ForgotPassword(
+        ForgotPasswordRequest request,
+        MarineDbContext context,
+        ITenantContext tenantContext,
+        IEmailService emailService,
+        HttpContext httpContext)
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(request.Email))
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid request",
+                Detail = "Email is required"
+            });
+        }
+
+        // Determine tenant
+        var tenantId = request.TenantId ?? tenantContext.TenantId;
+        if (!tenantId.HasValue)
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Tenant required",
+                Detail = "Tenant ID is required"
+            });
+        }
+
+        // Find user - but don't reveal if email exists (prevent enumeration)
+        var user = await context.TenantUsers
+            .FirstOrDefaultAsync(u => u.Email == request.Email.ToLowerInvariant() && u.TenantId == tenantId.Value);
+
+        // Always return success message to prevent email enumeration
+        if (user == null)
+        {
+            return Results.Ok(new { message = "If the email exists, a password reset link has been sent." });
+        }
+
+        // Invalidate any existing unused tokens for this user
+        var existingTokens = await context.PasswordResetTokens
+            .Where(t => t.UserId == user.Id && !t.IsUsed)
+            .ToListAsync();
+
+        foreach (var token in existingTokens)
+        {
+            context.PasswordResetTokens.Remove(token);
+        }
+
+        // Create new password reset token (2 hour expiration)
+        var resetToken = PasswordResetToken.Create(user.Id, expirationHours: 2);
+        context.PasswordResetTokens.Add(resetToken);
+        await context.SaveChangesAsync();
+
+        // Build reset URL
+        var scheme = httpContext.Request.Scheme;
+        var host = httpContext.Request.Host.Value;
+        var resetUrl = $"{scheme}://{host}/reset-password?token={Uri.EscapeDataString(resetToken.Token)}";
+
+        // Send email
+        var subject = "Reset your password - CoralLedger Blue";
+        var htmlContent = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: linear-gradient(135deg, #0066cc 0%, #004499 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }}
+        .button {{ display: inline-block; background: #0066cc; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+        .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+        .warning {{ background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin: 20px 0; }}
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <div class=""header"">
+            <h1>🌊 CoralLedger Blue</h1>
+            <p>Marine Intelligence Platform</p>
+        </div>
+        <div class=""content"">
+            <h2>Reset Your Password</h2>
+            <p>Hello{(string.IsNullOrEmpty(user.FullName) ? "" : $" {user.FullName}")},</p>
+            <p>We received a request to reset your password for your CoralLedger Blue account. Click the button below to reset it:</p>
+            <p style=""text-align: center;"">
+                <a href=""{resetUrl}"" class=""button"">Reset Password</a>
+            </p>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style=""word-break: break-all; color: #0066cc;"">{resetUrl}</p>
+            <div class=""warning"">
+                <strong>⚠️ Important:</strong>
+                <ul style=""margin: 5px 0;"">
+                    <li>This link will expire in 2 hours</li>
+                    <li>This link can only be used once</li>
+                    <li>If you didn't request this, please ignore this email</li>
+                </ul>
+            </div>
+        </div>
+        <div class=""footer"">
+            <p>CoralLedger Blue - Protecting Marine Ecosystems</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        var plainTextContent = $@"
+CoralLedger Blue - Password Reset
+
+Hello{(string.IsNullOrEmpty(user.FullName) ? "" : $" {user.FullName}")},
+
+We received a request to reset your password for your CoralLedger Blue account. 
+
+To reset your password, visit this link:
+{resetUrl}
+
+IMPORTANT:
+- This link will expire in 2 hours
+- This link can only be used once
+- If you didn't request this, please ignore this email
+
+--
+CoralLedger Blue
+Marine Intelligence Platform
+";
+
+        await emailService.SendEmailAsync(user.Email, subject, htmlContent, plainTextContent);
+
+        return Results.Ok(new { message = "If the email exists, a password reset link has been sent." });
+    }
+
+    private static async Task<IResult> ResetPassword(
+        ResetPasswordRequest request,
+        MarineDbContext context,
+        IPasswordHasher passwordHasher)
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(request.Token) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid request",
+                Detail = "Token and new password are required"
+            });
+        }
+
+        // Validate password strength
+        var passwordValidation = ValidatePasswordStrength(request.NewPassword);
+        if (!passwordValidation.IsValid)
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Weak password",
+                Detail = passwordValidation.ErrorMessage
+            });
+        }
+
+        // Find token
+        var resetToken = await context.PasswordResetTokens
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Token == request.Token);
+
+        if (resetToken == null)
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid token",
+                Detail = "The password reset token is invalid"
+            });
+        }
+
+        // Check if token is valid (not used and not expired)
+        if (!resetToken.IsValid())
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid or expired token",
+                Detail = resetToken.IsUsed
+                    ? "This password reset token has already been used"
+                    : "This password reset token has expired. Please request a new one."
+            });
+        }
+
+        // Mark token as used
+        resetToken.MarkAsUsed();
+
+        // Update user password
+        var passwordHash = passwordHasher.HashPassword(request.NewPassword);
+        resetToken.User.SetPassword(passwordHash);
+
+        // Reset any account lockout
+        resetToken.User.ResetFailedLoginAttempts();
+
+        await context.SaveChangesAsync();
+
+        return Results.Ok(new { message = "Password reset successfully" });
     }
 }
