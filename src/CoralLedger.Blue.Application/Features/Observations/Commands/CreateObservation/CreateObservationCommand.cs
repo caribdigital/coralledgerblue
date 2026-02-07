@@ -1,4 +1,6 @@
+using CoralLedger.Blue.Application.Common.Events;
 using CoralLedger.Blue.Application.Common.Interfaces;
+using CoralLedger.Blue.Application.Features.Gamification.Commands.AwardBadge;
 using CoralLedger.Blue.Domain.Entities;
 using CoralLedger.Blue.Domain.Enums;
 using MediatR;
@@ -31,15 +33,18 @@ public class CreateObservationCommandHandler : IRequestHandler<CreateObservation
 {
     private readonly IMarineDbContext _context;
     private readonly ISpatialValidationService _spatialValidation;
+    private readonly IMediator _mediator;
     private readonly ILogger<CreateObservationCommandHandler> _logger;
 
     public CreateObservationCommandHandler(
         IMarineDbContext context,
         ISpatialValidationService spatialValidation,
+        IMediator mediator,
         ILogger<CreateObservationCommandHandler> logger)
     {
         _context = context;
         _spatialValidation = spatialValidation;
+        _mediator = mediator;
         _logger = logger;
     }
 
@@ -91,6 +96,36 @@ public class CreateObservationCommandHandler : IRequestHandler<CreateObservation
 
             _logger.LogInformation("Created citizen observation {Id} of type {Type} at ({Lon}, {Lat})",
                 observation.Id, request.Type, request.Longitude, request.Latitude);
+
+            // Check for FirstObservation badge
+            if (!string.IsNullOrWhiteSpace(request.CitizenEmail))
+            {
+                var isFirstObservation = !await _context.CitizenObservations
+                    .AnyAsync(o => o.CitizenEmail == request.CitizenEmail && o.Id != observation.Id,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (isFirstObservation)
+                {
+                    await _mediator.Send(
+                        new AwardBadgeCommand(
+                            request.CitizenEmail,
+                            BadgeType.FirstObservation,
+                            "Submitted your first observation!"),
+                        cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            // Publish event for gamification processing
+            await _mediator.Publish(
+                new ObservationCreatedEvent(
+                    observation.Id,
+                    request.CitizenEmail,
+                    request.Type,
+                    HasPhotos: false, // Photos added separately
+                    HasLocation: true,
+                    IsInMpa: observation.IsInMpa ?? false),
+                cancellationToken).ConfigureAwait(false);
 
             return new CreateObservationResult(
                 Success: true,
