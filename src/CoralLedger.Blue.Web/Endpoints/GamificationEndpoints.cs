@@ -112,9 +112,10 @@ public static class GamificationEndpoints
         .WithDescription("Get user's achievements with progress tracking")
         .Produces<List<AchievementDto>>();
 
-        // Admin endpoints group
+        // Admin endpoints group - requires authentication
         var adminGroup = endpoints.MapGroup("/api/admin/gamification")
-            .WithTags("Gamification - Admin");
+            .WithTags("Gamification - Admin")
+            .RequireAuthorization();
 
         // POST /api/admin/gamification/points - Award points to a user
         adminGroup.MapPost("/points", async (
@@ -122,6 +123,12 @@ public static class GamificationEndpoints
             IMediator mediator,
             CancellationToken ct = default) =>
         {
+            // Validate points are positive
+            if (request.Points <= 0)
+            {
+                return Results.BadRequest(new { error = "Points must be a positive number" });
+            }
+
             var command = new AwardPointsCommand(request.Email, request.Points, request.Reason);
             var result = await mediator.Send(command, ct).ConfigureAwait(false);
             

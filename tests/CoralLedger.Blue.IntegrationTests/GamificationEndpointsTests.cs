@@ -1,11 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using CoralLedger.Blue.Application.Features.Gamification.Queries.GetLeaderboard;
 using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserProfile;
 using CoralLedger.Blue.Application.Features.Gamification.Queries.GetUserAchievements;
 using CoralLedger.Blue.Application.Features.Gamification.Commands.AwardPoints;
 using CoralLedger.Blue.Application.Features.Gamification.Commands.AwardBadge;
 using CoralLedger.Blue.Web.Endpoints;
+using CoralLedger.Blue.Web.Endpoints.Auth;
 using FluentAssertions;
 
 namespace CoralLedger.Blue.IntegrationTests;
@@ -13,10 +15,31 @@ namespace CoralLedger.Blue.IntegrationTests;
 public class GamificationEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
+    private readonly CustomWebApplicationFactory _factory;
 
     public GamificationEndpointsTests(CustomWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient();
+    }
+
+    private async Task<HttpClient> GetAuthenticatedClientAsync()
+    {
+        var email = $"admin_{Guid.NewGuid():N}@example.com";
+        var registerRequest = new RegisterRequest(
+            Email: email,
+            Password: "SecurePass123",
+            FullName: "Admin User",
+            TenantId: _factory.DefaultTenantId);
+
+        var registerResponse = await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+        var authResponse = await registerResponse.Content.ReadFromJsonAsync<AuthResponse>();
+
+        var authenticatedClient = _factory.CreateClient();
+        authenticatedClient.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", authResponse!.AccessToken);
+
+        return authenticatedClient;
     }
 
     [Fact]
@@ -153,17 +176,18 @@ public class GamificationEndpointsTests : IClassFixture<CustomWebApplicationFact
     public async Task AwardPoints_WithValidRequest_ReturnsOk()
     {
         // Arrange
+        var authenticatedClient = await GetAuthenticatedClientAsync();
         var request = new AwardPointsRequest(
             Email: "test@test.com",
             Points: 100,
             Reason: "Test award");
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/admin/gamification/points", request);
+        var response = await authenticatedClient.PostAsJsonAsync("/api/admin/gamification/points", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var result = await response.Content.ReadFromJsonAsync<AwardPointsResult>();
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
@@ -171,20 +195,71 @@ public class GamificationEndpointsTests : IClassFixture<CustomWebApplicationFact
     }
 
     [Fact]
+    public async Task AwardPoints_WithNegativePoints_ReturnsBadRequest()
+    {
+        // Arrange
+        var authenticatedClient = await GetAuthenticatedClientAsync();
+        var request = new AwardPointsRequest(
+            Email: "test@test.com",
+            Points: -50,
+            Reason: "Invalid negative points");
+
+        // Act
+        var response = await authenticatedClient.PostAsJsonAsync("/api/admin/gamification/points", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task AwardPoints_WithZeroPoints_ReturnsBadRequest()
+    {
+        // Arrange
+        var authenticatedClient = await GetAuthenticatedClientAsync();
+        var request = new AwardPointsRequest(
+            Email: "test@test.com",
+            Points: 0,
+            Reason: "Zero points");
+
+        // Act
+        var response = await authenticatedClient.PostAsJsonAsync("/api/admin/gamification/points", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task AwardPoints_WithoutAuthentication_ReturnsUnauthorized()
+    {
+        // Arrange
+        var request = new AwardPointsRequest(
+            Email: "test@test.com",
+            Points: 100,
+            Reason: "Test award");
+
+        // Act - Use unauthenticated client
+        var response = await _client.PostAsJsonAsync("/api/admin/gamification/points", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
     public async Task AwardBadge_WithValidRequest_ReturnsOk()
     {
         // Arrange
+        var authenticatedClient = await GetAuthenticatedClientAsync();
         var request = new AwardBadgeRequest(
             Email: "test2@test.com",
             BadgeType: "FirstObservation",
             Description: "Test badge award");
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/admin/gamification/badges", request);
+        var response = await authenticatedClient.PostAsJsonAsync("/api/admin/gamification/badges", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var result = await response.Content.ReadFromJsonAsync<AwardBadgeResult>();
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
@@ -194,15 +269,32 @@ public class GamificationEndpointsTests : IClassFixture<CustomWebApplicationFact
     public async Task AwardBadge_WithInvalidBadgeType_ReturnsBadRequest()
     {
         // Arrange
+        var authenticatedClient = await GetAuthenticatedClientAsync();
         var request = new AwardBadgeRequest(
             Email: "test@test.com",
             BadgeType: "InvalidBadgeType",
             Description: "Test");
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/admin/gamification/badges", request);
+        var response = await authenticatedClient.PostAsJsonAsync("/api/admin/gamification/badges", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task AwardBadge_WithoutAuthentication_ReturnsUnauthorized()
+    {
+        // Arrange
+        var request = new AwardBadgeRequest(
+            Email: "test@test.com",
+            BadgeType: "FirstObservation",
+            Description: "Test");
+
+        // Act - Use unauthenticated client
+        var response = await _client.PostAsJsonAsync("/api/admin/gamification/badges", request);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }
