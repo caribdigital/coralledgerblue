@@ -1,3 +1,4 @@
+using CoralLedger.Blue.Application.Common.Events;
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Domain.Entities;
 using CoralLedger.Blue.Domain.Enums;
@@ -104,19 +105,29 @@ public class VerifyObservationCommandHandler : IRequestHandler<VerifyObservation
             else
             {
                 profile.RecordRejectedObservation();
-
-                // Deduct points for rejected observation (anti-gaming measure)
-                var userPoints = await _context.UserPoints
-                    .FirstOrDefaultAsync(p => p.CitizenEmail == observation.CitizenEmail, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (userPoints != null)
-                {
-                    userPoints.DeductPoints(5, "Observation rejected");
-                }
             }
 
             await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            // Publish events for badge checking and point adjustments
+            if (request.Approve)
+            {
+                await _mediator.Publish(
+                    new ObservationVerifiedEvent(
+                        observation.Id,
+                        observation.CitizenEmail,
+                        pointsAwarded),
+                    cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await _mediator.Publish(
+                    new ObservationRejectedEvent(
+                        observation.Id,
+                        observation.CitizenEmail,
+                        request.Notes ?? "Rejected during verification"),
+                    cancellationToken).ConfigureAwait(false);
+            }
 
             var newTier = profile.Tier != oldTier ? profile.Tier : (ObserverTier?)null;
 
