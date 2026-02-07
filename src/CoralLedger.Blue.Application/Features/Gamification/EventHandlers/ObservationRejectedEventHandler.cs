@@ -1,5 +1,6 @@
 using CoralLedger.Blue.Application.Common.Events;
 using CoralLedger.Blue.Application.Common.Interfaces;
+using CoralLedger.Blue.Application.Features.Gamification;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -32,12 +33,12 @@ public class ObservationRejectedEventHandler : INotificationHandler<ObservationR
 
             if (userPoints != null)
             {
-                userPoints.DeductPoints(5, $"Observation rejected: {notification.Reason}");
+                userPoints.DeductPoints(GamificationConstants.RejectionPenaltyPoints, $"Observation rejected: {notification.Reason}");
                 await _context.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation(
-                    "Deducted 5 points from {Email} for rejected observation {ObservationId}",
-                    notification.CitizenEmail, notification.ObservationId);
+                    "Deducted {Points} points from {Email} for rejected observation {ObservationId}",
+                    GamificationConstants.RejectionPenaltyPoints, notification.CitizenEmail, notification.ObservationId);
             }
         }
         catch (Exception ex)

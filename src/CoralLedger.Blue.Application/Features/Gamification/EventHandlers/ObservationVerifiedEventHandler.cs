@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace CoralLedger.Blue.Application.Features.Gamification.EventHandlers;
 
+using static GamificationConstants;
+
 /// <summary>
 /// Handles the ObservationVerifiedEvent to award badges when criteria are met
 /// </summary>
@@ -64,37 +66,38 @@ public class ObservationVerifiedEventHandler : INotificationHandler<ObservationV
         }
 
         // Check for quantity milestone badges
-        if (totalObservations >= 10 && totalObservations < 50)
+        if (totalObservations >= TenObservationsThreshold && totalObservations < FiftyObservationsThreshold)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.TenObservations,
-                "Submitted 10 observations", cancellationToken);
+                $"Submitted {TenObservationsThreshold} observations", cancellationToken);
         }
-        else if (totalObservations >= 50 && totalObservations < 100)
+        else if (totalObservations >= FiftyObservationsThreshold && totalObservations < HundredObservationsThreshold)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.FiftyObservations,
-                "Submitted 50 observations", cancellationToken);
+                $"Submitted {FiftyObservationsThreshold} observations", cancellationToken);
         }
-        else if (totalObservations >= 100)
+        else if (totalObservations >= HundredObservationsThreshold)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.HundredObservations,
-                "Submitted 100 observations", cancellationToken);
+                $"Submitted {HundredObservationsThreshold} observations", cancellationToken);
         }
 
         // Check for AccurateObserver badge (90%+ accuracy with 20+ verified)
-        if (verifiedObservations >= 20 && accuracyRate >= 90)
+        if (verifiedObservations >= AccurateObserverMinVerified && accuracyRate >= AccurateObserverMinAccuracy)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.AccurateObserver,
                 $"Achieved {accuracyRate:F1}% accuracy rate with {verifiedObservations} verified observations",
                 cancellationToken);
         }
 
-        // Check for species-specific expert badges
-        var verifiedBleachingCount = observations.Count(o =>
-            o.Type == ObservationType.CoralBleaching && o.Status == ObservationStatus.Approved);
-        if (verifiedBleachingCount >= 25)
+        // Check for CoralExpert badge (25+ verified coral-related observations)
+        var coralTypes = new[] { ObservationType.CoralBleaching, ObservationType.ReefHealth };
+        var verifiedCoralCount = observations.Count(o =>
+            coralTypes.Contains(o.Type) && o.Status == ObservationStatus.Approved);
+        if (verifiedCoralCount >= CoralExpertThreshold)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.CoralExpert,
-                "Submitted 25+ verified coral observations", cancellationToken);
+                $"Submitted {CoralExpertThreshold}+ verified coral observations", cancellationToken);
         }
 
         // Check for BleachingDetector badge (awarded for first verified bleaching report)
@@ -108,10 +111,10 @@ public class ObservationVerifiedEventHandler : INotificationHandler<ObservationV
 
         // Check for MPAGuardian badge (10+ observations within MPA)
         var mpaObservations = observations.Count(o => o.IsInMpa == true);
-        if (mpaObservations >= 10)
+        if (mpaObservations >= MpaGuardianThreshold)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.MPAGuardian,
-                "Submitted 10+ observations within MPA boundaries", cancellationToken);
+                $"Submitted {MpaGuardianThreshold}+ observations within MPA boundaries", cancellationToken);
         }
 
         // Check for time-based contributor badges
@@ -128,19 +131,19 @@ public class ObservationVerifiedEventHandler : INotificationHandler<ObservationV
         // Weekly contributor: 7+ observations in current week
         var weekStart = now.AddDays(-(int)now.DayOfWeek);
         var weeklyCount = observations.Count(o => o.CreatedAt >= weekStart);
-        if (weeklyCount >= 7)
+        if (weeklyCount >= WeeklyContributorThreshold)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.WeeklyContributor,
-                "Submitted 7+ observations this week", cancellationToken);
+                $"Submitted {WeeklyContributorThreshold}+ observations this week", cancellationToken);
         }
 
         // Monthly contributor: 30+ observations in current month
         var monthStart = new DateTime(now.Year, now.Month, 1);
         var monthlyCount = observations.Count(o => o.CreatedAt >= monthStart);
-        if (monthlyCount >= 30)
+        if (monthlyCount >= MonthlyContributorThreshold)
         {
             await AwardBadgeIfNewAsync(citizenEmail, BadgeType.MonthlyContributor,
-                "Submitted 30+ observations this month", cancellationToken);
+                $"Submitted {MonthlyContributorThreshold}+ observations this month", cancellationToken);
         }
     }
 

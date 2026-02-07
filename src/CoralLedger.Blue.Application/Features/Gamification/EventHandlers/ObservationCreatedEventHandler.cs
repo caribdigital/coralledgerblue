@@ -37,27 +37,27 @@ public class ObservationCreatedEventHandler : INotificationHandler<ObservationCr
             var reasons = new List<string>();
 
             // Base points for submitting an observation
-            points += 5;
+            points += GamificationConstants.BaseObservationPoints;
             reasons.Add("Observation submitted");
 
             // Bonus for including photos
             if (notification.HasPhotos)
             {
-                points += 3;
+                points += GamificationConstants.PhotoBonusPoints;
                 reasons.Add("Photo included");
             }
 
             // Bonus for GPS coordinates (always true if observation is created with location)
             if (notification.HasLocation)
             {
-                points += 2;
+                points += GamificationConstants.GpsBonusPoints;
                 reasons.Add("GPS coordinates provided");
             }
 
             // Bonus for observation within MPA
             if (notification.IsInMpa)
             {
-                points += 5;
+                points += GamificationConstants.MpaBonusPoints;
                 reasons.Add("Within MPA");
             }
 

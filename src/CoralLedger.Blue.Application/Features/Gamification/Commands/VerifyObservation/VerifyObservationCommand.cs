@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 
 namespace CoralLedger.Blue.Application.Features.Gamification.Commands.VerifyObservation;
 
+using static GamificationConstants;
+
 public record VerifyObservationCommand(
     Guid ObservationId,
     bool Approve,
@@ -150,16 +152,16 @@ public class VerifyObservationCommandHandler : IRequestHandler<VerifyObservation
     private static int CalculatePoints(CitizenObservation observation)
     {
         // Base points
-        int points = 10;
+        int points = VerificationBasePoints;
 
         // Bonus for observation type
         points += observation.Type switch
         {
-            ObservationType.CoralBleaching => 20,
-            ObservationType.IllegalFishing => 25,
-            ObservationType.WildlifeSighting => 15,
-            ObservationType.ReefHealth => 15,
-            _ => 10
+            ObservationType.CoralBleaching => CoralBleachingBonus,
+            ObservationType.IllegalFishing => IllegalFishingBonus,
+            ObservationType.WildlifeSighting => WildlifeSightingBonus,
+            ObservationType.ReefHealth => ReefHealthBonus,
+            _ => DefaultTypeBonus
         };
 
         // Bonus for severity
@@ -168,7 +170,7 @@ public class VerifyObservationCommandHandler : IRequestHandler<VerifyObservation
         // Bonus for photo evidence
         if (observation.Photos.Any())
         {
-            points += 10;
+            points += PhotoEvidenceBonus;
         }
 
         return points;

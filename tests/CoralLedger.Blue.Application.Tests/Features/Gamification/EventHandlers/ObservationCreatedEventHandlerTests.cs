@@ -1,4 +1,5 @@
 using CoralLedger.Blue.Application.Common.Events;
+using CoralLedger.Blue.Application.Features.Gamification;
 using CoralLedger.Blue.Application.Features.Gamification.Commands.AwardPoints;
 using CoralLedger.Blue.Application.Features.Gamification.EventHandlers;
 using CoralLedger.Blue.Domain.Enums;
@@ -7,6 +8,8 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
+
+using static CoralLedger.Blue.Application.Features.Gamification.GamificationConstants;
 
 namespace CoralLedger.Blue.Application.Tests.Features.Gamification.EventHandlers;
 
@@ -24,9 +27,10 @@ public class ObservationCreatedEventHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithBasicObservation_Awards5Points()
+    public async Task Handle_WithBasicObservation_AwardsBaseAndGpsPoints()
     {
         // Arrange
+        var expectedPoints = BaseObservationPoints + GpsBonusPoints;
         var observationEvent = new ObservationCreatedEvent(
             ObservationId: Guid.NewGuid(),
             CitizenEmail: "test@example.com",
@@ -38,7 +42,7 @@ public class ObservationCreatedEventHandlerTests
 
         _mediatorMock
             .Setup(m => m.Send(It.IsAny<AwardPointsCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AwardPointsResult(Success: true, TotalPoints: 7));
+            .ReturnsAsync(new AwardPointsResult(Success: true, TotalPoints: expectedPoints));
 
         // Act
         await _handler.Handle(observationEvent, CancellationToken.None);
@@ -48,7 +52,7 @@ public class ObservationCreatedEventHandlerTests
             m => m.Send(
                 It.Is<AwardPointsCommand>(cmd =>
                     cmd.CitizenEmail == "test@example.com" &&
-                    cmd.Points == 7), // 5 base + 2 GPS
+                    cmd.Points == expectedPoints), // base + GPS
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -57,6 +61,7 @@ public class ObservationCreatedEventHandlerTests
     public async Task Handle_WithPhotosAndMpa_AwardsAllBonuses()
     {
         // Arrange
+        var expectedPoints = BaseObservationPoints + PhotoBonusPoints + GpsBonusPoints + MpaBonusPoints;
         var observationEvent = new ObservationCreatedEvent(
             ObservationId: Guid.NewGuid(),
             CitizenEmail: "test@example.com",
@@ -68,7 +73,7 @@ public class ObservationCreatedEventHandlerTests
 
         _mediatorMock
             .Setup(m => m.Send(It.IsAny<AwardPointsCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AwardPointsResult(Success: true, TotalPoints: 15));
+            .ReturnsAsync(new AwardPointsResult(Success: true, TotalPoints: expectedPoints));
 
         // Act
         await _handler.Handle(observationEvent, CancellationToken.None);
@@ -78,7 +83,7 @@ public class ObservationCreatedEventHandlerTests
             m => m.Send(
                 It.Is<AwardPointsCommand>(cmd =>
                     cmd.CitizenEmail == "test@example.com" &&
-                    cmd.Points == 15), // 5 base + 3 photo + 2 GPS + 5 MPA
+                    cmd.Points == expectedPoints), // base + photo + GPS + MPA
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
