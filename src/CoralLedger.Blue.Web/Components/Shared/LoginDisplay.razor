@@ -2,28 +2,28 @@
 
 <AuthorizeView>
     <Authorized>
-        <div class="login-display">
+        <nav class="login-display" aria-label="User menu">
             <span class="user-name">
-                <i class="bi bi-person-circle"></i>
+                <i class="bi bi-person-circle" aria-hidden="true"></i>
                 @context.User.Identity?.Name ?? context.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
             </span>
-            <a href="/logout" class="btn-link">
-                <i class="bi bi-box-arrow-right"></i>
+            <a href="/logout" class="btn-link" aria-label="Log out of your account">
+                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
                 Logout
             </a>
-        </div>
+        </nav>
     </Authorized>
     <NotAuthorized>
-        <div class="login-display">
-            <a href="/login" class="btn-link">
-                <i class="bi bi-box-arrow-in-right"></i>
+        <nav class="login-display" aria-label="Authentication">
+            <a href="/login" class="btn-link" aria-label="Log in to your account">
+                <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
                 Login
             </a>
-            <a href="/register" class="btn-link">
-                <i class="bi bi-person-plus"></i>
+            <a href="/register" class="btn-link" aria-label="Create a new account">
+                <i class="bi bi-person-plus" aria-hidden="true"></i>
                 Register
             </a>
-        </div>
+        </nav>
     </NotAuthorized>
 </AuthorizeView>
 

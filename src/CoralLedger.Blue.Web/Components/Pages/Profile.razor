@@ -17,16 +17,7 @@
 <PageTitle>My Profile - CoralLedger Blue</PageTitle>
 
 <div class="profile-page">
-    @if (!CurrentUser.IsAuthenticated)
-    {
-        <div class="auth-required">
-            <i class="bi bi-shield-lock"></i>
-            <h3>Authentication Required</h3>
-            <p>Please log in to view your profile.</p>
-            <a href="/login" class="btn btn-primary">Log In</a>
-        </div>
-    }
-    else if (_isLoading)
+    @if (_isLoading)
     {
         <div class="loading-container">
             <div class="spinner"></div>
@@ -188,7 +179,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (!CurrentUser.IsAuthenticated || string.IsNullOrEmpty(CurrentUser.Email))
+        // [Authorize] attribute ensures user is authenticated
+        if (string.IsNullOrEmpty(CurrentUser.Email))
         {
             _isLoading = false;
             return;
