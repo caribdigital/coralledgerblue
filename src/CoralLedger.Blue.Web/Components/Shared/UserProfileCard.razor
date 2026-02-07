@@ -29,7 +29,6 @@
 
 @code {
     private UserProfileDto? _profile;
-    private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -42,10 +41,6 @@
             catch
             {
                 // Silently fail if profile doesn't exist yet
-            }
-            finally
-            {
-                _isLoading = false;
             }
         }
     }
