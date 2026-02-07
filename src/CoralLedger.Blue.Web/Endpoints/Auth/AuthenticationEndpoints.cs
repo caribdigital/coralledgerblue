@@ -471,7 +471,7 @@ If you didn't create an account with CoralLedger Blue, please ignore this email.
 
 --
 CoralLedger Blue
-Marine Intelligence Platform for The Bahamas
+Marine Intelligence Platform
 ";
 
         await emailService.SendEmailAsync(user.Email, subject, htmlContent, plainTextContent);

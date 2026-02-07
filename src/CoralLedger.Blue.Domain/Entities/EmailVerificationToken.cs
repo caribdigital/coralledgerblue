@@ -43,7 +43,8 @@ public class EmailVerificationToken : BaseEntity
     {
         if (IsUsed)
             throw new InvalidOperationException("Token has already been used");
-            
+        
+        // Defensive check - this should already be validated by IsValid() before calling MarkAsUsed()
         if (DateTime.UtcNow >= ExpiresAt)
             throw new InvalidOperationException("Token has expired");
             
