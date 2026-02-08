@@ -490,4 +490,77 @@
   <data name="Bleaching_NOAAAttribution" xml:space="preserve">
     <value>NOAA Coral Reef Watch - Daily 5km Satellite Data</value>
   </data>
+  
+  <!-- Login / Register -->
+  <data name="Login_Title" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
+  <data name="Login_Subtitle" xml:space="preserve">
+    <value>Welcome back to CoralLedger Blue</value>
+  </data>
+  <data name="Login_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Login_Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Login_SignIn" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
+  <data name="Login_SigningIn" xml:space="preserve">
+    <value>Signing in</value>
+  </data>
+  <data name="Login_NoAccount" xml:space="preserve">
+    <value>Don't have an account?</value>
+  </data>
+  <data name="Login_RegisterNow" xml:space="preserve">
+    <value>Register now</value>
+  </data>
+  <data name="Login_OrSignInWith" xml:space="preserve">
+    <value>Or sign in with</value>
+  </data>
+  
+  <data name="Register_Title" xml:space="preserve">
+    <value>Create Account</value>
+  </data>
+  <data name="Register_Subtitle" xml:space="preserve">
+    <value>Join CoralLedger Blue</value>
+  </data>
+  <data name="Register_FullName" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="Register_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Register_Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Register_ConfirmPassword" xml:space="preserve">
+    <value>Confirm Password</value>
+  </data>
+  <data name="Register_PasswordRequirement" xml:space="preserve">
+    <value>At least 8 characters with uppercase, lowercase, and a number</value>
+  </data>
+  <data name="Register_CreateAccount" xml:space="preserve">
+    <value>Create Account</value>
+  </data>
+  <data name="Register_Creating" xml:space="preserve">
+    <value>Creating account</value>
+  </data>
+  <data name="Register_HaveAccount" xml:space="preserve">
+    <value>Already have an account?</value>
+  </data>
+  <data name="Register_SignIn" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="Register_OrSignUpWith" xml:space="preserve">
+    <value>Or sign up with</value>
+  </data>
+
+  <data name="OAuth_ContinueWithGoogle" xml:space="preserve">
+    <value>Continue with Google</value>
+  </data>
+  <data name="OAuth_ContinueWithMicrosoft" xml:space="preserve">
+    <value>Continue with Microsoft</value>
+  </data>
 </root>

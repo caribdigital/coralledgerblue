@@ -132,7 +132,36 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
-})
+});
+
+// Add OAuth providers only if credentials are configured
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGoogle("Google", options =>
+        {
+            options.ClientId = googleClientId;
+            options.ClientSecret = googleClientSecret;
+            options.CallbackPath = "/api/auth/signin-google";
+        });
+}
+
+var microsoftClientId = builder.Configuration["Authentication:Microsoft:ClientId"];
+var microsoftClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"];
+if (!string.IsNullOrEmpty(microsoftClientId) && !string.IsNullOrEmpty(microsoftClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddMicrosoftAccount("Microsoft", options =>
+        {
+            options.ClientId = microsoftClientId;
+            options.ClientSecret = microsoftClientSecret;
+            options.CallbackPath = "/api/auth/signin-microsoft";
+        });
+}
+
+builder.Services.AddAuthentication()
 .AddPolicyScheme("MultiScheme", "Cookie or API Key or JWT", options =>
 {
     options.ForwardDefaultSelector = context =>
@@ -295,6 +324,7 @@ app.MapRazorComponents<App>()
 
 // 7. Map API endpoints
 app.MapAuthenticationEndpoints();
+app.MapOAuthAuthenticationEndpoints();
 app.MapTenantManagementEndpoints();
 app.MapMpaEndpoints();
 app.MapVesselEndpoints();
