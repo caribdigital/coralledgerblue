@@ -119,8 +119,152 @@ Logout and clear authentication cookie.
 
 **Behavior:**
 - Clears the authentication cookie
+- Revokes all active refresh tokens for the user
 - Terminates the user's session
 - Requires no authentication to call
+
+#### POST /api/auth/refresh
+Refresh access token using a refresh token.
+
+**Request:**
+```json
+{
+  "refreshToken": "base64-refresh-token"
+}
+```
+
+**Response:**
+```json
+{
+  "accessToken": "eyJhbGc...",
+  "refreshToken": "new-base64-refresh-token",
+  "userId": "guid",
+  "email": "user@example.com",
+  "fullName": "John Doe",
+  "role": "User",
+  "tenantId": "guid"
+}
+```
+
+**Security Features:**
+- **Token Rotation**: Old refresh token is revoked, new one is issued
+- **Reuse Detection**: Attempting to reuse a revoked token revokes all tokens for that user
+- **Longer Lifetime**: Refresh tokens expire in 30 days (configurable)
+- **Hashed Storage**: Tokens are stored as SHA-256 hashes in the database
+
+## Refresh Token System
+
+### Overview
+
+CoralLedger Blue implements a secure refresh token system that allows users to obtain new access tokens without re-authenticating. This is essential for maintaining long-lived sessions while keeping access tokens short-lived for security.
+
+### How It Works
+
+1. **Login/Register**: User receives both an access token (60 min) and refresh token (30 days)
+2. **Store Token**: Client stores refresh token securely (e.g., localStorage or secure cookie)
+3. **Access Token Expires**: When access token expires, client calls `/api/auth/refresh`
+4. **Token Rotation**: Server validates refresh token and issues new access + refresh tokens
+5. **Old Token Revoked**: Previous refresh token is invalidated to prevent reuse
+
+### Security Features
+
+#### Token Rotation (Single-Use Tokens)
+Every time a refresh token is used, it is revoked and a new one is issued. This prevents token replay attacks and limits the impact of token theft.
+
+#### Reuse Detection
+If an already-revoked token is presented, the system assumes token theft and immediately revokes ALL refresh tokens for that user. This forces the legitimate user to re-authenticate while locking out the attacker.
+
+#### Hashed Storage
+Refresh tokens are never stored in plaintext. They are hashed using SHA-256 before storage, similar to how passwords are hashed. This protects against database leaks.
+
+#### Automatic Cleanup
+A background job runs daily to delete expired or old revoked tokens, preventing table bloat while maintaining security audit trails for 30 days.
+
+### Database Schema
+
+```sql
+CREATE TABLE refresh_tokens (
+    Id UUID PRIMARY KEY,
+    TenantUserId UUID NOT NULL REFERENCES tenant_users(Id) ON DELETE CASCADE,
+    TokenHash VARCHAR(256) NOT NULL UNIQUE,
+    ExpiresAt TIMESTAMP NOT NULL,
+    CreatedAt TIMESTAMP NOT NULL,
+    RevokedAt TIMESTAMP NULL,
+    ReplacedByTokenId UUID NULL
+);
+
+-- Indexes for performance
+CREATE UNIQUE INDEX IX_RefreshTokens_TokenHash ON refresh_tokens(TokenHash);
+CREATE INDEX IX_RefreshTokens_TenantUserId ON refresh_tokens(TenantUserId);
+CREATE INDEX IX_RefreshTokens_ExpiresAt ON refresh_tokens(ExpiresAt);
+CREATE INDEX IX_RefreshTokens_RevokedAt ON refresh_tokens(RevokedAt);
+```
+
+### Usage Example (Client-Side)
+
+```javascript
+// Store tokens after login
+const loginResponse = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, tenantId })
+});
+
+const { accessToken, refreshToken } = await loginResponse.json();
+localStorage.setItem('accessToken', accessToken);
+localStorage.setItem('refreshToken', refreshToken);
+
+// Refresh token when access token expires
+async function refreshAccessToken() {
+    const refreshToken = localStorage.getItem('refreshToken');
+    
+    const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+    });
+    
+    if (response.ok) {
+        const { accessToken, refreshToken: newRefreshToken } = await response.json();
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', newRefreshToken);
+        return accessToken;
+    } else {
+        // Refresh failed - user needs to login again
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/login';
+    }
+}
+
+// Use with HTTP interceptor
+axios.interceptors.response.use(null, async (error) => {
+    if (error.response?.status === 401) {
+        const newToken = await refreshAccessToken();
+        error.config.headers['Authorization'] = `Bearer ${newToken}`;
+        return axios.request(error.config);
+    }
+    return Promise.reject(error);
+});
+```
+
+### Background Cleanup
+
+The `ExpiredTokenCleanupJob` runs daily at 3:00 AM UTC and removes:
+- Refresh tokens that expired more than 30 days ago
+- Revoked tokens older than 30 days
+
+This maintains a 30-day audit window while preventing table bloat.
+
+### Best Practices
+
+1. **Client Storage**: Store refresh tokens in HttpOnly cookies or secure localStorage
+2. **Token Lifetime**: Keep access tokens short (minutes) and refresh tokens longer (weeks)
+3. **Automatic Refresh**: Implement token refresh before access token expires
+4. **Logout**: Always call logout endpoint to revoke refresh tokens
+5. **Security Events**: Revoke all tokens on password change or suspicious activity
+
+
 
 ### Blazor UI
 
@@ -159,7 +303,8 @@ Logout and clear authentication cookie.
     "Secret": "YOUR_SECRET_KEY_HERE",
     "Issuer": "CoralLedger.Blue",
     "Audience": "CoralLedger.Blue.Web",
-    "ExpirationMinutes": 60
+    "ExpirationMinutes": 60,
+    "RefreshTokenExpirationDays": 30
   }
 }
 ```
@@ -169,7 +314,8 @@ Logout and clear authentication cookie.
 - `JWT__SECRET`: JWT signing secret (required in production)
 - `JWT__ISSUER`: Token issuer (optional, defaults to "CoralLedger.Blue")
 - `JWT__AUDIENCE`: Token audience (optional, defaults to "CoralLedger.Blue.Web")
-- `JWT__EXPIRATIONMINUTES`: Token expiration in minutes (optional, defaults to 60)
+- `JWT__EXPIRATIONMINUTES`: Access token expiration in minutes (optional, defaults to 60)
+- `JWT__REFRESHTOKENEXPIRATIONDAYS`: Refresh token expiration in days (optional, defaults to 30)
 
 **⚠️ Security Warning**: Never commit JWT secrets to source control. Use environment variables or secure secret management (Azure Key Vault, AWS Secrets Manager, etc.).
 
@@ -194,9 +340,13 @@ openssl rand -base64 32
 
 ### Token Security
 - **Algorithm**: HS256 (HMAC-SHA256)
-- **Expiration**: 60 minutes (configurable)
+- **Access Token Expiration**: 60 minutes (configurable)
+- **Refresh Token Expiration**: 30 days (configurable)
 - **Clock Skew**: Zero tolerance
 - **Validation**: Issuer, Audience, Lifetime, Signature
+- **Refresh Token Storage**: SHA-256 hashed in database
+- **Token Rotation**: New refresh token issued on each use
+- **Reuse Detection**: Automatic revocation of all tokens on detected theft
 
 ### API Security
 - **Rate Limiting**: Inherited from existing rate limiting middleware
@@ -216,10 +366,18 @@ openssl rand -base64 32
    - Maintains `CitizenEmail` for backward compatibility
    - Adds navigation properties
 
+3. **20260208101213_AddRefreshTokens**
+   - Creates `refresh_tokens` table for token storage
+   - Adds indexes on `TokenHash`, `TenantUserId`, `ExpiresAt`, `RevokedAt`
+   - Implements cascade delete on user deletion
+
 ### Indexes
 
 - `(TenantId, Email)` - Unique index on TenantUsers
 - `TenantUserId` - Index on all gamification tables for efficient lookups
+- `TokenHash` - Unique index on RefreshTokens for fast token validation
+- `TenantUserId` - Index on RefreshTokens for user token queries
+- `ExpiresAt`, `RevokedAt` - Indexes on RefreshTokens for cleanup operations
 
 ## Usage Examples
 
@@ -413,8 +571,9 @@ Tests cover:
 
 1. **No Email Verification**: Email confirmation flow not implemented
 2. **No Password Reset**: Forgot password flow not implemented
-3. **No Refresh Token Storage**: Refresh tokens generated but not persisted
-4. **No OAuth2 External Providers**: Google, Microsoft, GitHub login not implemented
+3. **No OAuth2 External Providers**: Google, Microsoft, GitHub login not implemented
+
+~~3. **No Refresh Token Storage**: Refresh tokens generated but not persisted~~ ✅ **Completed**
 
 ## Blazor Authentication State
 
@@ -456,12 +615,15 @@ The following pages are protected with `[Authorize]` attribute:
 5. User is redirected to login page
 
 ### Testing
-All 11 authentication integration tests pass:
+All 19 authentication integration tests pass:
 - ✅ User registration with validation
 - ✅ User login with credential verification
 - ✅ Account lockout after failed attempts
 - ✅ JWT token generation and validation
 - ✅ Logout clears authentication cookie
+- ✅ Refresh token generation and storage
+- ✅ Refresh token validation and rotation
+- ✅ Token reuse detection and security
 
 ## Future Enhancements
 
@@ -473,8 +635,9 @@ All 11 authentication integration tests pass:
 ### Priority 2
 - [ ] OAuth2 external providers (Google, Microsoft, GitHub)
 - [ ] Two-factor authentication (2FA)
-- [ ] Refresh token rotation and storage
 - [ ] Password complexity requirements
+
+~~- [ ] Refresh token rotation and storage~~ ✅ **Completed**
 
 ### Priority 3
 - [ ] Session management (view active sessions, revoke tokens)
