@@ -259,14 +259,68 @@ Response includes cache status:
 }
 ```
 
+## Azure Environment Strategy
+
+### Dev Environment — Build on Demand, Delete When Idle
+
+Azure Cache for Redis has no stopped/paused state — instances incur cost 24/7 regardless of usage. To avoid unnecessary spend, the **dev Redis instance should be created only when actively developing and deleted when idle**.
+
+**Create dev Redis (when starting dev work):**
+
+```bash
+az redis create \
+  --name redis-coralcomply-dev \
+  --resource-group rg-coralcomply-dev \
+  --location eastus2 \
+  --sku Basic \
+  --vm-size c0 \
+  --minimum-tls-version 1.2 \
+  --redis-configuration '{"maxmemory-policy":"volatile-lru"}' \
+  --tags Application=coralledgerblue Environment=dev ManagedBy=Bicep
+```
+
+> **Note:** Redis provisioning takes ~10–15 minutes. Plan accordingly at the start of a dev session.
+
+**Delete dev Redis (when done for the day/sprint):**
+
+```bash
+az redis delete \
+  --name redis-coralcomply-dev \
+  --resource-group rg-coralcomply-dev \
+  --yes
+```
+
+**Local alternative:** For quick local development, use Docker instead of Azure Redis:
+
+```bash
+docker run -d -p 6379:6379 --name coralledger-redis redis:7-alpine
+```
+
+The application falls back to `IMemoryCache` automatically if Redis is unavailable, so dev work is never blocked by the absence of a Redis instance.
+
+### Staging — Basic C0
+
+Staging uses **Basic C0** (250 MB, no SLA, no replica). This is sufficient for integration testing and costs ~$14/month.
+
+- Instance: `redis-coralcomply-stg`
+- Resource group: `rg-coralcomply-stg`
+
+### Production — Standard C0
+
+Production uses **Standard C0** (250 MB, SLA-backed with replica). This provides high availability at ~$35/month. Monitor memory usage — if cache utilization consistently exceeds 200 MB, consider scaling to Standard C1.
+
+- Instance: `redis-coralcomply-prd`
+- Resource group: `rg-coralcomply-prd`
+
 ## Performance Considerations
 
 ### Cache Sizing
 
-For typical usage:
-- **Development**: Redis Basic C0 (250 MB) - $16/month
-- **Production**: Redis Standard C1 (1 GB) - $74/month
-- **High Traffic**: Redis Standard C2 (2.5 GB) - $148/month
+Current tier allocations (as of February 2026):
+- **Development**: Created on demand using Basic C0 (250 MB) — ~$14/month when running
+- **Staging**: Basic C0 (250 MB) — ~$14/month
+- **Production**: Standard C0 (250 MB, with replica) — ~$35/month
+- **High Traffic (future)**: Standard C1 (1 GB) — ~$86/month
 
 ### Key Expiration
 
