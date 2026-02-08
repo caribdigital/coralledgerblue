@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CoralLedger.Blue.Web.Endpoints.Auth;
 
@@ -52,7 +53,8 @@ public static class OAuthAuthenticationEndpoints
         HttpContext httpContext,
         MarineDbContext context,
         IJwtTokenService jwtTokenService,
-        ITenantContext tenantContext)
+        ITenantContext tenantContext,
+        ILoggerFactory loggerFactory)
     {
         try
         {
@@ -160,8 +162,9 @@ public static class OAuthAuthenticationEndpoints
         }
         catch (Exception ex)
         {
-            // Log the exception (would use ILogger in production)
-            Console.Error.WriteLine($"OAuth callback error: {ex.Message}");
+            // Log the exception with proper logging infrastructure
+            var logger = loggerFactory.CreateLogger("OAuthAuthentication");
+            logger.LogError(ex, "OAuth callback error for provider {Provider}", provider);
             return Results.Redirect("/login?error=oauth_error");
         }
     }

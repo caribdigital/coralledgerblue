@@ -13,6 +13,7 @@ public class MarineDbContextFactory : IDesignTimeDbContextFactory<MarineDbContex
         var optionsBuilder = new DbContextOptionsBuilder<MarineDbContext>();
         
         // Use a dummy connection string for migrations - actual connection is from configuration
+        // IMPORTANT: These are dummy credentials for design-time migrations only, never used at runtime
         optionsBuilder.UseNpgsql("Host=localhost;Database=coralledger;Username=postgres;Password=postgres",
             npgsqlOptions => npgsqlOptions.UseNetTopologySuite());
 

@@ -132,35 +132,36 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
-})
-.AddGoogle("Google", options =>
+});
+
+// Add OAuth providers only if credentials are configured
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
 {
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
-    options.CallbackPath = "/api/auth/signin-google";
-    
-    // Only add if credentials are configured
-    if (string.IsNullOrEmpty(options.ClientId) || string.IsNullOrEmpty(options.ClientSecret))
-    {
-        // Skip Google authentication if not configured (for development/testing)
-        options.ClientId = "not-configured";
-        options.ClientSecret = "not-configured";
-    }
-})
-.AddMicrosoftAccount("Microsoft", options =>
+    builder.Services.AddAuthentication()
+        .AddGoogle("Google", options =>
+        {
+            options.ClientId = googleClientId;
+            options.ClientSecret = googleClientSecret;
+            options.CallbackPath = "/api/auth/signin-google";
+        });
+}
+
+var microsoftClientId = builder.Configuration["Authentication:Microsoft:ClientId"];
+var microsoftClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"];
+if (!string.IsNullOrEmpty(microsoftClientId) && !string.IsNullOrEmpty(microsoftClientSecret))
 {
-    options.ClientId = builder.Configuration["Authentication:Microsoft:ClientId"] ?? string.Empty;
-    options.ClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"] ?? string.Empty;
-    options.CallbackPath = "/api/auth/signin-microsoft";
-    
-    // Only add if credentials are configured
-    if (string.IsNullOrEmpty(options.ClientId) || string.IsNullOrEmpty(options.ClientSecret))
-    {
-        // Skip Microsoft authentication if not configured (for development/testing)
-        options.ClientId = "not-configured";
-        options.ClientSecret = "not-configured";
-    }
-})
+    builder.Services.AddAuthentication()
+        .AddMicrosoftAccount("Microsoft", options =>
+        {
+            options.ClientId = microsoftClientId;
+            options.ClientSecret = microsoftClientSecret;
+            options.CallbackPath = "/api/auth/signin-microsoft";
+        });
+}
+
+builder.Services.AddAuthentication()
 .AddPolicyScheme("MultiScheme", "Cookie or API Key or JWT", options =>
 {
     options.ForwardDefaultSelector = context =>
