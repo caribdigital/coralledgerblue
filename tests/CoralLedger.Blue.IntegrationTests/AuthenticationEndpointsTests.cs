@@ -285,4 +285,197 @@ public class AuthenticationEndpointsTests : IClassFixture<CustomWebApplicationFa
             Assert.Fail("Expected Set-Cookie header to be present in logout response");
         }
     }
+
+    [Fact]
+    public async Task ForgotPassword_WithValidEmail_ReturnsOk()
+    {
+        // Arrange - First register a user
+        var email = $"resetpwd_{Guid.NewGuid():N}@example.com";
+
+        var registerRequest = new RegisterRequest(
+            Email: email,
+            Password: "SecurePass123",
+            FullName: "Password Reset Test",
+            TenantId: _factory.DefaultTenantId);
+
+        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        // Act - Request password reset
+        var forgotPasswordRequest = new ForgotPasswordRequest(
+            Email: email,
+            TenantId: _factory.DefaultTenantId);
+
+        var response = await _client.PostAsJsonAsync("/api/auth/forgot-password", forgotPasswordRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_WithNonExistentEmail_ReturnsOk()
+    {
+        // Arrange - Use an email that doesn't exist (security: don't reveal if email exists)
+        var forgotPasswordRequest = new ForgotPasswordRequest(
+            Email: "nonexistent@example.com",
+            TenantId: _factory.DefaultTenantId);
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/auth/forgot-password", forgotPasswordRequest);
+
+        // Assert - Should still return OK to prevent email enumeration
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_WithMissingEmail_ReturnsBadRequest()
+    {
+        // Arrange
+        var forgotPasswordRequest = new ForgotPasswordRequest(
+            Email: "",
+            TenantId: _factory.DefaultTenantId);
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/auth/forgot-password", forgotPasswordRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ResetPassword_WithValidToken_ResetsPassword()
+    {
+        // Arrange - Register user and get reset token via database
+        var email = $"resetpwd_{Guid.NewGuid():N}@example.com";
+        var originalPassword = "OriginalPass123";
+        var newPassword = "NewSecurePass456";
+
+        var registerRequest = new RegisterRequest(
+            Email: email,
+            Password: originalPassword,
+            FullName: "Password Reset Test",
+            TenantId: _factory.DefaultTenantId);
+
+        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        // Request password reset
+        var forgotPasswordRequest = new ForgotPasswordRequest(
+            Email: email,
+            TenantId: _factory.DefaultTenantId);
+        await _client.PostAsJsonAsync("/api/auth/forgot-password", forgotPasswordRequest);
+
+        // Get the reset token from the database
+        var resetToken = await _factory.GetPasswordResetTokenAsync(email);
+        resetToken.Should().NotBeNull();
+
+        // Act - Reset password with the token
+        var resetPasswordRequest = new ResetPasswordRequest(
+            Token: resetToken!,
+            NewPassword: newPassword);
+
+        var response = await _client.PostAsJsonAsync("/api/auth/reset-password", resetPasswordRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Verify can login with new password
+        var loginRequest = new LoginRequest(
+            Email: email,
+            Password: newPassword,
+            TenantId: _factory.DefaultTenantId);
+
+        var loginResponse = await _client.PostAsJsonAsync("/api/auth/login", loginRequest);
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Verify cannot login with old password
+        var oldPasswordLogin = new LoginRequest(
+            Email: email,
+            Password: originalPassword,
+            TenantId: _factory.DefaultTenantId);
+
+        var oldPasswordResponse = await _client.PostAsJsonAsync("/api/auth/login", oldPasswordLogin);
+        oldPasswordResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task ResetPassword_WithInvalidToken_ReturnsBadRequest()
+    {
+        // Arrange
+        var resetPasswordRequest = new ResetPasswordRequest(
+            Token: "invalid-token",
+            NewPassword: "NewSecurePass456");
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/auth/reset-password", resetPasswordRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ResetPassword_WithWeakPassword_ReturnsBadRequest()
+    {
+        // Arrange - Register user and get reset token
+        var email = $"resetpwd_{Guid.NewGuid():N}@example.com";
+
+        var registerRequest = new RegisterRequest(
+            Email: email,
+            Password: "OriginalPass123",
+            FullName: "Password Reset Test",
+            TenantId: _factory.DefaultTenantId);
+
+        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        var forgotPasswordRequest = new ForgotPasswordRequest(
+            Email: email,
+            TenantId: _factory.DefaultTenantId);
+        await _client.PostAsJsonAsync("/api/auth/forgot-password", forgotPasswordRequest);
+
+        var resetToken = await _factory.GetPasswordResetTokenAsync(email);
+
+        // Act - Try to reset with weak password
+        var resetPasswordRequest = new ResetPasswordRequest(
+            Token: resetToken!,
+            NewPassword: "weak");
+
+        var response = await _client.PostAsJsonAsync("/api/auth/reset-password", resetPasswordRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task ResetPassword_TokenCanOnlyBeUsedOnce()
+    {
+        // Arrange - Register user and get reset token
+        var email = $"resetpwd_{Guid.NewGuid():N}@example.com";
+
+        var registerRequest = new RegisterRequest(
+            Email: email,
+            Password: "OriginalPass123",
+            FullName: "Password Reset Test",
+            TenantId: _factory.DefaultTenantId);
+
+        await _client.PostAsJsonAsync("/api/auth/register", registerRequest);
+
+        var forgotPasswordRequest = new ForgotPasswordRequest(
+            Email: email,
+            TenantId: _factory.DefaultTenantId);
+        await _client.PostAsJsonAsync("/api/auth/forgot-password", forgotPasswordRequest);
+
+        var resetToken = await _factory.GetPasswordResetTokenAsync(email);
+
+        // Act - Use token once
+        var resetPasswordRequest = new ResetPasswordRequest(
+            Token: resetToken!,
+            NewPassword: "NewSecurePass456");
+
+        var firstResponse = await _client.PostAsJsonAsync("/api/auth/reset-password", resetPasswordRequest);
+        firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Try to use the same token again
+        var secondResponse = await _client.PostAsJsonAsync("/api/auth/reset-password", resetPasswordRequest);
+
+        // Assert - Second attempt should fail
+        secondResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
 }

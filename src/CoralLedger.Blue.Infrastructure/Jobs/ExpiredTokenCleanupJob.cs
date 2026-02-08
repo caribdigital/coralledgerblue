@@ -7,7 +7,7 @@ using Quartz;
 namespace CoralLedger.Blue.Infrastructure.Jobs;
 
 /// <summary>
-/// Scheduled job that cleans up expired and used email verification tokens
+/// Scheduled job that cleans up expired and used tokens (email verification and password reset)
 /// Runs daily to prevent table bloat
 /// </summary>
 [DisallowConcurrentExecution]
@@ -49,16 +49,37 @@ public class ExpiredTokenCleanupJob : IJob
 
             if (expiredTokens.Count > 0)
             {
-                _logger.LogInformation("Found {Count} expired/used tokens to clean up", expiredTokens.Count);
+                _logger.LogInformation("Found {Count} expired/used email verification tokens to clean up", expiredTokens.Count);
 
                 dbContext.EmailVerificationTokens.RemoveRange(expiredTokens);
                 await dbContext.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("Successfully cleaned up {Count} expired/used tokens", expiredTokens.Count);
+                _logger.LogInformation("Successfully cleaned up {Count} expired/used email verification tokens", expiredTokens.Count);
             }
             else
             {
-                _logger.LogInformation("No expired tokens found to clean up");
+                _logger.LogInformation("No expired email verification tokens found to clean up");
+            }
+
+            // Clean up password reset tokens
+            var expiredPasswordResetTokens = await dbContext.PasswordResetTokens
+                .Where(t => t.ExpiresAt < cutoffDate ||
+                           (t.IsUsed && t.UsedAt < usedTokenCutoff))
+                .ToListAsync(context.CancellationToken)
+                .ConfigureAwait(false);
+
+            if (expiredPasswordResetTokens.Count > 0)
+            {
+                _logger.LogInformation("Found {Count} expired/used password reset tokens to clean up", expiredPasswordResetTokens.Count);
+
+                dbContext.PasswordResetTokens.RemoveRange(expiredPasswordResetTokens);
+                await dbContext.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
+
+                _logger.LogInformation("Successfully cleaned up {Count} expired/used password reset tokens", expiredPasswordResetTokens.Count);
+            }
+            else
+            {
+                _logger.LogInformation("No expired password reset tokens found to clean up");
             }
         }
         catch (Exception ex)

@@ -96,4 +96,26 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
         return tenant.Id;
     }
+
+    /// <summary>
+    /// Helper method to get the password reset token for a user from the database
+    /// </summary>
+    public async Task<string?> GetPasswordResetTokenAsync(string email)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<MarineDbContext>();
+        
+        var user = await db.TenantUsers
+            .FirstOrDefaultAsync(u => u.Email == email.ToLowerInvariant());
+        
+        if (user == null)
+            return null;
+        
+        var token = await db.PasswordResetTokens
+            .Where(t => t.UserId == user.Id && !t.IsUsed)
+            .OrderByDescending(t => t.CreatedAt)
+            .FirstOrDefaultAsync();
+        
+        return token?.Token;
+    }
 }
