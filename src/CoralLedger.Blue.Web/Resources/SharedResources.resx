@@ -556,4 +556,11 @@
   <data name="Register_OrSignUpWith" xml:space="preserve">
     <value>Or sign up with</value>
   </data>
+
+  <data name="OAuth_ContinueWithGoogle" xml:space="preserve">
+    <value>Continue with Google</value>
+  </data>
+  <data name="OAuth_ContinueWithMicrosoft" xml:space="preserve">
+    <value>Continue with Microsoft</value>
+  </data>
 </root>
