@@ -7,7 +7,7 @@ using Quartz;
 namespace CoralLedger.Blue.Infrastructure.Jobs;
 
 /// <summary>
-/// Scheduled job that cleans up expired and used tokens (email verification and password reset)
+/// Scheduled job that cleans up expired and used tokens (email verification, password reset, and refresh tokens)
 /// Runs daily to prevent table bloat
 /// </summary>
 [DisallowConcurrentExecution]
@@ -80,6 +80,30 @@ public class ExpiredTokenCleanupJob : IJob
             else
             {
                 _logger.LogInformation("No expired password reset tokens found to clean up");
+            }
+
+            // Clean up refresh tokens (expired or revoked and older than 30 days)
+            var refreshTokenCutoff = DateTime.UtcNow.AddDays(-30);
+            
+            var expiredRefreshTokens = await dbContext.RefreshTokens
+                .Where(t => 
+                    (t.ExpiresAt < cutoffDate || t.RevokedAt != null) && 
+                    t.CreatedAt < refreshTokenCutoff)
+                .ToListAsync(context.CancellationToken)
+                .ConfigureAwait(false);
+
+            if (expiredRefreshTokens.Count > 0)
+            {
+                _logger.LogInformation("Found {Count} expired/revoked refresh tokens to clean up", expiredRefreshTokens.Count);
+
+                dbContext.RefreshTokens.RemoveRange(expiredRefreshTokens);
+                await dbContext.SaveChangesAsync(context.CancellationToken).ConfigureAwait(false);
+
+                _logger.LogInformation("Successfully cleaned up {Count} expired/revoked refresh tokens", expiredRefreshTokens.Count);
+            }
+            else
+            {
+                _logger.LogInformation("No expired refresh tokens found to clean up");
             }
         }
         catch (Exception ex)
