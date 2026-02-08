@@ -253,3 +253,85 @@
         font-size: 1.5rem;
     }
 }
+
+/* OAuth Buttons */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 2rem 0 1.5rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.auth-divider span {
+    padding: 0 1rem;
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.oauth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.oauth-btn:hover {
+    background: #f8f8f8;
+    border-color: #d0d0d0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    color: #333;
+    text-decoration: none;
+}
+
+.oauth-btn svg {
+    flex-shrink: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    .auth-divider::before,
+    .auth-divider::after {
+        border-bottom-color: #444;
+    }
+
+    .auth-divider span {
+        color: #aaa;
+    }
+
+    .oauth-btn {
+        background: #2a2a2a;
+        border-color: #444;
+        color: #f0f0f0;
+    }
+
+    .oauth-btn:hover {
+        background: #333;
+        border-color: #555;
+        color: #f0f0f0;
+    }
+}

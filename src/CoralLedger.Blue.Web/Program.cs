@@ -133,6 +133,34 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 })
+.AddGoogle("Google", options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
+    options.CallbackPath = "/api/auth/signin-google";
+    
+    // Only add if credentials are configured
+    if (string.IsNullOrEmpty(options.ClientId) || string.IsNullOrEmpty(options.ClientSecret))
+    {
+        // Skip Google authentication if not configured (for development/testing)
+        options.ClientId = "not-configured";
+        options.ClientSecret = "not-configured";
+    }
+})
+.AddMicrosoftAccount("Microsoft", options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Microsoft:ClientId"] ?? string.Empty;
+    options.ClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"] ?? string.Empty;
+    options.CallbackPath = "/api/auth/signin-microsoft";
+    
+    // Only add if credentials are configured
+    if (string.IsNullOrEmpty(options.ClientId) || string.IsNullOrEmpty(options.ClientSecret))
+    {
+        // Skip Microsoft authentication if not configured (for development/testing)
+        options.ClientId = "not-configured";
+        options.ClientSecret = "not-configured";
+    }
+})
 .AddPolicyScheme("MultiScheme", "Cookie or API Key or JWT", options =>
 {
     options.ForwardDefaultSelector = context =>
@@ -295,6 +323,7 @@ app.MapRazorComponents<App>()
 
 // 7. Map API endpoints
 app.MapAuthenticationEndpoints();
+app.MapOAuthAuthenticationEndpoints();
 app.MapTenantManagementEndpoints();
 app.MapMpaEndpoints();
 app.MapVesselEndpoints();

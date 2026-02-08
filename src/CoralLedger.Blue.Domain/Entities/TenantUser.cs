@@ -11,6 +11,8 @@ public class TenantUser : BaseEntity, IAuditableEntity
     public string Email { get; private set; } = string.Empty;
     public string? FullName { get; private set; }
     public string? PasswordHash { get; private set; }
+    public string? OAuthProvider { get; private set; } // Google, Microsoft, null for local auth
+    public string? OAuthSubjectId { get; private set; } // OAuth provider's unique user ID
     public string Role { get; private set; } = "User"; // Admin, Manager, User, Viewer
     public bool IsActive { get; private set; } = true;
     public DateTime? LastLoginAt { get; private set; }
@@ -113,5 +115,17 @@ public class TenantUser : BaseEntity, IAuditableEntity
     {
         LastLoginAt = DateTime.UtcNow;
         ResetFailedLoginAttempts();
+    }
+    
+    public void SetOAuthProvider(string provider, string subjectId)
+    {
+        if (string.IsNullOrWhiteSpace(provider))
+            throw new ArgumentException("Provider is required", nameof(provider));
+        if (string.IsNullOrWhiteSpace(subjectId))
+            throw new ArgumentException("Subject ID is required", nameof(subjectId));
+            
+        OAuthProvider = provider;
+        OAuthSubjectId = subjectId;
+        ModifiedAt = DateTime.UtcNow;
     }
 }
