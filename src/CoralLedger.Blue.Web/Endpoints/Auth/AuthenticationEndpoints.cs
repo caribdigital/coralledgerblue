@@ -28,14 +28,16 @@ public static class AuthenticationEndpoints
             .Produces<AuthResponse>(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
 
-        group.MapPost("/logout", async (HttpContext httpContext) =>
-            {
-                await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                return Results.Ok();
-            })
+        group.MapPost("/logout", Logout)
             .WithName("Logout")
             .WithSummary("Logout and clear authentication cookie")
             .Produces(StatusCodes.Status200OK);
+
+        group.MapPost("/refresh", RefreshToken)
+            .WithName("RefreshToken")
+            .WithSummary("Refresh access token using refresh token")
+            .Produces<AuthResponse>(StatusCodes.Status200OK)
+            .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/send-verification-email", SendVerificationEmail)
             .WithName("SendVerificationEmail")
@@ -142,6 +144,9 @@ public static class AuthenticationEndpoints
         // Generate tokens
         var accessToken = jwtTokenService.GenerateAccessToken(user);
         var refreshToken = jwtTokenService.GenerateRefreshToken();
+        
+        // Store refresh token in database
+        await jwtTokenService.StoreRefreshTokenAsync(user.Id, refreshToken);
 
         // Sign in with cookie authentication for Blazor
         await SignInWithCookie(httpContext, user, accessToken);
@@ -223,6 +228,9 @@ public static class AuthenticationEndpoints
         // Generate tokens
         var accessToken = jwtTokenService.GenerateAccessToken(user);
         var refreshToken = jwtTokenService.GenerateRefreshToken();
+        
+        // Store refresh token in database
+        await jwtTokenService.StoreRefreshTokenAsync(user.Id, refreshToken);
 
         // Sign in with cookie authentication for Blazor
         await SignInWithCookie(httpContext, user, accessToken);
@@ -688,5 +696,68 @@ Marine Intelligence Platform
         await context.SaveChangesAsync();
 
         return Results.Ok(new { message = "Password reset successfully" });
+    }
+
+    private static async Task<IResult> Logout(
+        HttpContext httpContext,
+        IJwtTokenService jwtTokenService)
+    {
+        // Get user from claims
+        var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        // Revoke all refresh tokens for the user if logged in
+        if (Guid.TryParse(userIdClaim, out var userId))
+        {
+            await jwtTokenService.RevokeAllUserRefreshTokensAsync(userId);
+        }
+        
+        // Sign out cookie
+        await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> RefreshToken(
+        RefreshTokenRequest request,
+        MarineDbContext context,
+        IJwtTokenService jwtTokenService)
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            return Results.Unauthorized();
+        }
+
+        // Validate refresh token and get user ID
+        var userId = await jwtTokenService.ValidateRefreshTokenAsync(request.RefreshToken);
+        if (!userId.HasValue)
+        {
+            return Results.Unauthorized();
+        }
+
+        // Get user from database
+        var user = await context.TenantUsers.FindAsync(userId.Value);
+        if (user == null || !user.IsActive)
+        {
+            return Results.Unauthorized();
+        }
+
+        // Revoke old refresh token and generate new ones (token rotation)
+        await jwtTokenService.RevokeRefreshTokenAsync(request.RefreshToken);
+        
+        var newAccessToken = jwtTokenService.GenerateAccessToken(user);
+        var newRefreshToken = jwtTokenService.GenerateRefreshToken();
+        
+        // Store new refresh token with reference to old token for security tracking
+        await jwtTokenService.StoreRefreshTokenAsync(user.Id, newRefreshToken);
+
+        return Results.Ok(new AuthResponse(
+            newAccessToken,
+            newRefreshToken,
+            user.Id,
+            user.Email,
+            user.FullName,
+            user.Role,
+            user.TenantId));
     }
 }

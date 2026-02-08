@@ -4,6 +4,8 @@ using System.Security.Cryptography;
 using System.Text;
 using CoralLedger.Blue.Application.Common.Interfaces;
 using CoralLedger.Blue.Domain.Entities;
+using CoralLedger.Blue.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -17,19 +19,23 @@ public class JwtTokenService : IJwtTokenService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<JwtTokenService> _logger;
+    private readonly MarineDbContext _context;
     private readonly string _secret;
     private readonly string _issuer;
     private readonly string _audience;
     private readonly int _expirationMinutes;
+    private readonly int _refreshTokenExpirationDays;
 
-    public JwtTokenService(IConfiguration configuration, ILogger<JwtTokenService> logger)
+    public JwtTokenService(IConfiguration configuration, ILogger<JwtTokenService> logger, MarineDbContext context)
     {
         _configuration = configuration;
         _logger = logger;
+        _context = context;
         _secret = configuration["Jwt:Secret"] ?? throw new InvalidOperationException("JWT Secret not configured");
         _issuer = configuration["Jwt:Issuer"] ?? "CoralLedger.Blue";
         _audience = configuration["Jwt:Audience"] ?? "CoralLedger.Blue.Web";
         _expirationMinutes = int.TryParse(configuration["Jwt:ExpirationMinutes"], out var minutes) ? minutes : 60;
+        _refreshTokenExpirationDays = int.TryParse(configuration["Jwt:RefreshTokenExpirationDays"], out var days) ? days : 30;
     }
 
     public string GenerateAccessToken(TenantUser user)
@@ -98,5 +104,72 @@ public class JwtTokenService : IJwtTokenService
             _logger.LogWarning(ex, "JWT token validation failed");
             return null;
         }
+    }
+
+    public async Task<Guid> StoreRefreshTokenAsync(Guid tenantUserId, string refreshToken, CancellationToken cancellationToken = default)
+    {
+        var token = RefreshToken.Create(tenantUserId, refreshToken, _refreshTokenExpirationDays);
+        _context.RefreshTokens.Add(token);
+        await _context.SaveChangesAsync(cancellationToken);
+        return token.Id;
+    }
+
+    public async Task<Guid?> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        var tokenHash = RefreshToken.HashToken(refreshToken);
+        
+        var token = await _context.RefreshTokens
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, cancellationToken);
+
+        if (token == null)
+        {
+            _logger.LogWarning("Refresh token not found");
+            return null;
+        }
+
+        if (!token.IsValid())
+        {
+            _logger.LogWarning("Refresh token is invalid (revoked or expired)");
+            
+            // Detect token reuse - if token is revoked and has a replacement, this might be a stolen token
+            if (token.RevokedAt.HasValue && token.ReplacedByTokenId.HasValue)
+            {
+                _logger.LogWarning("Possible token theft detected - revoking all tokens for user {UserId}", token.TenantUserId);
+                await RevokeAllUserRefreshTokensAsync(token.TenantUserId, cancellationToken);
+            }
+            
+            return null;
+        }
+
+        return token.TenantUserId;
+    }
+
+    public async Task RevokeRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        var tokenHash = RefreshToken.HashToken(refreshToken);
+        
+        var token = await _context.RefreshTokens
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, cancellationToken);
+
+        if (token != null && token.IsValid())
+        {
+            token.Revoke();
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task RevokeAllUserRefreshTokensAsync(Guid tenantUserId, CancellationToken cancellationToken = default)
+    {
+        var tokens = await _context.RefreshTokens
+            .Where(t => t.TenantUserId == tenantUserId && t.RevokedAt == null)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in tokens)
+        {
+            token.Revoke();
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
