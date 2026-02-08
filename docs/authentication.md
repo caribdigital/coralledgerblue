@@ -2,18 +2,19 @@
 
 ## Overview
 
-This directory contains the end-user authentication system for CoralLedger Blue, implementing secure user registration, login, and session management using JWT tokens.
+This directory contains the end-user authentication system for CoralLedger Blue, implementing secure user registration, login, and session management using JWT tokens and OAuth2 external providers.
 
 ## Architecture
 
 ### Authentication Schemes
 
-The application supports **two authentication schemes**:
+The application supports **three authentication schemes**:
 
 1. **API Key Authentication** (`X-API-Key` header) - For server-to-server integrations
 2. **JWT Bearer Authentication** (`Authorization: Bearer <token>` header) - For end-users
+3. **OAuth2 External Providers** (Google, Microsoft) - For social sign-in
 
-Both schemes are supported simultaneously using ASP.NET Core's Policy Scheme authentication.
+All schemes are supported simultaneously using ASP.NET Core's Policy Scheme authentication.
 
 ## Components
 
@@ -23,7 +24,9 @@ Both schemes are supported simultaneously using ASP.NET Core's Policy Scheme aut
 - **Purpose**: Represents an authenticated user within a tenant
 - **Key Fields**:
   - `Email`: User email (unique per tenant)
-  - `PasswordHash`: BCrypt-hashed password
+  - `PasswordHash`: BCrypt-hashed password (nullable for OAuth-only users)
+  - `OAuthProvider`: OAuth provider name (Google, Microsoft, null for local auth)
+  - `OAuthSubjectId`: OAuth provider's unique user identifier
   - `Role`: User role (Admin, Manager, User, Viewer)
   - `IsActive`: Account status
   - `EmailConfirmed`: Email verification status
@@ -265,6 +268,132 @@ public class MyService
     }
 }
 ```
+
+## OAuth2 External Authentication
+
+### Overview
+
+CoralLedger Blue supports OAuth2 authentication with external providers, allowing users to sign in with their existing Google or Microsoft accounts.
+
+### Supported Providers
+
+1. **Google** - Google Sign-In (OAuth 2.0)
+2. **Microsoft** - Microsoft Account / Azure AD
+
+### OAuth Endpoints
+
+- `GET /api/auth/signin-google` - Initiate Google OAuth flow
+- `GET /api/auth/signin-microsoft` - Initiate Microsoft OAuth flow
+- `GET /api/auth/oauth-callback` - OAuth provider callback handler
+
+### Configuration
+
+OAuth providers are registered conditionally based on configuration:
+
+```csharp
+// Google OAuth (only if credentials configured)
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+{
+    builder.Services.AddAuthentication()
+        .AddGoogle("Google", options => { ... });
+}
+```
+
+**Configuration required** (via User Secrets, Environment Variables, or Key Vault):
+```json
+{
+  "Authentication": {
+    "Google": {
+      "ClientId": "your-google-client-id",
+      "ClientSecret": "your-google-client-secret"
+    },
+    "Microsoft": {
+      "ClientId": "your-microsoft-client-id",
+      "ClientSecret": "your-microsoft-client-secret"
+    }
+  }
+}
+```
+
+For detailed setup instructions, see [OAuth2 Configuration Guide](OAUTH2-CONFIGURATION.md).
+
+### OAuth Flow
+
+1. **User clicks OAuth button** on Login/Register page
+2. **Redirect to provider** (Google/Microsoft) for authentication
+3. **User authenticates** and grants consent
+4. **Provider redirects back** to callback endpoint with authorization code
+5. **Callback handler**:
+   - Exchanges code for access token
+   - Retrieves user profile (email, name)
+   - **Finds or creates user** by email
+   - Links OAuth provider to user account
+   - Marks email as confirmed (verified by provider)
+   - Generates JWT and sets authentication cookie
+6. **User redirected** to dashboard (logged in)
+
+### Account Linking
+
+**Existing User**: If a user with the same email exists:
+- OAuth provider information is added to their account
+- User can now sign in with either password or OAuth
+- Email automatically marked as verified
+
+**New User**: If no user exists with that email:
+- New account created automatically
+- Email pre-verified (no verification email sent)
+- Assigned to default tenant
+- No password set (OAuth-only authentication)
+
+### Hybrid Authentication
+
+Users can have **both password and OAuth** authentication:
+- Create account with email/password
+- Later link Google or Microsoft account
+- Sign in with either method
+- Useful for password recovery and flexibility
+
+### Security Features
+
+✅ **Email Verification** - OAuth users have pre-verified emails  
+✅ **Account Lockout** - Lockout policy applies to OAuth logins  
+✅ **Account Status** - Inactive accounts cannot sign in via OAuth  
+✅ **Audit Trail** - OAuth logins recorded in `LastLoginAt`  
+✅ **Provider Validation** - Only configured providers accepted  
+✅ **Secure Storage** - OAuth subject IDs stored separately from email  
+
+### UI Integration
+
+OAuth buttons appear on Login and Register pages:
+- **Google button** - With Google logo and "Continue with Google" text
+- **Microsoft button** - With Microsoft logo and "Continue with Microsoft" text
+- **Responsive design** - Works on mobile and desktop
+- **Localized** - Supports English, Spanish, and Haitian Creole
+
+### Database Schema
+
+OAuth-related fields in `TenantUser`:
+```sql
+OAuthProvider VARCHAR(50) NULL  -- 'Google', 'Microsoft', or NULL
+OAuthSubjectId VARCHAR(255) NULL  -- Provider's unique user ID
+```
+
+### Testing
+
+OAuth integration tests available in `OAuthAuthenticationEndpointsTests.cs`:
+```bash
+dotnet test --filter "FullyQualifiedName~OAuthAuthenticationEndpointsTests"
+```
+
+Tests cover:
+- OAuth provider initiation
+- New user creation via OAuth
+- Existing user account linking
+- Email verification behavior
+- Database schema validation
+- Error handling
 
 ## Testing
 
