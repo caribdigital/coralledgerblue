@@ -36,8 +36,10 @@ public static class AuthenticationEndpoints
         group.MapPost("/refresh", RefreshToken)
             .WithName("RefreshToken")
             .WithSummary("Refresh access token using refresh token")
+            .RequireRateLimiting(CoralLedger.Blue.Web.Security.SecurityConfiguration.StrictRateLimiterPolicy)
             .Produces<AuthResponse>(StatusCodes.Status200OK)
-            .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
+            .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status429TooManyRequests);
 
         group.MapPost("/send-verification-email", SendVerificationEmail)
             .WithName("SendVerificationEmail")
@@ -219,6 +221,16 @@ public static class AuthenticationEndpoints
             user.RecordFailedLogin();
             await context.SaveChangesAsync();
             return Results.Unauthorized();
+        }
+
+        // Check if 2FA is enabled
+        if (user.TwoFactorEnabled)
+        {
+            // Return a response indicating 2FA is required
+            return Results.Ok(new TwoFactorRequiredResponse(
+                RequiresTwoFactor: true,
+                UserId: user.Id,
+                Email: user.Email));
         }
 
         // Record successful login

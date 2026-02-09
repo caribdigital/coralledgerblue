@@ -12,7 +12,8 @@ public static class AdminEndpoints
     public static IEndpointRouteBuilder MapAdminEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/admin")
-            .WithTags("Administration");
+            .WithTags("Administration")
+            .RequireAuthorization(policy => policy.RequireRole("Admin", "Manager"));
 
         // GET /api/admin/dashboard - Admin dashboard stats
         group.MapGet("/dashboard", async (

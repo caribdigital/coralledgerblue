@@ -196,6 +196,18 @@ builder.Services.AddCascadingAuthenticationState();
 // Add Performance: Response compression and caching
 builder.Services.AddPerformanceCompression();
 
+// Add API Versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = Asp.Versioning.ApiVersionReader.Combine(
+        new Asp.Versioning.HeaderApiVersionReader("API-Version"),
+        new Asp.Versioning.QueryStringApiVersionReader("api-version")
+    );
+});
+
 // Add OpenAPI documentation
 builder.Services.AddOpenApi(options =>
 {
@@ -325,6 +337,7 @@ app.MapRazorComponents<App>()
 // 7. Map API endpoints
 app.MapAuthenticationEndpoints();
 app.MapOAuthAuthenticationEndpoints();
+app.MapTwoFactorEndpoints();
 app.MapTenantManagementEndpoints();
 app.MapMpaEndpoints();
 app.MapVesselEndpoints();

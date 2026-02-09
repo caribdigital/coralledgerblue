@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUser, CurrentUserService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<ITotpService, TotpService>();
 
         // Register Global Fishing Watch client
         services.Configure<GlobalFishingWatchOptions>(

@@ -14,6 +14,12 @@ namespace CoralLedger.Blue.IntegrationTests;
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     /// <summary>
+    /// Default admin credentials for authenticated tests
+    /// </summary>
+    public const string AdminEmail = "admin@coralledger.blue";
+    public const string AdminPassword = "Admin123!";
+
+    /// <summary>
     /// Gets the default tenant ID for tests that require tenant context
     /// </summary>
     public Guid? DefaultTenantId { get; private set; }
@@ -49,6 +55,18 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .ToList();
 
             foreach (var descriptor in descriptorsToRemove)
+            {
+                services.Remove(descriptor);
+            }
+
+            // Remove Quartz hosted service to prevent background job execution and
+            // LoggerFactory disposal issues during test teardown
+            var quartzHostedDescriptors = services
+                .Where(d => d.ServiceType.FullName?.Contains("QuartzHostedService") == true ||
+                           d.ImplementationType?.FullName?.Contains("QuartzHostedService") == true)
+                .ToList();
+
+            foreach (var descriptor in quartzHostedDescriptors)
             {
                 services.Remove(descriptor);
             }

@@ -123,9 +123,30 @@ public class TenantUser : BaseEntity, IAuditableEntity
             throw new ArgumentException("Provider is required", nameof(provider));
         if (string.IsNullOrWhiteSpace(subjectId))
             throw new ArgumentException("Subject ID is required", nameof(subjectId));
-            
+
         OAuthProvider = provider;
         OAuthSubjectId = subjectId;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    // Two-Factor Authentication
+    public bool TwoFactorEnabled { get; private set; }
+    public string? TwoFactorSecretKey { get; private set; }
+
+    public void EnableTwoFactor(string secretKey)
+    {
+        if (string.IsNullOrWhiteSpace(secretKey))
+            throw new ArgumentException("Secret key is required", nameof(secretKey));
+
+        TwoFactorSecretKey = secretKey;
+        TwoFactorEnabled = true;
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public void DisableTwoFactor()
+    {
+        TwoFactorSecretKey = null;
+        TwoFactorEnabled = false;
         ModifiedAt = DateTime.UtcNow;
     }
 }

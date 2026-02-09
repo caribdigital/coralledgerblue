@@ -29,21 +29,28 @@ public class ApiUsageTrackingMiddleware
             return;
         }
 
-        // Check if request is authenticated with API key
-        var apiClientIdClaim = context.User?.FindFirst(ClaimTypes.NameIdentifier);
+        // Check if request is authenticated (any authentication type)
+        var isAuthenticated = context.User?.Identity?.IsAuthenticated == true;
+        var userIdClaim = context.User?.FindFirst(ClaimTypes.NameIdentifier);
         var apiKeyIdClaim = context.User?.FindFirst("ApiKeyId");
 
-        if (apiClientIdClaim == null || !Guid.TryParse(apiClientIdClaim.Value, out var apiClientId))
+        if (!isAuthenticated || userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
         {
             await _next(context);
             return;
         }
+
+        // Determine authentication type for audit logging
+        var authType = apiKeyIdClaim != null ? "ApiKey" :
+                       context.User?.Identity?.AuthenticationType ?? "Unknown";
 
         Guid? apiKeyId = null;
         if (apiKeyIdClaim != null && Guid.TryParse(apiKeyIdClaim.Value, out var keyId))
         {
             apiKeyId = keyId;
         }
+
+        var apiClientId = userId; // Reuse variable for backward compatibility
 
         var stopwatch = Stopwatch.StartNew();
         var originalBodyStream = context.Response.Body;

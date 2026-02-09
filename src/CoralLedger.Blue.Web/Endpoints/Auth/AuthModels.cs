@@ -37,3 +37,8 @@ public record ForgotPasswordRequest(
 public record ResetPasswordRequest(
     string Token,
     string NewPassword);
+
+public record TwoFactorRequiredResponse(
+    bool RequiresTwoFactor,
+    Guid UserId,
+    string Email);

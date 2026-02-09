@@ -5,6 +5,7 @@
     <PackageReference Include="Azure.Storage.Blobs" />
     <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
+    <PackageReference Include="Otp.NET" />
     <PackageReference Include="SendGrid" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
     <PackageReference Include="WebPush" />

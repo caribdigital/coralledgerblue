@@ -53,8 +53,27 @@ public static class DefaultTenantSeeder
         );
         context.TenantBrandings.Add(branding);
 
+        // Create default admin user for testing and initial setup
+        var adminEmail = "admin@coralledger.blue";
+        var existingAdmin = await context.TenantUsers
+            .FirstOrDefaultAsync(u => u.Email == adminEmail)
+            .ConfigureAwait(false);
+
+        if (existingAdmin == null)
+        {
+            var admin = TenantUser.Create(
+                tenant.Id,
+                adminEmail,
+                "System Administrator",
+                "Admin");
+            // Hash password using BCrypt directly (seeder is static, no DI available)
+            admin.SetPassword(BCrypt.Net.BCrypt.HashPassword("Admin123!"));
+            admin.ConfirmEmail();
+            context.TenantUsers.Add(admin);
+        }
+
         await context.SaveChangesAsync().ConfigureAwait(false);
-        
+
         return tenant;
     }
 
