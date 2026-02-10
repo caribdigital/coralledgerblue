@@ -563,4 +563,281 @@
   <data name="OAuth_ContinueWithMicrosoft" xml:space="preserve">
     <value>Continue with Microsoft</value>
   </data>
+
+  <!-- Email Confirmation -->
+  <data name="EmailConfirmation_Title" xml:space="preserve">
+    <value>Check Your Email</value>
+  </data>
+  <data name="EmailConfirmation_Subtitle" xml:space="preserve">
+    <value>We've sent a verification link</value>
+  </data>
+  <data name="EmailConfirmation_Message" xml:space="preserve">
+    <value>We've sent a verification email to your address. Click the link in the email to verify your account.</value>
+  </data>
+  <data name="EmailConfirmation_ResendSuccess" xml:space="preserve">
+    <value>Verification email sent successfully!</value>
+  </data>
+  <data name="EmailConfirmation_Tip1" xml:space="preserve">
+    <value>Check your spam or junk folder if you don't see the email</value>
+  </data>
+  <data name="EmailConfirmation_Tip2" xml:space="preserve">
+    <value>The verification link expires in 48 hours</value>
+  </data>
+  <data name="EmailConfirmation_Resend" xml:space="preserve">
+    <value>Resend Verification Email</value>
+  </data>
+  <data name="EmailConfirmation_Resending" xml:space="preserve">
+    <value>Sending</value>
+  </data>
+  <data name="EmailConfirmation_ResendIn" xml:space="preserve">
+    <value>Resend in</value>
+  </data>
+  <data name="EmailConfirmation_AlreadyVerified" xml:space="preserve">
+    <value>Already verified?</value>
+  </data>
+  <data name="EmailConfirmation_SignIn" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+
+  <!-- Verify Email -->
+  <data name="VerifyEmail_Title" xml:space="preserve">
+    <value>Email Verification</value>
+  </data>
+  <data name="VerifyEmail_Verifying" xml:space="preserve">
+    <value>Verifying your email...</value>
+  </data>
+  <data name="VerifyEmail_SuccessTitle" xml:space="preserve">
+    <value>Email Verified!</value>
+  </data>
+  <data name="VerifyEmail_SuccessMessage" xml:space="preserve">
+    <value>Your email has been verified successfully</value>
+  </data>
+  <data name="VerifyEmail_SuccessDescription" xml:space="preserve">
+    <value>You can now sign in with your account and access all features.</value>
+  </data>
+  <data name="VerifyEmail_GoToLogin" xml:space="preserve">
+    <value>Go to Login</value>
+  </data>
+  <data name="VerifyEmail_ErrorTitle" xml:space="preserve">
+    <value>Verification Failed</value>
+  </data>
+  <data name="VerifyEmail_ErrorDescription" xml:space="preserve">
+    <value>Please try registering again or contact support if the problem persists.</value>
+  </data>
+  <data name="VerifyEmail_RegisterAgain" xml:space="preserve">
+    <value>Register Again</value>
+  </data>
+  <data name="VerifyEmail_BackToLogin" xml:space="preserve">
+    <value>Back to Login</value>
+  </data>
+  <data name="VerifyEmail_Error_NoToken" xml:space="preserve">
+    <value>No verification token provided</value>
+  </data>
+  <data name="VerifyEmail_Error_Expired" xml:space="preserve">
+    <value>This verification link has expired</value>
+  </data>
+  <data name="VerifyEmail_Error_AlreadyUsed" xml:space="preserve">
+    <value>This verification link has already been used</value>
+  </data>
+  <data name="VerifyEmail_Error_Invalid" xml:space="preserve">
+    <value>Invalid verification link</value>
+  </data>
+  <data name="VerifyEmail_Error_Generic" xml:space="preserve">
+    <value>An error occurred while verifying your email</value>
+  </data>
+
+  <!-- Two-Factor Authentication - Validate -->
+  <data name="TwoFactor_Validate_Title" xml:space="preserve">
+    <value>Two-Factor Authentication</value>
+  </data>
+  <data name="TwoFactor_Validate_Subtitle" xml:space="preserve">
+    <value>Enter the code from your authenticator app</value>
+  </data>
+  <data name="TwoFactor_Validate_Code" xml:space="preserve">
+    <value>Verification Code</value>
+  </data>
+  <data name="TwoFactor_Validate_CodeHint" xml:space="preserve">
+    <value>Enter the 6-digit code from your authenticator app</value>
+  </data>
+  <data name="TwoFactor_Validate_RecoveryCode" xml:space="preserve">
+    <value>Recovery Code</value>
+  </data>
+  <data name="TwoFactor_Validate_RecoveryCodeHint" xml:space="preserve">
+    <value>Enter one of your recovery codes</value>
+  </data>
+  <data name="TwoFactor_Validate_Verify" xml:space="preserve">
+    <value>Verify</value>
+  </data>
+  <data name="TwoFactor_Validate_Verifying" xml:space="preserve">
+    <value>Verifying</value>
+  </data>
+  <data name="TwoFactor_Validate_Or" xml:space="preserve">
+    <value>Or</value>
+  </data>
+  <data name="TwoFactor_Validate_UseAuthenticator" xml:space="preserve">
+    <value>Use authenticator app</value>
+  </data>
+  <data name="TwoFactor_Validate_UseRecoveryCode" xml:space="preserve">
+    <value>Use a recovery code</value>
+  </data>
+  <data name="TwoFactor_Validate_BackToLogin" xml:space="preserve">
+    <value>Back to Login</value>
+  </data>
+  <data name="TwoFactor_Validate_Error" xml:space="preserve">
+    <value>Invalid verification code</value>
+  </data>
+  <data name="TwoFactor_Validate_ErrorGeneric" xml:space="preserve">
+    <value>An error occurred. Please try again.</value>
+  </data>
+
+  <!-- Two-Factor Authentication - Setup -->
+  <data name="TwoFactor_Setup_Title" xml:space="preserve">
+    <value>Set Up Two-Factor Authentication</value>
+  </data>
+  <data name="TwoFactor_Setup_Step1" xml:space="preserve">
+    <value>Scan QR</value>
+  </data>
+  <data name="TwoFactor_Setup_Step2" xml:space="preserve">
+    <value>Verify</value>
+  </data>
+  <data name="TwoFactor_Setup_Step3" xml:space="preserve">
+    <value>Save Codes</value>
+  </data>
+  <data name="TwoFactor_Setup_Loading" xml:space="preserve">
+    <value>Setting up two-factor authentication...</value>
+  </data>
+  <data name="TwoFactor_Setup_Step1_Description" xml:space="preserve">
+    <value>Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</value>
+  </data>
+  <data name="TwoFactor_Setup_ManualEntry" xml:space="preserve">
+    <value>Can't scan? Enter this key manually:</value>
+  </data>
+  <data name="TwoFactor_Setup_Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="TwoFactor_Setup_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="TwoFactor_Setup_Step2_Description" xml:space="preserve">
+    <value>Enter the 6-digit code from your authenticator app to verify setup</value>
+  </data>
+  <data name="TwoFactor_Setup_EnterCode" xml:space="preserve">
+    <value>Verification Code</value>
+  </data>
+  <data name="TwoFactor_Setup_Verifying" xml:space="preserve">
+    <value>Verifying</value>
+  </data>
+  <data name="TwoFactor_Setup_VerifyAndEnable" xml:space="preserve">
+    <value>Verify and Enable</value>
+  </data>
+  <data name="TwoFactor_Setup_InvalidCode" xml:space="preserve">
+    <value>Invalid verification code. Please try again.</value>
+  </data>
+  <data name="TwoFactor_Setup_Success" xml:space="preserve">
+    <value>Two-factor authentication enabled successfully!</value>
+  </data>
+  <data name="TwoFactor_Setup_Step3_Description" xml:space="preserve">
+    <value>Save these recovery codes in a safe place. You can use them to access your account if you lose your authenticator device.</value>
+  </data>
+  <data name="TwoFactor_Setup_RecoveryWarning" xml:space="preserve">
+    <value>Each code can only be used once. Store them securely!</value>
+  </data>
+  <data name="TwoFactor_Setup_Download" xml:space="preserve">
+    <value>Download Codes</value>
+  </data>
+  <data name="TwoFactor_Setup_Done" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="TwoFactor_Setup_BackToSettings" xml:space="preserve">
+    <value>Back to Settings</value>
+  </data>
+
+  <!-- Account Settings -->
+  <data name="AccountSettings_Title" xml:space="preserve">
+    <value>Account Settings</value>
+  </data>
+  <data name="AccountSettings_Profile" xml:space="preserve">
+    <value>Profile Information</value>
+  </data>
+  <data name="AccountSettings_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="AccountSettings_FullName" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="AccountSettings_Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="AccountSettings_ChangePassword" xml:space="preserve">
+    <value>Change Password</value>
+  </data>
+  <data name="AccountSettings_CurrentPassword" xml:space="preserve">
+    <value>Current Password</value>
+  </data>
+  <data name="AccountSettings_NewPassword" xml:space="preserve">
+    <value>New Password</value>
+  </data>
+  <data name="AccountSettings_ConfirmNewPassword" xml:space="preserve">
+    <value>Confirm New Password</value>
+  </data>
+  <data name="AccountSettings_PasswordRequirement" xml:space="preserve">
+    <value>At least 8 characters with uppercase, lowercase, and a number</value>
+  </data>
+  <data name="AccountSettings_UpdatePassword" xml:space="preserve">
+    <value>Update Password</value>
+  </data>
+  <data name="AccountSettings_Updating" xml:space="preserve">
+    <value>Updating</value>
+  </data>
+  <data name="AccountSettings_PasswordChanged" xml:space="preserve">
+    <value>Password changed successfully!</value>
+  </data>
+  <data name="AccountSettings_PasswordMismatch" xml:space="preserve">
+    <value>Passwords do not match</value>
+  </data>
+  <data name="AccountSettings_PasswordChangeFailed" xml:space="preserve">
+    <value>Failed to change password. Please try again.</value>
+  </data>
+  <data name="AccountSettings_TwoFactor" xml:space="preserve">
+    <value>Two-Factor Authentication</value>
+  </data>
+  <data name="AccountSettings_TwoFactorDescription" xml:space="preserve">
+    <value>Add an extra layer of security to your account with two-factor authentication.</value>
+  </data>
+  <data name="AccountSettings_TwoFactor_Enabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="AccountSettings_TwoFactor_Disabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="AccountSettings_TwoFactor_Enable" xml:space="preserve">
+    <value>Enable 2FA</value>
+  </data>
+  <data name="AccountSettings_TwoFactor_Disable" xml:space="preserve">
+    <value>Disable 2FA</value>
+  </data>
+  <data name="AccountSettings_TwoFactor_DisableWarning" xml:space="preserve">
+    <value>Disabling 2FA will make your account less secure. Enter your current 2FA code to confirm.</value>
+  </data>
+  <data name="AccountSettings_TwoFactor_EnterCode" xml:space="preserve">
+    <value>Enter 2FA Code</value>
+  </data>
+  <data name="AccountSettings_TwoFactor_DisableFailed" xml:space="preserve">
+    <value>Failed to disable 2FA. Please check your code and try again.</value>
+  </data>
+  <data name="AccountSettings_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="AccountSettings_UnexpectedError" xml:space="preserve">
+    <value>An unexpected error occurred. Please try again.</value>
+  </data>
+  <data name="AccountSettings_QuickLinks" xml:space="preserve">
+    <value>Quick Links</value>
+  </data>
+  <data name="AccountSettings_Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="AccountSettings_Logout" xml:space="preserve">
+    <value>Logout</value>
+  </data>
 </root>

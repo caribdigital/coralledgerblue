@@ -139,12 +139,12 @@
             if (response.IsSuccessStatusCode)
             {
                 var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
-                
+
                 if (authResponse != null)
                 {
-                    // Authentication cookie is set by the server
-                    // Redirect to dashboard
-                    NavigationManager.NavigateTo("/", forceLoad: true);
+                    // Redirect to email confirmation page
+                    var encodedEmail = Uri.EscapeDataString(_registerModel.Email);
+                    NavigationManager.NavigateTo($"/email-confirmation?email={encodedEmail}", forceLoad: true);
                 }
             }
             else

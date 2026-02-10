@@ -70,6 +70,14 @@ public static class AuthenticationEndpoints
             .Produces(StatusCodes.Status200OK)
             .Produces<ProblemDetails>(StatusCodes.Status400BadRequest);
 
+        group.MapPost("/change-password", ChangePassword)
+            .WithName("ChangePassword")
+            .WithSummary("Change password for authenticated user")
+            .RequireAuthorization()
+            .Produces(StatusCodes.Status200OK)
+            .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
+
         return app;
     }
 
@@ -771,5 +779,73 @@ Marine Intelligence Platform
             user.FullName,
             user.Role,
             user.TenantId));
+    }
+
+    private static async Task<IResult> ChangePassword(
+        ChangePasswordRequest request,
+        ClaimsPrincipal currentUser,
+        MarineDbContext context,
+        IPasswordHasher passwordHasher)
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid request",
+                Detail = "Current password and new password are required"
+            });
+        }
+
+        // Validate new password strength
+        var passwordValidation = ValidatePasswordStrength(request.NewPassword);
+        if (!passwordValidation.IsValid)
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Weak password",
+                Detail = passwordValidation.ErrorMessage
+            });
+        }
+
+        // Get current user
+        var userIdClaim = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var user = await context.TenantUsers.FindAsync(userId);
+        if (user == null || !user.IsActive)
+        {
+            return Results.Unauthorized();
+        }
+
+        // Verify current password
+        if (string.IsNullOrEmpty(user.PasswordHash) || !passwordHasher.VerifyPassword(request.CurrentPassword, user.PasswordHash))
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid password",
+                Detail = "Current password is incorrect"
+            });
+        }
+
+        // Check if new password is same as old
+        if (passwordHasher.VerifyPassword(request.NewPassword, user.PasswordHash))
+        {
+            return Results.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid password",
+                Detail = "New password must be different from current password"
+            });
+        }
+
+        // Update password
+        var newPasswordHash = passwordHasher.HashPassword(request.NewPassword);
+        user.SetPassword(newPasswordHash);
+        await context.SaveChangesAsync();
+
+        return Results.Ok(new { message = "Password changed successfully" });
     }
 }
