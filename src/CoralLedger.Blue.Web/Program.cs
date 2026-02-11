@@ -196,7 +196,9 @@ builder.Services.AddCascadingAuthenticationState();
 // Add Performance: Response compression and caching
 builder.Services.AddPerformanceCompression();
 
-// Add API Versioning
+// Add API Versioning (scaffolding only - endpoints not yet versioned)
+// TODO: Apply version sets to endpoint groups using HasApiVersion/WithApiVersionSet
+// when multiple API versions are needed
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);

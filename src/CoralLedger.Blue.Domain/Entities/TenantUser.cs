@@ -130,6 +130,8 @@ public class TenantUser : BaseEntity, IAuditableEntity
     }
 
     // Two-Factor Authentication
+    // TODO: Encrypt TwoFactorSecretKey at rest using ASP.NET Core Data Protection or KMS
+    // Currently stored as plain text - if database is compromised, attacker can generate valid TOTPs
     public bool TwoFactorEnabled { get; private set; }
     public string? TwoFactorSecretKey { get; private set; }
     public string? TwoFactorPendingSecretKey { get; private set; }
