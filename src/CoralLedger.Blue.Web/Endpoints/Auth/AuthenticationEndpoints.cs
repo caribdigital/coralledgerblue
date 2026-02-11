@@ -236,13 +236,13 @@ public static class AuthenticationEndpoints
         if (user.TwoFactorEnabled)
         {
             // Return HTTP 202 Accepted to indicate 2FA is required
-            return Results.AcceptedAtRoute(
-                routeName: null,
-                routeValues: null,
-                value: new TwoFactorRequiredResponse(
+            // Using TypedResults.Json with 202 status code
+            return Results.Json(
+                new TwoFactorRequiredResponse(
                     RequiresTwoFactor: true,
                     UserId: user.Id,
-                    Email: user.Email));
+                    Email: user.Email),
+                statusCode: StatusCodes.Status202Accepted);
         }
 
         // Record successful login
