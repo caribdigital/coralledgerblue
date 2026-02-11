@@ -67,7 +67,7 @@ public static class DefaultTenantSeeder
                 var admin = TenantUser.Create(
                     tenant.Id,
                     adminEmail,
-                    "Development Administrator",
+                    "Default Admin (Dev Only)",
                     "Admin");
                 // Hash password using BCrypt directly (seeder is static, no DI available)
                 // WARNING: This is only for development - DO NOT use in production

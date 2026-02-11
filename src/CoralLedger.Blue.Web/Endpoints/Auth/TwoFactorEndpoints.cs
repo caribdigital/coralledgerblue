@@ -141,9 +141,11 @@ public static class TwoFactorEndpoints
         tenantUser.EnableTwoFactor(tenantUser.TwoFactorPendingSecretKey!);
         await context.SaveChangesAsync().ConfigureAwait(false);
 
-        // Generate recovery codes (not persisted - see TODO below)
-        // TODO: Persist recovery codes as hashed values and add endpoints to consume/regenerate them
+        // Generate recovery codes (not persisted - creates significant usability risk)
+        // TODO: CRITICAL - Persist recovery codes as hashed values and add endpoints to consume/regenerate them
+        // Without recovery codes, users who lose their authenticator cannot regain access to their account
         // Recovery codes should be stored similar to password hashes, and marked as used when consumed
+        // See PR review comment: https://github.com/caribdigital/coralledgerblue/pull/118
         var recoveryCodes = totpService.GenerateRecoveryCodes();
 
         return Results.Ok(new Enable2FAResponse(recoveryCodes));

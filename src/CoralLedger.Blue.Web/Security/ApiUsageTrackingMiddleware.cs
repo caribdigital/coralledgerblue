@@ -30,7 +30,8 @@ public class ApiUsageTrackingMiddleware
         }
 
         // Only track API key authenticated requests (not JWT/cookie auth)
-        // API key authentication sets the "ApiClientId" claim, which references ApiClient entity
+        // API key authentication sets the "ApiClientId" claim via ApiKeyAuthenticationHandler,
+        // which references the ApiClient entity. JWT/cookie auth uses NameIdentifier for TenantUser.Id.
         var apiClientIdClaim = context.User?.FindFirst("ApiClientId");
         var apiKeyIdClaim = context.User?.FindFirst("ApiKeyId");
 
