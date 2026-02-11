@@ -26,6 +26,7 @@ public static class AuthenticationEndpoints
             .WithName("Login")
             .WithSummary("Login with email and password")
             .Produces<AuthResponse>(StatusCodes.Status200OK)
+            .Produces<TwoFactorRequiredResponse>(StatusCodes.Status202Accepted)
             .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
 
         group.MapPost("/logout", Logout)
@@ -234,11 +235,14 @@ public static class AuthenticationEndpoints
         // Check if 2FA is enabled
         if (user.TwoFactorEnabled)
         {
-            // Return a response indicating 2FA is required
-            return Results.Ok(new TwoFactorRequiredResponse(
-                RequiresTwoFactor: true,
-                UserId: user.Id,
-                Email: user.Email));
+            // Return HTTP 202 Accepted to indicate 2FA is required
+            // Using TypedResults.Json with 202 status code
+            return Results.Json(
+                new TwoFactorRequiredResponse(
+                    RequiresTwoFactor: true,
+                    UserId: user.Id,
+                    Email: user.Email),
+                statusCode: StatusCodes.Status202Accepted);
         }
 
         // Record successful login

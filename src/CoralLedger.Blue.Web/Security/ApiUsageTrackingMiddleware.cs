@@ -29,28 +29,24 @@ public class ApiUsageTrackingMiddleware
             return;
         }
 
-        // Check if request is authenticated (any authentication type)
-        var isAuthenticated = context.User?.Identity?.IsAuthenticated == true;
-        var userIdClaim = context.User?.FindFirst(ClaimTypes.NameIdentifier);
+        // Only track API key authenticated requests (not JWT/cookie auth)
+        // API key authentication sets the "ApiClientId" claim via ApiKeyAuthenticationHandler,
+        // which references the ApiClient entity. JWT/cookie auth uses NameIdentifier for TenantUser.Id.
+        var apiClientIdClaim = context.User?.FindFirst("ApiClientId");
         var apiKeyIdClaim = context.User?.FindFirst("ApiKeyId");
 
-        if (!isAuthenticated || userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+        if (apiClientIdClaim == null || !Guid.TryParse(apiClientIdClaim.Value, out var apiClientId))
         {
+            // Not an API key authenticated request, skip usage tracking
             await _next(context);
             return;
         }
-
-        // Determine authentication type for audit logging
-        var authType = apiKeyIdClaim != null ? "ApiKey" :
-                       context.User?.Identity?.AuthenticationType ?? "Unknown";
 
         Guid? apiKeyId = null;
         if (apiKeyIdClaim != null && Guid.TryParse(apiKeyIdClaim.Value, out var keyId))
         {
             apiKeyId = keyId;
         }
-
-        var apiClientId = userId; // Reuse variable for backward compatibility
 
         var stopwatch = Stopwatch.StartNew();
         var originalBodyStream = context.Response.Body;

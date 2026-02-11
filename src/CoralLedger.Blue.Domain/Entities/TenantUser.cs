@@ -130,8 +130,31 @@ public class TenantUser : BaseEntity, IAuditableEntity
     }
 
     // Two-Factor Authentication
+    // TODO: CRITICAL - Encrypt TwoFactorSecretKey at rest using ASP.NET Core Data Protection or KMS
+    // Currently stored as plain text - if database is compromised, attacker can generate valid TOTPs
+    // This MUST be addressed before deploying to production
+    // See PR review comment: https://github.com/caribdigital/coralledgerblue/pull/118
     public bool TwoFactorEnabled { get; private set; }
     public string? TwoFactorSecretKey { get; private set; }
+    public string? TwoFactorPendingSecretKey { get; private set; }
+    public DateTime? TwoFactorPendingSecretExpiry { get; private set; }
+
+    public void SetPendingTwoFactorSecret(string secretKey, int expirationMinutes = 15)
+    {
+        if (string.IsNullOrWhiteSpace(secretKey))
+            throw new ArgumentException("Secret key is required", nameof(secretKey));
+
+        TwoFactorPendingSecretKey = secretKey;
+        TwoFactorPendingSecretExpiry = DateTime.UtcNow.AddMinutes(expirationMinutes);
+        ModifiedAt = DateTime.UtcNow;
+    }
+
+    public bool IsPendingSecretValid()
+    {
+        return !string.IsNullOrEmpty(TwoFactorPendingSecretKey) &&
+               TwoFactorPendingSecretExpiry.HasValue &&
+               TwoFactorPendingSecretExpiry.Value > DateTime.UtcNow;
+    }
 
     public void EnableTwoFactor(string secretKey)
     {
@@ -140,6 +163,8 @@ public class TenantUser : BaseEntity, IAuditableEntity
 
         TwoFactorSecretKey = secretKey;
         TwoFactorEnabled = true;
+        TwoFactorPendingSecretKey = null;
+        TwoFactorPendingSecretExpiry = null;
         ModifiedAt = DateTime.UtcNow;
     }
 
@@ -147,6 +172,8 @@ public class TenantUser : BaseEntity, IAuditableEntity
     {
         TwoFactorSecretKey = null;
         TwoFactorEnabled = false;
+        TwoFactorPendingSecretKey = null;
+        TwoFactorPendingSecretExpiry = null;
         ModifiedAt = DateTime.UtcNow;
     }
 }

@@ -38,9 +38,10 @@ public static class TwoFactorEndpoints
             .WithName("Validate2FA")
             .WithSummary("Validate 2FA code during login")
             .AllowAnonymous()
+            .RequireRateLimiting(CoralLedger.Blue.Web.Security.SecurityConfiguration.StrictRateLimiterPolicy)
             .Produces<TwoFactorValidateResponse>(StatusCodes.Status200OK)
-            .Produces<ProblemDetails>(StatusCodes.Status400BadRequest)
-            .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized);
+            .Produces<ProblemDetails>(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status429TooManyRequests);
 
         group.MapGet("/status", Get2FAStatus)
             .WithName("Get2FAStatus")
@@ -82,13 +83,9 @@ public static class TwoFactorEndpoints
         var secretKey = totpService.GenerateSecretKey();
         var qrCodeUri = totpService.GenerateQrCodeUri(tenantUser.Email, secretKey);
 
-        // Store the secret temporarily (will be confirmed when enabled)
-        tenantUser.EnableTwoFactor(secretKey);
-        tenantUser.DisableTwoFactor(); // Clear enabled flag, keep secret for verification
-
-        // Actually just set the secret without enabling
-        // We need to add a method or modify the entity to support pending 2FA setup
-        // For now, we'll return the secret and let the enable endpoint verify and enable
+        // Store the secret as pending (expires in 15 minutes)
+        tenantUser.SetPendingTwoFactorSecret(secretKey, expirationMinutes: 15);
+        await context.SaveChangesAsync().ConfigureAwait(false);
 
         return Results.Ok(new TwoFactorSetupResponse(secretKey, qrCodeUri));
     }
@@ -122,8 +119,17 @@ public static class TwoFactorEndpoints
                 title: "2FA Already Enabled");
         }
 
-        // Validate the code with the provided secret
-        if (!totpService.ValidateCode(request.SecretKey, request.Code))
+        // Validate that a pending secret exists and hasn't expired
+        if (!tenantUser.IsPendingSecretValid())
+        {
+            return Results.Problem(
+                detail: "No pending 2FA setup found or setup has expired. Please run /setup again.",
+                statusCode: 400,
+                title: "No Pending Setup");
+        }
+
+        // Validate the code with the server-stored pending secret
+        if (!totpService.ValidateCode(tenantUser.TwoFactorPendingSecretKey!, request.Code))
         {
             return Results.Problem(
                 detail: "Invalid verification code",
@@ -131,11 +137,15 @@ public static class TwoFactorEndpoints
                 title: "Invalid Code");
         }
 
-        // Enable 2FA with the verified secret
-        tenantUser.EnableTwoFactor(request.SecretKey);
+        // Enable 2FA with the verified pending secret
+        tenantUser.EnableTwoFactor(tenantUser.TwoFactorPendingSecretKey!);
         await context.SaveChangesAsync().ConfigureAwait(false);
 
-        // Generate recovery codes
+        // Generate recovery codes (not persisted - creates significant usability risk)
+        // TODO: CRITICAL - Persist recovery codes as hashed values and add endpoints to consume/regenerate them
+        // Without recovery codes, users who lose their authenticator cannot regain access to their account
+        // Recovery codes should be stored similar to password hashes, and marked as used when consumed
+        // See PR review comment: https://github.com/caribdigital/coralledgerblue/pull/118
         var recoveryCodes = totpService.GenerateRecoveryCodes();
 
         return Results.Ok(new Enable2FAResponse(recoveryCodes));
@@ -194,28 +204,16 @@ public static class TwoFactorEndpoints
             .FirstOrDefaultAsync(u => u.Id == request.UserId)
             .ConfigureAwait(false);
 
-        if (tenantUser == null)
+        // Use generic response for all failure modes to prevent user enumeration
+        if (tenantUser == null ||
+            !tenantUser.TwoFactorEnabled ||
+            string.IsNullOrEmpty(tenantUser.TwoFactorSecretKey) ||
+            !totpService.ValidateCode(tenantUser.TwoFactorSecretKey, request.Code))
         {
             return Results.Problem(
-                detail: "User not found",
+                detail: "Invalid two-factor authentication attempt",
                 statusCode: 401,
                 title: "Unauthorized");
-        }
-
-        if (!tenantUser.TwoFactorEnabled || string.IsNullOrEmpty(tenantUser.TwoFactorSecretKey))
-        {
-            return Results.Problem(
-                detail: "Two-factor authentication is not enabled for this user",
-                statusCode: 400,
-                title: "2FA Not Enabled");
-        }
-
-        if (!totpService.ValidateCode(tenantUser.TwoFactorSecretKey, request.Code))
-        {
-            return Results.Problem(
-                detail: "Invalid verification code",
-                statusCode: 401,
-                title: "Invalid Code");
         }
 
         // Record successful login
@@ -250,7 +248,7 @@ public static class TwoFactorEndpoints
 
 // Request/Response records
 public record TwoFactorSetupResponse(string SecretKey, string QrCodeUri);
-public record Enable2FARequest(string SecretKey, string Code);
+public record Enable2FARequest(string Code);
 public record Enable2FAResponse(string[] RecoveryCodes);
 public record Disable2FARequest(string Code);
 public record Validate2FARequest(Guid UserId, string Code);

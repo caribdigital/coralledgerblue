@@ -196,7 +196,9 @@ builder.Services.AddCascadingAuthenticationState();
 // Add Performance: Response compression and caching
 builder.Services.AddPerformanceCompression();
 
-// Add API Versioning
+// Add API Versioning (scaffolding only - endpoints not yet versioned)
+// TODO: Apply version sets to endpoint groups using HasApiVersion/WithApiVersionSet
+// when multiple API versions are needed
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
@@ -268,7 +270,7 @@ if (!app.Environment.IsEnvironment("Testing"))
     }
 
     // Seed the database with Bahamas MPA data (idempotent - checks if data exists)
-    await BahamasMpaSeeder.SeedAsync(context).ConfigureAwait(false);
+    await BahamasMpaSeeder.SeedAsync(context, app.Environment.IsDevelopment()).ConfigureAwait(false);
 
     // Seed the database with Bahamian species (idempotent - checks if data exists)
     await BahamianSpeciesSeeder.SeedAsync(context).ConfigureAwait(false);

@@ -11,13 +11,13 @@ public static class BahamasMpaSeeder
     private static readonly GeometryFactory GeometryFactory =
         NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
 
-    public static async Task SeedAsync(MarineDbContext context)
+    public static async Task SeedAsync(MarineDbContext context, bool isDevelopment = false)
     {
         if (await context.MarineProtectedAreas.AnyAsync().ConfigureAwait(false))
             return; // Already seeded
 
         // Ensure default tenant exists
-        var defaultTenant = await DefaultTenantSeeder.SeedAsync(context).ConfigureAwait(false);
+        var defaultTenant = await DefaultTenantSeeder.SeedAsync(context, isDevelopment).ConfigureAwait(false);
 
         var mpas = GetBahamasMpas(defaultTenant.Id).ToList();
 
