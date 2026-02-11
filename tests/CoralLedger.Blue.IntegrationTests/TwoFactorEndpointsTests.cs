@@ -94,7 +94,7 @@ public class TwoFactorEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var code = totp.ComputeTotp();
 
         // Act
-        var enableRequest = new Enable2FARequest(setupResult.SecretKey, code);
+        var enableRequest = new Enable2FARequest(code);
         var response = await client.PostAsJsonAsync("/api/auth/2fa/enable", enableRequest);
 
         // Assert
@@ -118,7 +118,7 @@ public class TwoFactorEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var setupResult = await setupResponse.Content.ReadFromJsonAsync<TwoFactorSetupResponse>();
 
         // Act - Use invalid code
-        var enableRequest = new Enable2FARequest(setupResult!.SecretKey, "000000");
+        var enableRequest = new Enable2FARequest("000000");
         var response = await client.PostAsJsonAsync("/api/auth/2fa/enable", enableRequest);
 
         // Assert
@@ -155,7 +155,7 @@ public class TwoFactorEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var totp = new Totp(secretBytes);
         var code = totp.ComputeTotp();
 
-        var enableRequest = new Enable2FARequest(setupResult.SecretKey, code);
+        var enableRequest = new Enable2FARequest(code);
         await client.PostAsJsonAsync("/api/auth/2fa/enable", enableRequest);
 
         // Act
@@ -182,7 +182,7 @@ public class TwoFactorEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var totp = new Totp(secretBytes);
         var enableCode = totp.ComputeTotp();
 
-        var enableRequest = new Enable2FARequest(setupResult.SecretKey, enableCode);
+        var enableRequest = new Enable2FARequest(enableCode);
         await client.PostAsJsonAsync("/api/auth/2fa/enable", enableRequest);
 
         // Generate a new valid code for disable
@@ -214,7 +214,7 @@ public class TwoFactorEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var totp = new Totp(secretBytes);
         var enableCode = totp.ComputeTotp();
 
-        var enableRequest = new Enable2FARequest(setupResult.SecretKey, enableCode);
+        var enableRequest = new Enable2FARequest(enableCode);
         await client.PostAsJsonAsync("/api/auth/2fa/enable", enableRequest);
 
         // Act - Use invalid code
@@ -238,7 +238,7 @@ public class TwoFactorEndpointsTests : IClassFixture<CustomWebApplicationFactory
         var totp = new Totp(secretBytes);
         var enableCode = totp.ComputeTotp();
 
-        var enableRequest = new Enable2FARequest(setupResult.SecretKey, enableCode);
+        var enableRequest = new Enable2FARequest(enableCode);
         await client.PostAsJsonAsync("/api/auth/2fa/enable", enableRequest);
 
         // Get user ID from the auth response

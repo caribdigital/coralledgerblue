@@ -13,7 +13,7 @@ public static class DefaultTenantSeeder
     private static readonly GeometryFactory GeometryFactory =
         NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
 
-    public static async Task<Tenant> SeedAsync(MarineDbContext context)
+    public static async Task<Tenant> SeedAsync(MarineDbContext context, bool isDevelopment = false)
     {
         // Check if a default tenant exists
         var existingTenant = await context.Tenants
@@ -53,23 +53,28 @@ public static class DefaultTenantSeeder
         );
         context.TenantBrandings.Add(branding);
 
-        // Create default admin user for testing and initial setup
-        var adminEmail = "admin@coralledger.blue";
-        var existingAdmin = await context.TenantUsers
-            .FirstOrDefaultAsync(u => u.Email == adminEmail)
-            .ConfigureAwait(false);
-
-        if (existingAdmin == null)
+        // Create default admin user ONLY in Development environment
+        // Production deployments should use explicit admin provisioning
+        if (isDevelopment)
         {
-            var admin = TenantUser.Create(
-                tenant.Id,
-                adminEmail,
-                "System Administrator",
-                "Admin");
-            // Hash password using BCrypt directly (seeder is static, no DI available)
-            admin.SetPassword(BCrypt.Net.BCrypt.HashPassword("Admin123!"));
-            admin.ConfirmEmail();
-            context.TenantUsers.Add(admin);
+            var adminEmail = "admin@coralledger.blue";
+            var existingAdmin = await context.TenantUsers
+                .FirstOrDefaultAsync(u => u.Email == adminEmail)
+                .ConfigureAwait(false);
+
+            if (existingAdmin == null)
+            {
+                var admin = TenantUser.Create(
+                    tenant.Id,
+                    adminEmail,
+                    "Development Administrator",
+                    "Admin");
+                // Hash password using BCrypt directly (seeder is static, no DI available)
+                // WARNING: This is only for development - DO NOT use in production
+                admin.SetPassword(BCrypt.Net.BCrypt.HashPassword("Admin123!"));
+                admin.ConfirmEmail();
+                context.TenantUsers.Add(admin);
+            }
         }
 
         await context.SaveChangesAsync().ConfigureAwait(false);

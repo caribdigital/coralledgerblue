@@ -268,7 +268,7 @@ if (!app.Environment.IsEnvironment("Testing"))
     }
 
     // Seed the database with Bahamas MPA data (idempotent - checks if data exists)
-    await BahamasMpaSeeder.SeedAsync(context).ConfigureAwait(false);
+    await BahamasMpaSeeder.SeedAsync(context, app.Environment.IsDevelopment()).ConfigureAwait(false);
 
     // Seed the database with Bahamian species (idempotent - checks if data exists)
     await BahamianSpeciesSeeder.SeedAsync(context).ConfigureAwait(false);
