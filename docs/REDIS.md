@@ -89,7 +89,7 @@ Both staging and production use Azure Cache for Redis **Basic C0** (250 MB). See
 
 ```bash
 az redis list-keys \
-  --name redis-coralcomply-prd \
+  --name redis-coralledger-prd-eus2 \
   --resource-group rg-coralcomply-prd
 ```
 
@@ -103,7 +103,7 @@ Set the `REDIS_CONNECTION_STRING` environment variable in your Azure App Service
 az webapp config appsettings set \
   --name your-app-name \
   --resource-group your-rg \
-  --settings REDIS_CONNECTION_STRING="redis-coralcomply-prd.redis.cache.windows.net:6380,password=YOUR_KEY,ssl=True,abortConnect=False"
+  --settings REDIS_CONNECTION_STRING="redis-coralledger-prd-eus2.redis.cache.windows.net:6380,password=YOUR_KEY,ssl=True,abortConnect=False"
 ```
 
 **Option B: App Configuration**
@@ -115,7 +115,7 @@ Use Azure App Configuration to manage the connection string securely.
 Azure Cache for Redis requires SSL. Ensure your connection string includes `ssl=True`:
 
 ```
-redis-coralcomply-prd.redis.cache.windows.net:6380,password=YOUR_KEY,ssl=True,abortConnect=False
+redis-coralledger-prd-eus2.redis.cache.windows.net:6380,password=YOUR_KEY,ssl=True,abortConnect=False
 ```
 
 ## Cache Keys Structure
@@ -258,8 +258,8 @@ Azure Cache for Redis has no stopped/paused state — instances incur cost 24/7 
 
 ```bash
 az redis create \
-  --name redis-coralcomply-dev \
-  --resource-group rg-coralcomply-dev \
+  --name redis-coralledger-nonprd-eus2 \
+  --resource-group rg-coralcomply-stg \
   --location eastus2 \
   --sku Basic \
   --vm-size c0 \
@@ -274,8 +274,8 @@ az redis create \
 
 ```bash
 az redis delete \
-  --name redis-coralcomply-dev \
-  --resource-group rg-coralcomply-dev \
+  --name redis-coralledger-nonprd-eus2 \
+  --resource-group rg-coralcomply-stg \
   --yes
 ```
 
@@ -291,14 +291,14 @@ The application falls back to `IMemoryCache` automatically if Redis is unavailab
 
 Staging uses **Basic C0** (250 MB, no SLA, no replica). This is sufficient for integration testing and costs ~$14/month.
 
-- Instance: `redis-coralcomply-stg`
+- Instance: `redis-coralledger-nonprd-eus2`
 - Resource group: `rg-coralcomply-stg`
 
 ### Production — Basic C0
 
 Production uses **Basic C0** (250 MB, no SLA, no replica) at ~$14/month. This is sufficient for current pre-launch traffic levels. When user traffic grows, upgrade to Standard C0 ($35/mo) for SLA and replica, or Standard C1 ($86/mo) for 1 GB capacity.
 
-- Instance: `redis-coralcomply-prd`
+- Instance: `redis-coralledger-prd-eus2`
 - Resource group: `rg-coralcomply-prd`
 
 ## Performance Considerations
