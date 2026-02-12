@@ -33,6 +33,7 @@
     <PackageVersion Include="NetTopologySuite.IO.GeoJSON" Version="4.0.0" />
     <PackageVersion Include="NetTopologySuite.Features" Version="2.2.0" />
     <PackageVersion Include="Otp.NET" Version="1.4.0" />
+    <PackageVersion Include="QRCoder" Version="1.6.0" />
     <PackageVersion Include="ProjNet" Version="2.0.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <!-- CQRS & Validation -->

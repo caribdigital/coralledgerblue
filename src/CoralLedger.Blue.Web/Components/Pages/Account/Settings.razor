@@ -1,0 +1,387 @@
+@page "/account/settings"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using System.Net.Http.Json
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using CoralLedger.Blue.Web.Endpoints.Auth
+@inject NavigationManager NavigationManager
+@inject IHttpClientFactory HttpClientFactory
+@inject IStringLocalizer<SharedResources> Localizer
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<PageTitle>@Localizer["AccountSettings_Title"] - CoralLedger Blue</PageTitle>
+
+<div class="account-settings-page">
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="bi bi-gear"></i>
+                    @Localizer["AccountSettings_Title"]
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Profile Section -->
+                <div class="settings-card">
+                    <h3>
+                        <i class="bi bi-person"></i>
+                        @Localizer["AccountSettings_Profile"]
+                    </h3>
+                    <div class="profile-info">
+                        <div class="info-row">
+                            <span class="label">@Localizer["AccountSettings_Email"]:</span>
+                            <span class="value">@_userEmail</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">@Localizer["AccountSettings_FullName"]:</span>
+                            <span class="value">@(_userFullName ?? "Not set")</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">@Localizer["AccountSettings_Role"]:</span>
+                            <span class="value badge bg-primary">@_userRole</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Change Password Section -->
+                <div class="settings-card">
+                    <h3>
+                        <i class="bi bi-key"></i>
+                        @Localizer["AccountSettings_ChangePassword"]
+                    </h3>
+
+                    @if (_passwordChangeSuccess)
+                    {
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle-fill"></i>
+                            @Localizer["AccountSettings_PasswordChanged"]
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(_passwordError))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            @_passwordError
+                        </div>
+                    }
+
+                    <EditForm Model="@_passwordModel" OnValidSubmit="@HandleChangePassword" FormName="change-password-form">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-group">
+                            <label for="currentPassword">@Localizer["AccountSettings_CurrentPassword"]</label>
+                            <InputText id="currentPassword" type="password" class="form-control"
+                                       @bind-Value="_passwordModel.CurrentPassword" />
+                            <ValidationMessage For="@(() => _passwordModel.CurrentPassword)" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="newPassword">@Localizer["AccountSettings_NewPassword"]</label>
+                            <InputText id="newPassword" type="password" class="form-control"
+                                       @bind-Value="_passwordModel.NewPassword" />
+                            <small class="form-text">@Localizer["AccountSettings_PasswordRequirement"]</small>
+                            <ValidationMessage For="@(() => _passwordModel.NewPassword)" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword">@Localizer["AccountSettings_ConfirmNewPassword"]</label>
+                            <InputText id="confirmPassword" type="password" class="form-control"
+                                       @bind-Value="_passwordModel.ConfirmPassword" />
+                            <ValidationMessage For="@(() => _passwordModel.ConfirmPassword)" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" disabled="@_isChangingPassword">
+                            @if (_isChangingPassword)
+                            {
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                                <span>@Localizer["AccountSettings_Updating"]...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-check-lg"></i>
+                                <span>@Localizer["AccountSettings_UpdatePassword"]</span>
+                            }
+                        </button>
+                    </EditForm>
+                </div>
+
+                <!-- Two-Factor Authentication Section -->
+                <div class="settings-card">
+                    <h3>
+                        <i class="bi bi-shield-lock"></i>
+                        @Localizer["AccountSettings_TwoFactor"]
+                    </h3>
+
+                    <div class="two-factor-status">
+                        <div class="status-info">
+                            <p>@Localizer["AccountSettings_TwoFactorDescription"]</p>
+                            <span class="status-badge @(_twoFactorEnabled ? "enabled" : "disabled")">
+                                @if (_twoFactorEnabled)
+                                {
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>@Localizer["AccountSettings_TwoFactor_Enabled"]</span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    <span>@Localizer["AccountSettings_TwoFactor_Disabled"]</span>
+                                }
+                            </span>
+                        </div>
+
+                        <div class="status-actions">
+                            @if (_twoFactorEnabled)
+                            {
+                                <button type="button" class="btn btn-outline-danger" @onclick="ShowDisable2FAModal">
+                                    <i class="bi bi-shield-x"></i>
+                                    @Localizer["AccountSettings_TwoFactor_Disable"]
+                                </button>
+                            }
+                            else
+                            {
+                                <a href="/account/2fa/setup" class="btn btn-primary">
+                                    <i class="bi bi-shield-check"></i>
+                                    @Localizer["AccountSettings_TwoFactor_Enable"]
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    @if (_showDisable2FAForm)
+                    {
+                        <div class="disable-2fa-form mt-3">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                @Localizer["AccountSettings_TwoFactor_DisableWarning"]
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(_disable2FAError))
+                            {
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    @_disable2FAError
+                                </div>
+                            }
+
+                            <EditForm Model="@_disable2FAModel" OnValidSubmit="@HandleDisable2FA" FormName="disable-2fa-form">
+                                <DataAnnotationsValidator />
+                                <div class="form-group">
+                                    <label for="disableCode">@Localizer["AccountSettings_TwoFactor_EnterCode"]</label>
+                                    <InputText id="disableCode" class="form-control" @bind-Value="_disable2FAModel.Code"
+                                               placeholder="000000" maxlength="6" />
+                                    <ValidationMessage For="@(() => _disable2FAModel.Code)" />
+                                </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-secondary" @onclick="HideDisable2FAForm">
+                                        @Localizer["AccountSettings_Cancel"]
+                                    </button>
+                                    <button type="submit" class="btn btn-danger" disabled="@_isDisabling2FA">
+                                        @if (_isDisabling2FA)
+                                        {
+                                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-shield-x"></i>
+                                        }
+                                        @Localizer["AccountSettings_TwoFactor_Disable"]
+                                    </button>
+                                </div>
+                            </EditForm>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="settings-sidebar">
+                    <div class="settings-card">
+                        <h4>@Localizer["AccountSettings_QuickLinks"]</h4>
+                        <nav class="nav flex-column">
+                            <a href="/" class="nav-link">
+                                <i class="bi bi-house"></i>
+                                @Localizer["AccountSettings_Dashboard"]
+                            </a>
+                            <a href="/logout" class="nav-link text-danger">
+                                <i class="bi bi-box-arrow-right"></i>
+                                @Localizer["AccountSettings_Logout"]
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? _userEmail;
+    private string? _userFullName;
+    private string? _userRole;
+    private bool _twoFactorEnabled = false;
+
+    // Password change
+    private PasswordChangeModel _passwordModel = new();
+    private bool _isChangingPassword = false;
+    private bool _passwordChangeSuccess = false;
+    private string? _passwordError;
+
+    // 2FA disable
+    private bool _showDisable2FAForm = false;
+    private Disable2FAModel _disable2FAModel = new();
+    private bool _isDisabling2FA = false;
+    private string? _disable2FAError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _userEmail = user.FindFirst(ClaimTypes.Email)?.Value;
+        _userFullName = user.FindFirst(ClaimTypes.Name)?.Value;
+        _userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? "User";
+
+        await Load2FAStatus();
+    }
+
+    private async Task Load2FAStatus()
+    {
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient();
+            httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+            var response = await httpClient.GetAsync("/api/auth/2fa/status");
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<TwoFactorStatusResponse>();
+                _twoFactorEnabled = result?.TwoFactorEnabled ?? false;
+            }
+        }
+        catch
+        {
+            // Ignore - status will show as disabled
+        }
+    }
+
+    private async Task HandleChangePassword()
+    {
+        if (_passwordModel.NewPassword != _passwordModel.ConfirmPassword)
+        {
+            _passwordError = Localizer["AccountSettings_PasswordMismatch"];
+            return;
+        }
+
+        _isChangingPassword = true;
+        _passwordError = null;
+        _passwordChangeSuccess = false;
+        StateHasChanged();
+
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient();
+            httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+            var request = new ChangePasswordRequest(_passwordModel.CurrentPassword, _passwordModel.NewPassword);
+            var response = await httpClient.PostAsJsonAsync("/api/auth/change-password", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _passwordChangeSuccess = true;
+                _passwordModel = new PasswordChangeModel();
+            }
+            else
+            {
+                var problemDetails = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>();
+                _passwordError = problemDetails?.Detail ?? Localizer["AccountSettings_PasswordChangeFailed"];
+            }
+        }
+        catch
+        {
+            _passwordError = Localizer["AccountSettings_UnexpectedError"];
+        }
+        finally
+        {
+            _isChangingPassword = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ShowDisable2FAModal()
+    {
+        _showDisable2FAForm = true;
+        _disable2FAModel = new Disable2FAModel();
+        _disable2FAError = null;
+    }
+
+    private void HideDisable2FAForm()
+    {
+        _showDisable2FAForm = false;
+        _disable2FAError = null;
+    }
+
+    private async Task HandleDisable2FA()
+    {
+        _isDisabling2FA = true;
+        _disable2FAError = null;
+        StateHasChanged();
+
+        try
+        {
+            var httpClient = HttpClientFactory.CreateClient();
+            httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+            var request = new Disable2FARequest(_disable2FAModel.Code);
+            var response = await httpClient.PostAsJsonAsync("/api/auth/2fa/disable", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _twoFactorEnabled = false;
+                _showDisable2FAForm = false;
+            }
+            else
+            {
+                var problemDetails = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>();
+                _disable2FAError = problemDetails?.Detail ?? Localizer["AccountSettings_TwoFactor_DisableFailed"];
+            }
+        }
+        catch
+        {
+            _disable2FAError = Localizer["AccountSettings_UnexpectedError"];
+        }
+        finally
+        {
+            _isDisabling2FA = false;
+            StateHasChanged();
+        }
+    }
+
+    public class PasswordChangeModel
+    {
+        [Required(ErrorMessage = "Current password is required")]
+        public string CurrentPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "New password is required")]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$",
+            ErrorMessage = "Password must contain uppercase, lowercase, and a number")]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please confirm your new password")]
+        [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    public class Disable2FAModel
+    {
+        [Required(ErrorMessage = "Verification code is required")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "Code must be 6 digits")]
+        public string Code { get; set; } = string.Empty;
+    }
+}

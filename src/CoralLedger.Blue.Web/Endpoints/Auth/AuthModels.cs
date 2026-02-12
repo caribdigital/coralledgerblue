@@ -42,3 +42,7 @@ public record TwoFactorRequiredResponse(
     bool RequiresTwoFactor,
     Guid UserId,
     string Email);
+
+public record ChangePasswordRequest(
+    string CurrentPassword,
+    string NewPassword);

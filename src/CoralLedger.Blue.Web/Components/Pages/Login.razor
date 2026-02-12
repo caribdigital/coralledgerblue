@@ -126,8 +126,27 @@
 
             if (response.IsSuccessStatusCode)
             {
-                var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
-                
+                // Check if 2FA is required
+                var content = await response.Content.ReadAsStringAsync();
+                if (content.Contains("RequiresTwoFactor"))
+                {
+                    var twoFactorResponse = System.Text.Json.JsonSerializer.Deserialize<TwoFactorRequiredResponse>(
+                        content,
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                    if (twoFactorResponse?.RequiresTwoFactor == true)
+                    {
+                        var returnUrl = string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl;
+                        NavigationManager.NavigateTo(
+                            $"/2fa/validate?userId={twoFactorResponse.UserId}&returnUrl={Uri.EscapeDataString(returnUrl)}");
+                        return;
+                    }
+                }
+
+                var authResponse = System.Text.Json.JsonSerializer.Deserialize<AuthResponse>(
+                    content,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
                 if (authResponse != null)
                 {
                     // Authentication cookie is set by the server
