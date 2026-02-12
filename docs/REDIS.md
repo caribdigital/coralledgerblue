@@ -81,30 +81,19 @@ Or on Windows:
 $env:REDIS_CONNECTION_STRING="your-redis-server:6379"
 ```
 
-## Azure Cache for Redis (Production)
+## Azure Cache for Redis
 
-For production deployment on Azure, use Azure Cache for Redis:
+Both staging and production use Azure Cache for Redis **Basic C0** (250 MB). See [Azure Environment Strategy](#azure-environment-strategy) below for tier details.
 
-### 1. Create Azure Cache for Redis
-
-```bash
-az redis create \
-  --name coralledger-redis \
-  --resource-group coralledger-rg \
-  --location eastus \
-  --sku Basic \
-  --vm-size C1
-```
-
-### 2. Get Connection String
+### Get Connection String
 
 ```bash
 az redis list-keys \
-  --name coralledger-redis \
-  --resource-group coralledger-rg
+  --name redis-coralcomply-prd \
+  --resource-group rg-coralcomply-prd
 ```
 
-### 3. Configure Application
+### Configure Application
 
 **Option A: Environment Variable (Recommended)**
 
@@ -112,21 +101,21 @@ Set the `REDIS_CONNECTION_STRING` environment variable in your Azure App Service
 
 ```bash
 az webapp config appsettings set \
-  --name coralledger-web \
-  --resource-group coralledger-rg \
-  --settings REDIS_CONNECTION_STRING="coralledger-redis.redis.cache.windows.net:6380,password=YOUR_KEY,ssl=True,abortConnect=False"
+  --name your-app-name \
+  --resource-group your-rg \
+  --settings REDIS_CONNECTION_STRING="redis-coralcomply-prd.redis.cache.windows.net:6380,password=YOUR_KEY,ssl=True,abortConnect=False"
 ```
 
 **Option B: App Configuration**
 
 Use Azure App Configuration to manage the connection string securely.
 
-### 4. SSL Configuration
+### SSL Configuration
 
 Azure Cache for Redis requires SSL. Ensure your connection string includes `ssl=True`:
 
 ```
-your-cache.redis.cache.windows.net:6380,password=YOUR_KEY,ssl=True,abortConnect=False
+redis-coralcomply-prd.redis.cache.windows.net:6380,password=YOUR_KEY,ssl=True,abortConnect=False
 ```
 
 ## Cache Keys Structure
@@ -305,9 +294,9 @@ Staging uses **Basic C0** (250 MB, no SLA, no replica). This is sufficient for i
 - Instance: `redis-coralcomply-stg`
 - Resource group: `rg-coralcomply-stg`
 
-### Production — Standard C0
+### Production — Basic C0
 
-Production uses **Standard C0** (250 MB, SLA-backed with replica). This provides high availability at ~$35/month. Monitor memory usage — if cache utilization consistently exceeds 200 MB, consider scaling to Standard C1.
+Production uses **Basic C0** (250 MB, no SLA, no replica) at ~$14/month. This is sufficient for current pre-launch traffic levels. When user traffic grows, upgrade to Standard C0 ($35/mo) for SLA and replica, or Standard C1 ($86/mo) for 1 GB capacity.
 
 - Instance: `redis-coralcomply-prd`
 - Resource group: `rg-coralcomply-prd`
@@ -319,7 +308,8 @@ Production uses **Standard C0** (250 MB, SLA-backed with replica). This provides
 Current tier allocations (as of February 2026):
 - **Development**: Created on demand using Basic C0 (250 MB) — ~$14/month when running
 - **Staging**: Basic C0 (250 MB) — ~$14/month
-- **Production**: Standard C0 (250 MB, with replica) — ~$35/month
+- **Production**: Basic C0 (250 MB) — ~$14/month
+- **Production (scaled)**: Standard C0 (250 MB, with replica) — ~$35/month
 - **High Traffic (future)**: Standard C1 (1 GB) — ~$86/month
 
 ### Key Expiration
