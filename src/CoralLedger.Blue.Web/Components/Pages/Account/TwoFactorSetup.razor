@@ -288,7 +288,7 @@
             var httpClient = HttpClientFactory.CreateClient();
             httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-            var request = new Enable2FARequest(_secretKey, _verifyModel.Code);
+            var request = new Enable2FARequest(_verifyModel.Code);
             var response = await httpClient.PostAsJsonAsync("/api/auth/2fa/enable", request);
 
             if (response.IsSuccessStatusCode)

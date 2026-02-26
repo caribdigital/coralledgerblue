@@ -36,12 +36,14 @@ public class ApiEndpointTests
         // Act - Use bahamas endpoint which has data without parameters
         var response = await _fixture.WebClient.GetAsync("/api/bleaching/bahamas");
 
-        // Assert - Accept success or service unavailable (external NOAA API may be down)
+        // Assert - Accept success or gateway/service unavailable errors (external NOAA API may be down)
+        // Note: 500 Internal Server Error removed from acceptable codes as it indicates an API bug,
+        // not an upstream dependency failure. Only gateway-level errors (502/503/504) are acceptable.
         response.StatusCode.Should().BeOneOf(
             HttpStatusCode.OK,
-            HttpStatusCode.ServiceUnavailable,
-            HttpStatusCode.InternalServerError,
-            HttpStatusCode.BadGateway);
+            HttpStatusCode.BadGateway,           // 502: Bad Gateway
+            HttpStatusCode.ServiceUnavailable,   // 503: Service Unavailable
+            HttpStatusCode.GatewayTimeout);      // 504: Gateway Timeout
 
         if (response.IsSuccessStatusCode)
         {
